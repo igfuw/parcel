@@ -12,6 +12,15 @@ import pdb
 import subprocess
 parcel_version = subprocess.check_output(["git", "rev-parse", "HEAD"]).rstrip()
 
+Chem_ga_id = ["SO2", "H2O2", "O3"]
+Chem_aq_id = Chem_ga_id + ["HSO3"]
+
+Chem_id = {
+  "SO2"  : lgrngn.chem_species_t.SO2,
+  "H2O2" : lgrngn.chem_species_t.H2O2,
+  "O3"   : lgrngn.chem_species_t.O3,
+  "HSO3" : lgrngn.chem_species_t.HSO3                                                      
+}
 
 def micro_init(opts, state):
   # sanity check
@@ -30,28 +39,45 @@ def micro_init(opts, state):
     setattr(opts_init, opt, opts[opt])
   opts_init.dry_distros = {opts["kappa"]:lognormal}
   opts_init.kernel = lgrngn.kernel_t.geometric #TODO: will not be needed soon (libcloud PR #89)
+  opts_init.chem_switch = True 
 
   # initialitation
   micro = lgrngn.factory(lgrngn.backend_t.serial, opts_init)
   micro.init(state["th_d"], state["r_v"], state["rhod"])
   return micro
 
-def micro_step(micro, state, info):
-  opts = lgrngn.opts_t()
-  micro.step_sync(opts, state["th_d"], state["r_v"], state["rhod"]) 
+def micro_step(micro, state, info, chem_gas):
+  libopts = lgrngn.opts_t()
+  for id in chem_gas:
+    libopts.chem_gas[Chem_id[id]] = chem_gas[id]
+
+  micro.step_sync(libopts, state["th_d"], state["r_v"], state["rhod"]) 
+
+  # new = diag_chem(Chem_id[id])
+  for id in chem_gas:
+    old = 0 #libopts.chem_gas[Chem_id[id]]
+    
+    new = 0 #np.frombuffer(micro.outbuf())    
+    chem_gas[id] -= (new - old)
 
 def stats(state, info):
   state["T"] = np.array([common.T(state["th_d"][0], state["rhod"][0])])
   state["RH"] = state["p"] * state["r_v"] / (state["r_v"] + common.eps) / common.p_vs(state["T"][0])
   info["RH_max"] = max(info["RH_max"], state["RH"])
 
-def histo(bins, micro, opts):
+def histo(bins, micro, opts, chem_aq):
   r_min = 0
   i = 0
   for r_max in opts["radii"]:
     micro.diag_wet_rng(r_min, r_max)
+
     micro.diag_wet_mom(0) # #/kg dry air
     bins["conc"][i] = np.frombuffer(micro.outbuf())
+
+    for id in Chem_aq_id:
+      micro.diag_chem(Chem_id[id])
+      chem_aq[id][i] = np.frombuffer(micro.outbuf())
+
     r_min = r_max
     i += 1
 
@@ -61,10 +87,14 @@ def output_init(opts):
   fout.createDimension('t', None)
   fout.createDimension('radii', opts["radii"].shape[0]) #TODO: r_d, cloud only; #TODO: r_w vs. r_v - might be misleading
   
-  units = {"z" : "m", "t" : "s", "r_v" : "kg/kg", "th_d" : "K", "rhod" : "kg/m3", "p" : "Pa", "T" : "K", "RH" : "1", "conc" : "(kg of dry air)^-1"}
+  units = {"z" : "m", "t" : "s", "r_v" : "kg/kg", "th_d" : "K", "rhod" : "kg/m3", 
+    "p" : "Pa", "T" : "K", "RH" : "1", "conc" : "(kg of dry air)^-1"
+  }
+  for id in Chem_id:
+    units[id] = "todo"
 
   for name, unit in units.iteritems():
-    if name == "conc":
+    if name in Chem_aq_id + ["conc"]:
       dims = ('t','radii')
     else:
       dims = ('t',)
@@ -82,16 +112,19 @@ def save_attrs(fout, dictnr):
   for var, val in dictnr.iteritems():
     setattr(fout, var, val)
 
-def output(fout, opts, micro, bins, state, rec):
-  histo(bins, micro, opts)
+def output(fout, opts, micro, bins, state, chem_gas, chem_aq, rec):
+  histo(bins, micro, opts, chem_aq)
   output_save(fout, state, rec)
   output_save(fout, bins, rec)
-  #output_save(f, chem) 
+  output_save(fout, chem_aq, rec) 
+  output_save(fout, chem_gas, rec)
 
+ 
 def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022, outfile="test.nc", 
   outfreq=100, sd_conc_mean=64, kappa=.5,
   mean_r = .04e-6 / 2, stdev  = 1.4, n_tot  = 60e6, 
-  radii = 1e-6 * pow(10, -3 + np.arange(26) * .2)
+  radii = 1e-6 * pow(10, -3 + np.arange(26) * .2), 
+  SO2_0 = 44, O3_0 = 44, H2O2_0 = 44
 ):
   # packing function arguments into "opts" dictionary
   args, _, _, _ = inspect.getargvalues(inspect.currentframe())
@@ -109,11 +142,13 @@ def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022, outfile="test.n
   info = { "RH_max" : 0, "libcloud_Git_revision" : libcloud_version, 
            "parcel_Git_revision" : parcel_version }
   bins = { "conc" : np.empty((radii.shape[0],)) }
+  chem_gas = { "SO2" : SO2_0, "O3" : O3_0, "H2O2" : H2O2_0 }
+  chem_aq = dict(zip(Chem_aq_id, len(Chem_aq_id)*[np.empty(radii.shape[0])]))
   with output_init(opts) as fout:
     # t=0 : init & save
     micro = micro_init(opts, state)
     stats(state, info)
-    output(fout, opts, micro, bins, state, 0)
+    output(fout, opts, micro, bins, state, chem_gas, chem_aq, 0)
 
     # timestepping
     for it in range(1,nt+1):
@@ -127,7 +162,7 @@ def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022, outfile="test.n
       state["rhod"][0] = common.rhod(state["p"], th_0, r_0)
 
       # microphysics
-      micro_step(micro, state, info)
+      micro_step(micro, state, info, chem_gas)
       stats(state, info)
     
       # TODO: only if user wants to stop @ RH_max
@@ -136,7 +171,7 @@ def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022, outfile="test.n
       # output
       if (it % outfreq == 0): 
         rec = it/outfreq
-        output(fout, opts, micro, bins, state, rec)
+        output(fout, opts, micro, bins, state, chem_gas, chem_aq, rec)
  
     save_attrs(fout, info)
     save_attrs(fout, opts)
