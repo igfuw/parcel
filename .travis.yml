@@ -1,0 +1,26 @@
+language: cpp
+os:
+  - linux
+compiler:
+  - gcc
+
+before_install:
+  - sudo add-apt-repository "deb http://us.archive.ubuntu.com/ubuntu/ trusty main universe multiverse"
+  - sudo apt-get update
+
+install:
+  - sudo apt-get install --no-install-recommends g++ python-scipy python-pytest libblitz0-dev cmake libboost-python-dev libthrust-dev 
+
+  # libcloudphxx
+  - cd ..
+  - git clone --depth=1 git://github.com/igfuw/libcloudphxx.git
+  - cd libcloudphxx
+  - mkdir build
+  - cd build
+  - cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+  - make
+  - sudo make install
+  - cd ../..
+
+script:
+  - cd parcel
