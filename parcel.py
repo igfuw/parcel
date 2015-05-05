@@ -1,4 +1,5 @@
 from libcloudphxx import common, lgrngn
+from libcloudphxx import git_revision as libcloud_version
 
 from distutils.version import StrictVersion
 from scipy import __version__ as scipy_version
@@ -7,6 +8,9 @@ assert StrictVersion(scipy_version) >= StrictVersion("0.13"), "see https://githu
 from scipy.io import netcdf
 import inspect, numpy as np
 import pdb
+
+import subprocess
+parcel_version = subprocess.check_output(["git", "rev-parse", "HEAD"]).rstrip()
 
 
 def micro_init(opts, state):
@@ -102,7 +106,8 @@ def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022, outfile="test.n
     "rhod" : np.array([common.rhod(p_0, th_0, r_0)]),
     "T" : None, "RH" : None
   }
-  info = { "RH_max" : 0 }
+  info = { "RH_max" : 0, "libcloud_Git_revision" : libcloud_version, 
+           "parcel_Git_revision" : parcel_version }
   bins = { "conc" : np.empty((radii.shape[0],)) }
   with output_init(opts) as fout:
     # t=0 : init & save
