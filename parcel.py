@@ -1,10 +1,13 @@
-import sys 
-sys.path.insert(0, "../../../build/bindings/python/")
-
 from libcloudphxx import common, lgrngn
+
+from distutils.version import StrictVersion
+from scipy import __version__ as scipy_version
+assert StrictVersion(scipy_version) >= StrictVersion("0.13"), "see https://github.com/scipy/scipy/pull/491"
+
 from scipy.io import netcdf
 import inspect, numpy as np
 import pdb
+
 
 def micro_init(opts, state):
   # sanity check
@@ -81,7 +84,8 @@ def output(fout, opts, micro, bins, state, rec):
   output_save(fout, bins, rec)
   #output_save(f, chem) 
 
-def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022, outfile="test.nc", outfreq=100, sd_conc_mean=64, kappa=.5,
+def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022, outfile="test.nc", 
+  outfreq=100, sd_conc_mean=64, kappa=.5,
   mean_r = .04e-6 / 2, stdev  = 1.4, n_tot  = 60e6, 
   radii = 1e-6 * pow(10, -3 + np.arange(26) * .2)
 ):
