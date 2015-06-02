@@ -18,7 +18,7 @@ install:
   - cd libcloudphxx
   - mkdir build
   - cd build
-  - cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+  - VERBOSE 1 cmake -DCMAKE_INSTALL_PREFIX=/usr ..
   - make
   - sudo make install
   - cd ../..
