@@ -146,8 +146,8 @@ def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022, outfile="test.n
   chem_aq = dict(zip(Chem_aq_id, len(Chem_aq_id)*[np.empty(radii.shape[0])]))
   with output_init(opts) as fout:
     # t=0 : init & save
-    micro = micro_init(opts, state)
     stats(state, info)
+    micro = micro_init(opts, state)
     output(fout, opts, micro, bins, state, chem_gas, chem_aq, 0)
 
     # timestepping
