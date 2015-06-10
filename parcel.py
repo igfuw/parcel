@@ -17,9 +17,9 @@ from enum import Enum # https://pypi.python.org/pypi/enum34
 class Pprof(Enum):
   hydro_const_rhod = 0, # as in WWG & LPW 2009
   hydro_const_th_rv = 1, # as in icicle
-  hydro_piecewise_const_th_rv = 2, # better than both above? :)
-  hydro_old_drops = 3
-  # ... rho/p profile, ...
+  hydro_piecewise_const_th_rv = 2, # better than both above? (not really?) 
+  hydro_old_drops = 3 # as in old parcel model
+  # ... rho or p given as a profile, ...
 
 Chem_ga_id = ["SO2", "H2O2", "O3"]
 Chem_aq_id = Chem_ga_id + ["HSO3"]
@@ -129,8 +129,9 @@ def output(fout, opts, micro, bins, state, chem_gas, chem_aq, rec):
   output_save(fout, chem_gas, rec)
 
  
-def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022, outfile="test_const_rhod.nc", 
-  pprof=Pprof.hydro_const_rhod,
+def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022, 
+  outfile="test.nc", 
+  pprof=Pprof.hydro_const_th_rv,
   outfreq=1, sd_conc_mean=64, kappa=.5,
   mean_r = .04e-6 / 2, stdev  = 1.4, n_tot  = 60e6, 
   radii = 1e-6 * pow(10, -3 + np.arange(26) * .2), 
