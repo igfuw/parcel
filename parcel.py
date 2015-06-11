@@ -22,8 +22,9 @@ Chem_id = {
   "HSO3" : lgrngn.chem_species_t.HSO3                                                      
 }
 
-def micro_init(opts, state):
+def micro_init(opts, state, info):
   # sanity check
+  stats(state, info)
   if (state["RH"] > 1): raise Exception("Please supply initial T,p,r_v below supersaturation")
 
   # using nested function to get access to opts
@@ -146,8 +147,7 @@ def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022, outfile="test.n
   chem_aq = dict(zip(Chem_aq_id, len(Chem_aq_id)*[np.empty(radii.shape[0])]))
   with output_init(opts) as fout:
     # t=0 : init & save
-    stats(state, info)
-    micro = micro_init(opts, state)
+    micro = micro_init(opts, state, info)
     output(fout, opts, micro, bins, state, chem_gas, chem_aq, 0)
 
     # timestepping
