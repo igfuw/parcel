@@ -9,7 +9,7 @@ def test_cmdline(tmpdir):
 
   # calling via subprocess
   file_sbproc = str(tmpdir.join("sbproc.nc"))
-  subprocess.check_call(["../parcel.py", "--outfile="+file_sbproc])
+  subprocess.check_call(["parcel.py", "--outfile="+file_sbproc])
 
   # comparing if the output is the same
   # TODO!
