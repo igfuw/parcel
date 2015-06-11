@@ -170,11 +170,12 @@ def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022,
       state["z"] += w * dt
       state["t"] = it * dt
 
+      # pressure
       if pprof == Pprof.hydro_const_th_rv:
         state["p"] = common.p_hydro(state["z"], th_0, r_0, 0, p_0)
 
       elif pprof == Pprof.hydro_const_rhod:
-        rho = 1. # kg/m3  1.13 
+        rho = 1.13 # kg/m3  1.13 
         state["p"] -= rho * common.g * w * dt
 
       elif pprof == Pprof.hydro_piecewise_const_th_rv:
@@ -191,7 +192,20 @@ def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022,
 
       else: assert(False)
 
-      state["rhod"][0] = common.rhod(state["p"], th_0, r_0)
+      # rhod
+      if pprof == Pprof.hydro_const_th_rv:
+        state["rhod"][0] = common.rhod(state["p"], th_0, r_0)
+      else:
+        state["rhod"][0] = common.rhod(
+          state["p"], 
+          common.th_dry2std(state["th_d"][0], state["r_v"][0]), 
+          state["r_v"][0]
+        )
+        assert np.isclose(common.p(
+          state["rhod"][0],
+          state["r_v"][0],
+          common.T(state["th_d"][0], state["rhod"][0])
+        ), state["p"])
 
       # microphysics
       micro_step(micro, state, info, chem_gas)
