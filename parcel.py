@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+
+from argparse import ArgumentParser
+
 from libcloudphxx import common, lgrngn
 from libcloudphxx import git_revision as libcloud_version
 
@@ -127,6 +131,10 @@ def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022, outfile="test.n
   radii = 1e-6 * pow(10, -3 + np.arange(26) * .2), 
   SO2_0 = 44, O3_0 = 44, H2O2_0 = 44
 ):
+  """
+  Args:
+    dt (Optional[float]): timestep [s]
+  """
   # packing function arguments into "opts" dictionary
   args, _, _, _ = inspect.getargvalues(inspect.currentframe())
   opts = dict(zip(args, [locals()[k] for k in args]))
@@ -176,6 +184,30 @@ def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022, outfile="test.n
     save_attrs(fout, info)
     save_attrs(fout, opts)
 
+
 # ensuring that pure "import parcel" does not trigger any simulation
 if __name__ == '__main__':
-  parcel()
+
+  # getting list of argument names and their default values
+  name, _, _, dflt = inspect.getargspec(parcel)
+  opts = dict(zip(name[-len(dflt):], dflt))
+
+  # handling all parcel() arguments as command-line arguments
+  prsr = ArgumentParser(add_help=True, description=parcel.__doc__)
+  for k in opts:
+    prsr.add_argument('--' + k, 
+      default=opts[k], 
+      help = "(default: %(default)s)",
+      # reading in ndarrays as lists (see comment below ****)
+      type = (type(opts[k]) if type(opts[k]) != np.ndarray else type(opts[k][0])),
+      nargs = ('?'          if type(opts[k]) != np.ndarray else '+')
+    )
+  args = vars(prsr.parse_args())
+
+  # converting lists into ndarrays (see comment abowe ****)
+  for k in opts:
+    if type(opts[k]) == np.ndarray:
+      args[k] = np.fromiter(args[k], dtype=opts[k].dtype)
+
+  # executing parcel() with command-line arguments unpacked - treated as keyword arguments 
+  parcel(**args)
