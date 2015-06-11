@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, RawTextHelpFormatter
 
 from libcloudphxx import common, lgrngn
 from libcloudphxx import git_revision as libcloud_version
@@ -40,8 +40,9 @@ def _micro_init(opts, state, info):
 
   # lagrangian scheme options
   opts_init = lgrngn.opts_init_t()  
-  for opt in ["dt", "sd_conc_mean"]:  
+  for opt in ["dt",]:  
     setattr(opts_init, opt, opts[opt])
+  opts_init.sd_conc_mean = opts["sd_conc"]
   opts_init.dry_distros = {opts["kappa"]:lognormal}
   opts_init.kernel = lgrngn.kernel_t.geometric #TODO: will not be needed soon (libcloud PR #89)
   opts_init.chem_switch = True 
@@ -126,14 +127,32 @@ def _output(fout, opts, micro, bins, state, chem_gas, chem_aq, rec):
 
  
 def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022, outfile="test.nc", 
-  outfreq=100, sd_conc_mean=64, kappa=.5,
+  outfreq=100, sd_conc=64, kappa=.5,
   mean_r = .04e-6 / 2, stdev  = 1.4, n_tot  = 60e6, 
   radii = 1e-6 * pow(10, -3 + np.arange(26) * .2), 
   SO2_0 = 44, O3_0 = 44, H2O2_0 = 44
 ):
   """
   Args:
-    dt (Optional[float]): timestep [s]
+    dt      (Optional[float]):   timestep [s]
+    z_max   (Optional[float]):   maximum vertical displacement [m]
+    w       (Optional[float]):   updraft velocity [m/s]
+    T_0     (Optional[float]):   initial temperature [K]
+    p_0     (Optional[float]):   initial pressure [Pa]
+    r_0     (Optional[float]):   initial water vapour mass mixing ratio [kg/kg]
+    outfile (Optional[string]):  output netCDF file name
+    outfreq (Optional[int]):     output interval (in number of time steps)
+    sd_conc (Optional[int]):     number of moving bins (super-droplets)
+    kappa   (Optional[float]):   kappa hygroscopicity parameter (see doi:10.5194/acp-7-1961-2007)
+    mean_r  (Optional[float]):   lognormal distribution mode diameter [m]
+    stdev   (Optional[float]):   lognormal distribution geometric standard deviation [1]
+    n_tot   (Optional[float]):   lognormal distribution total concentration under standard 
+                                 conditions (T=20C, p=1013.25 hPa, rv=0) [m-3]
+    radii   (Optional[ndarray]): right bin edges for spectrum output [m]
+                                 (left edge of the first bin equals 0)
+    SO2_0   (Optional[float]):   initial SO2 TODO [TODO]
+    O3_0    (Optional[float]):   initial O3 TODO [TODO]
+    H2O2_0  (Optional[float]):   initial H2O2 TODO [TODO]
   """
   # packing function arguments into "opts" dictionary
   args, _, _, _ = inspect.getargvalues(inspect.currentframe())
@@ -193,7 +212,7 @@ if __name__ == '__main__':
   opts = dict(zip(name[-len(dflt):], dflt))
 
   # handling all parcel() arguments as command-line arguments
-  prsr = ArgumentParser(add_help=True, description=parcel.__doc__)
+  prsr = ArgumentParser(add_help=True, description=parcel.__doc__, formatter_class=RawTextHelpFormatter)
   for k in opts:
     prsr.add_argument('--' + k, 
       default=opts[k], 
