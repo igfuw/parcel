@@ -54,11 +54,12 @@ def micro_step(micro, state, info, chem_gas):
 
   micro.step_sync(libopts, state["th_d"], state["r_v"], state["rhod"]) 
 
-  # new = diag_chem(Chem_id[id])
+  micro.diag_all() # selecting all particles
   for id in chem_gas:
-    old = 0 #libopts.chem_gas[Chem_id[id]]
-    
-    new = 0 #np.frombuffer(micro.outbuf())    
+    old = libopts.chem_gas[Chem_id[id]]
+    micro.diag_chem(Chem_id[id])
+    #print (SO2_mass_new[0] - self.SO2_mass_old[0]) * rhod[0] * libcom.kaBoNA * libcom.T(th_d[0], rhod[0]) / libcom.M_SO2
+    new = np.frombuffer(micro.outbuf())  
     chem_gas[id] -= (new - old)
 
 def stats(state, info):
