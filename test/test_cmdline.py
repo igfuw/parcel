@@ -1,15 +1,18 @@
 import sys,subprocess,filecmp
 sys.path.insert(0, "../")
-import parcel
+sys.path.insert(0, "./")
+import parcel as pc
 
 def test_cmdline(tmpdir):
   # calling from Python
-  file_python = str(tmpdir.join("python.nc"))
-  parcel.parcel(outfile=file_python)
+  file = str(tmpdir.join("test.nc"))
+  pc.parcel(outfile=file)
+  # renaming the output file
+  subprocess.call(["mv", file, str(tmpdir.join("test_pyt.nc"))])
 
   # calling via subprocess
-  file_sbproc = str(tmpdir.join("sbproc.nc"))
-  subprocess.check_call(["parcel.py", "--outfile="+file_sbproc])
+  subprocess.call(["mv", file, str(tmpdir.join("test_pyt.nc"))])
+  subprocess.check_call(["python", "parcel.py", "--outfile="+file])
 
   # comparing if the output is the same
-  # TODO!
+  subprocess.check_call(["diff", file, str(tmpdir.join("test_pyt.nc"))])
