@@ -192,7 +192,7 @@ def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022,
 
       else: assert(False)
 
-      # rhod
+      # dry air density
       if pprof == Pprof.hydro_const_th_rv:
         state["rhod"][0] = common.rhod(state["p"], th_0, r_0)
       else:

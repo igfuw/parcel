@@ -8,7 +8,7 @@ from parcel import parcel, Pprof
 import numpy as np
 import pytest
 
-@pytest.mark.parametrize("dt", [.2, .5, 1, 5])
+@pytest.mark.parametrize("dt", [1])
 def test_pressure(dt):
     # running parcel model for different ways to solve for pressure  ...
     parcel(dt=dt, pprof=Pprof.hydro_const_rhod,            outfile="test_hydro_const_rhod.nc")
