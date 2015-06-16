@@ -172,7 +172,7 @@ def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022,
 
       # pressure
       if pprof == Pprof.hydro_const_th_rv:
-        state["p"] = common.p_hydro(state["z"], th_0, r_0, 0, p_0)
+        p_hydro = common.p_hydro(state["z"], th_0, r_0, 0, p_0)
 
       elif pprof == Pprof.hydro_const_rhod:
         rho = 1.13 # kg/m3  1.13 
@@ -194,7 +194,12 @@ def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022,
 
       # dry air density
       if pprof == Pprof.hydro_const_th_rv:
-        state["rhod"][0] = common.rhod(state["p"], th_0, r_0)
+        state["rhod"][0] = common.rhod(p_hydro, th_0, r_0)
+        state["p"] = common.p(
+          state["rhod"][0],
+          state["r_v"][0],
+          common.T(state["th_d"][0], state["rhod"][0])
+        )
       else:
         state["rhod"][0] = common.rhod(
           state["p"], 
