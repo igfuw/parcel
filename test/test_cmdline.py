@@ -7,11 +7,13 @@ import pytest
 # examples of usage, type of value should be float (??todo??)
 @pytest.mark.parametrize("arg",[{"r_0" : 0.01, "T_0" : 298., "z_max" : 300.}, 
                                 {"w" : 2., "p_0" : 1e5}, 
-                                {"dt" : 1., "outfreq" : 1.},
+                                {"dt" : 1., "outfreq" : 1},
                                 {"sd_conc" : 32., "kappa" : 1.}, 
-              pytest.mark.xfail({"mean_r" : .03e-6, "stdev" : 1., "n_tot" : 20.e6}),
-                                {"SO2_0" : 0., "O3_0" : 0., "H2O2_0" : 0.}
+                                {"SO2_0" : 0., "O3_0" : 0., "H2O2_0" : 0.},
+              pytest.mark.xfail({"gstdev" : 1.}), # gstdev=1 -> monodisperse distribution
+              pytest.mark.xfail({"outfreq" : 1.}) # outfreq has to be int
                                 ])
+
 def test_cmdline(tmpdir, arg):
   # calling from Python
   file = str(tmpdir.join("test.nc"))

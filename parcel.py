@@ -35,8 +35,8 @@ def _micro_init(opts, state, info):
   def lognormal(lnr):
     from math import exp, log, sqrt, pi
     return opts["n_tot"] * exp(
-      -(lnr - log(opts["mean_r"]))**2 / 2 / log(opts["stdev"])**2
-    ) / log(opts["stdev"]) / sqrt(2*pi);
+      -(lnr - log(opts["mean_r"]))**2 / 2 / log(opts["gstdev"])**2
+    ) / log(opts["gstdev"]) / sqrt(2*pi);
 
   # lagrangian scheme options
   opts_init = lgrngn.opts_init_t()  
@@ -127,8 +127,8 @@ def _output(fout, opts, micro, bins, state, chem_gas, chem_aq, rec):
 
  
 def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, outfile="test.nc", 
-  outfreq=100., sd_conc=64., kappa=.5,
-  mean_r = .04e-6 / 2, stdev  = 1.4, n_tot  = 60.e6, 
+  outfreq=100, sd_conc=64., kappa=.5,
+  mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
   radii = 1e-6 * pow(10, -3 + np.arange(26) * .2), 
   SO2_0 = 44., O3_0 = 44., H2O2_0 = 44.
 ):
@@ -145,7 +145,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, outfile="te
     sd_conc (Optional[int]):     number of moving bins (super-droplets)
     kappa   (Optional[float]):   kappa hygroscopicity parameter (see doi:10.5194/acp-7-1961-2007)
     mean_r  (Optional[float]):   lognormal distribution mode diameter [m]
-    stdev   (Optional[float]):   lognormal distribution geometric standard deviation [1]
+    gstdev  (Optional[float]):   lognormal distribution geometric standard deviation [1]
     n_tot   (Optional[float]):   lognormal distribution total concentration under standard 
                                  conditions (T=20C, p=1013.25 hPa, rv=0) [m-3]
     radii   (Optional[ndarray]): right bin edges for spectrum output [m]
