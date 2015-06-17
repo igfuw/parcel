@@ -177,4 +177,6 @@ def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022, outfile="test.n
     save_attrs(fout, info)
     save_attrs(fout, opts)
 
-parcel()
+# ensuring that pure "import parcel" does not trigger any simulation
+if __name__ == '__main__':
+  parcel()
