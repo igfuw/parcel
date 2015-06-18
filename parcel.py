@@ -19,6 +19,7 @@ parcel_version = subprocess.check_output(["git", "rev-parse", "HEAD"]).rstrip()
 _Chem_ga_id = ["SO2", "H2O2", "O3"]
 _Chem_aq_id = _Chem_ga_id + ["HSO3"]
 
+# dissolved within the droplet
 _Chem_id = {
   "SO2"  : lgrngn.chem_species_t.SO2,
   "H2O2" : lgrngn.chem_species_t.H2O2,
@@ -61,12 +62,12 @@ def _micro_step(micro, state, info, chem_gas):
 
   micro.diag_all() # selecting all particles
   for id in chem_gas:
-    old = libopts.chem_gas[Chem_id[id]]
-    micro.diag_chem(Chem_id[id])
+    old = libopts.chem_gas[_Chem_id[id]]
+    micro.diag_chem(_Chem_id[id])
 
     #print (SO2_mass_new[0] - self.SO2_mass_old[0]) * rhod[0] * libcom.kaBoNA * libcom.T(th_d[0], rhod[0]) / libcom.M_SO2
 
-    new = np.frombuffer(micro.outbuf())  
+    new = np.frombuffer(micro.outbuf()) 
     chem_gas[id] -= (new - old)
 
 def _stats(state, info):
@@ -100,7 +101,7 @@ def _output_init(opts):
     "p" : "Pa", "T" : "K", "RH" : "1", "conc" : "(kg of dry air)^-1"
   }
   for id in _Chem_id:
-    units[id] = "todo"
+    units[id] = "kilograms of chem species dissolved within droplets / kilograms of dry air"
 
   for name, unit in units.iteritems():
     if name in _Chem_aq_id + ["conc"]:
@@ -129,11 +130,11 @@ def _output(fout, opts, micro, bins, state, chem_gas, chem_aq, rec):
   _output_save(fout, chem_gas, rec)
 
  
-def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, outfile="test.nc", 
+def parcel(dt=1., z_max=20., w=1., T_0=300., p_0=101300., r_0=.022, outfile="test.nc", 
   outfreq=100, sd_conc=64., kappa=.5,
   mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
   radii = 1e-6 * pow(10, -3 + np.arange(26) * .2), 
-  SO2_0 = 44., O3_0 = 44., H2O2_0 = 44.
+  SO2_0 = 0., O3_0 = 0., H2O2_0 = 0.
 ):
   """
   Args:
@@ -153,9 +154,9 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, outfile="te
                                  conditions (T=20C, p=1013.25 hPa, rv=0) [m-3]
     radii   (Optional[ndarray]): right bin edges for spectrum output [m]
                                  (left edge of the first bin equals 0)
-    SO2_0   (Optional[float]):   initial SO2 TODO [TODO]
-    O3_0    (Optional[float]):   initial O3 TODO [TODO]
-    H2O2_0  (Optional[float]):   initial H2O2 TODO [TODO]
+    SO2_0   (Optional[float]):   initial SO2 volume concentration [1]
+    O3_0    (Optional[float]):   initial O3 volume concentration [1]
+    H2O2_0  (Optional[float]):   initial H2O2 volume concentration [1]
   """
   # packing function arguments into "opts" dictionary
   args, _, _, _ = inspect.getargvalues(inspect.currentframe())
