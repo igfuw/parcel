@@ -68,6 +68,7 @@ def _micro_step(micro, state, info, chem_gas, opts):
   libopts = lgrngn.opts_t()
   libopts.cond = True
   libopts.chem = micro.opts_init.chem_switch
+  print micro.opts_init.chem_switch
   libopts.coal = False
   libopts.adve = False
   libopts.sedi = False
@@ -91,6 +92,12 @@ def _micro_step(micro, state, info, chem_gas, opts):
  
         # since p & rhod are the "new" ones, for consistency we also use new T (_stats called above)
         chem_gas[id] -= (new[0] - old) * state["rhod"][0] * common.R * state["T"][0] / _molar_mass[id] / state["p"]
+      elif opts['chem_sys'] == 'open':
+        None
+      else:
+        print "Expected chem_sys options are: 'open', 'closed'."
+        print "Type: parcel.__doc__ for more help."
+        assert False 
  
 def _stats(state, info):
   state["T"] = np.array([common.T(state["th_d"][0], state["rhod"][0])])
@@ -160,29 +167,32 @@ def parcel(dt=1., z_max=20., w=1., T_0=300., p_0=101300., r_0=.022, outfile="tes
   mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
   radii = 1e-6 * pow(10, -3 + np.arange(26) * .2), 
   SO2_0 = 200e-12, O3_0 = 50e-9, H2O2_0 = 500e-12,
-  chem_sys = 'open'
+  chem_sys = 'closed'
 ):
   """
   Args:
-    dt      (Optional[float]):   timestep [s]
-    z_max   (Optional[float]):   maximum vertical displacement [m]
-    w       (Optional[float]):   updraft velocity [m/s]
-    T_0     (Optional[float]):   initial temperature [K]
-    p_0     (Optional[float]):   initial pressure [Pa]
-    r_0     (Optional[float]):   initial water vapour mass mixing ratio [kg/kg]
-    outfile (Optional[string]):  output netCDF file name
-    outfreq (Optional[int]):     output interval (in number of time steps)
-    sd_conc (Optional[int]):     number of moving bins (super-droplets)
-    kappa   (Optional[float]):   kappa hygroscopicity parameter (see doi:10.5194/acp-7-1961-2007)
-    mean_r  (Optional[float]):   lognormal distribution mode diameter [m]
-    gstdev  (Optional[float]):   lognormal distribution geometric standard deviation [1]
-    n_tot   (Optional[float]):   lognormal distribution total concentration under standard 
-                                 conditions (T=20C, p=1013.25 hPa, rv=0) [m-3]
-    radii   (Optional[ndarray]): right bin edges for spectrum output [m]
-                                 (left edge of the first bin equals 0)
-    SO2_0   (Optional[float]):   initial SO2  gas volume concentration (mole fraction) [1]
-    O3_0    (Optional[float]):   initial O3   gas volume concentration (mole fraction) [1]
-    H2O2_0  (Optional[float]):   initial H2O2 gas volume concentration (mole fraction) [1]
+    dt       (Optional[float]):   timestep [s]
+    z_max    (Optional[float]):   maximum vertical displacement [m]
+    w        (Optional[float]):   updraft velocity [m/s]
+    T_0      (Optional[float]):   initial temperature [K]
+    p_0      (Optional[float]):   initial pressure [Pa]
+    r_0      (Optional[float]):   initial water vapour mass mixing ratio [kg/kg]
+    outfile  (Optional[string]):  output netCDF file name
+    outfreq  (Optional[int]):     output interval (in number of time steps)
+    sd_conc  (Optional[int]):     number of moving bins (super-droplets)
+    kappa    (Optional[float]):   kappa hygroscopicity parameter (see doi:10.5194/acp-7-1961-2007)
+    mean_r   (Optional[float]):   lognormal distribution mode diameter [m]
+    gstdev   (Optional[float]):   lognormal distribution geometric standard deviation [1]
+    n_tot    (Optional[float]):   lognormal distribution total concentration under standard 
+                                  conditions (T=20C, p=1013.25 hPa, rv=0) [m-3]
+    radii    (Optional[ndarray]): right bin edges for spectrum output [m]
+                                  (left edge of the first bin equals 0)
+    SO2_0    (Optional[float]):   initial SO2  gas volume concentration (mole fraction) [1]
+    O3_0     (Optional[float]):   initial O3   gas volume concentration (mole fraction) [1]
+    H2O2_0   (Optional[float]):   initial H2O2 gas volume concentration (mole fraction) [1]
+    chem_sys (Optional[string]):  accepted values: 'open' or 'closed'
+                                  (in open/closed system gas volume concentration in the air doesn't/does change 
+                                   due to chemical reactions)
   """
   # packing function arguments into "opts" dictionary
   args, _, _, _ = inspect.getargvalues(inspect.currentframe())
