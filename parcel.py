@@ -27,7 +27,6 @@ _Chem_id = {
   "HSO3" : lgrngn.chem_species_t.HSO3                                                      
 }
 
-# molar mass
 _molar_mass = {
   "SO2"  : common.M_SO2,
   "H2O2" : common.M_H2O2,
