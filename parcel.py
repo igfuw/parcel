@@ -19,12 +19,19 @@ parcel_version = subprocess.check_output(["git", "rev-parse", "HEAD"]).rstrip()
 _Chem_ga_id = ["SO2", "H2O2", "O3"]
 _Chem_aq_id = _Chem_ga_id + ["HSO3"]
 
-# dissolved within the droplet
+# chem species dissolved within the droplet
 _Chem_id = {
   "SO2"  : lgrngn.chem_species_t.SO2,
   "H2O2" : lgrngn.chem_species_t.H2O2,
   "O3"   : lgrngn.chem_species_t.O3,
   "HSO3" : lgrngn.chem_species_t.HSO3                                                      
+}
+
+# molar mass
+_molar_mass = {
+  "SO2"  : common.M_SO2,
+  "H2O2" : common.M_H2O2,
+  "O3"   : common.M_O3
 }
 
 def _micro_init(opts, state, info):
@@ -57,24 +64,34 @@ def _micro_init(opts, state, info):
   micro.init(state["th_d"], state["r_v"], state["rhod"])
   return micro
 
-def _micro_step(micro, state, info, chem_gas):
+def _micro_step(micro, state, info, chem_gas, opts):
   libopts = lgrngn.opts_t()
+  libopts.cond = True
+  libopts.chem = micro.opts_init.chem_switch
+  libopts.coal = False
+  libopts.adve = False
+  libopts.sedi = False
+
+  tmp = {}
   for id in chem_gas:
-    libopts.chem_gas[_Chem_id[id]] = chem_gas[id]
+    tmp[_Chem_id[id]] = chem_gas[id]
+  libopts.chem_gas = tmp
 
   micro.step_sync(libopts, state["th_d"], state["r_v"], state["rhod"]) 
+  micro.step_async(libopts)
+  _stats(state, info) # give updated T needed for chemistry below
 
   if micro.opts_init.chem_switch:
     micro.diag_all() # selecting all particles
     for id in chem_gas:
-      old = libopts.chem_gas[_Chem_id[id]]
-      micro.diag_chem(_Chem_id[id])
-
-      #print (SO2_mass_new[0] - self.SO2_mass_old[0]) * rhod[0] * libcom.kaBoNA * libcom.T(th_d[0], rhod[0]) / libcom.M_SO2
-
-      new = np.frombuffer(micro.outbuf()) 
-      chem_gas[id] -= (new - old)
-
+      if opts['chem_sys'] == 'closed':
+        old = libopts.chem_gas[_Chem_id[id]]
+        micro.diag_chem(_Chem_id[id])
+        new = np.frombuffer(micro.outbuf()) 
+ 
+        # since p & rhod are the "new" ones, for consistency we also use new T (_stats called above)
+        chem_gas[id] -= (new[0] - old) * state["rhod"][0] * common.R * state["T"][0] / _molar_mass[id] / state["p"]
+ 
 def _stats(state, info):
   state["T"] = np.array([common.T(state["th_d"][0], state["rhod"][0])])
   state["RH"] = state["p"] * state["r_v"] / (state["r_v"] + common.eps) / common.p_vs(state["T"][0])
@@ -142,7 +159,8 @@ def parcel(dt=1., z_max=20., w=1., T_0=300., p_0=101300., r_0=.022, outfile="tes
   outfreq=100, sd_conc=64., kappa=.5,
   mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
   radii = 1e-6 * pow(10, -3 + np.arange(26) * .2), 
-  SO2_0 = 0., O3_0 = 0., H2O2_0 = 0.
+  SO2_0 = 200e-12, O3_0 = 50e-9, H2O2_0 = 500e-12,
+  chem_sys = 'open'
 ):
   """
   Args:
@@ -162,9 +180,9 @@ def parcel(dt=1., z_max=20., w=1., T_0=300., p_0=101300., r_0=.022, outfile="tes
                                  conditions (T=20C, p=1013.25 hPa, rv=0) [m-3]
     radii   (Optional[ndarray]): right bin edges for spectrum output [m]
                                  (left edge of the first bin equals 0)
-    SO2_0   (Optional[float]):   initial SO2 volume concentration [1]
-    O3_0    (Optional[float]):   initial O3 volume concentration [1]
-    H2O2_0  (Optional[float]):   initial H2O2 volume concentration [1]
+    SO2_0   (Optional[float]):   initial SO2  gas volume concentration (mole fraction) [1]
+    O3_0    (Optional[float]):   initial O3   gas volume concentration (mole fraction) [1]
+    H2O2_0  (Optional[float]):   initial H2O2 gas volume concentration (mole fraction) [1]
   """
   # packing function arguments into "opts" dictionary
   args, _, _, _ = inspect.getargvalues(inspect.currentframe())
@@ -202,8 +220,7 @@ def parcel(dt=1., z_max=20., w=1., T_0=300., p_0=101300., r_0=.022, outfile="tes
       state["rhod"][0] = common.rhod(state["p"], th_0, r_0)
 
       # microphysics
-      _micro_step(micro, state, info, chem_gas)
-      _stats(state, info)
+      _micro_step(micro, state, info, chem_gas, opts)
     
       # TODO: only if user wants to stop @ RH_max
       #if (state["RH"] < info["RH_max"]): break
