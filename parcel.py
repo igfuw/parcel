@@ -46,7 +46,11 @@ def _micro_init(opts, state, info):
   opts_init.sd_conc_mean = opts["sd_conc"]
   opts_init.dry_distros = {opts["kappa"]:lognormal}
   opts_init.kernel = lgrngn.kernel_t.geometric #TODO: will not be needed soon (libcloud PR #89)
-  opts_init.chem_switch = True 
+
+  # switching off chemistry if all initial volume conc. equal zero
+  opts_init.chem_switch = False
+  for c in _Chem_ga_id:
+    if opts[c + "_0"] != 0: opts_init.chem_switch = True
 
   # initialitation
   micro = lgrngn.factory(lgrngn.backend_t.serial, opts_init)
@@ -60,15 +64,16 @@ def _micro_step(micro, state, info, chem_gas):
 
   micro.step_sync(libopts, state["th_d"], state["r_v"], state["rhod"]) 
 
-  micro.diag_all() # selecting all particles
-  for id in chem_gas:
-    old = libopts.chem_gas[_Chem_id[id]]
-    micro.diag_chem(_Chem_id[id])
+  if micro.opts_init.chem_switch:
+    micro.diag_all() # selecting all particles
+    for id in chem_gas:
+      old = libopts.chem_gas[_Chem_id[id]]
+      micro.diag_chem(_Chem_id[id])
 
-    #print (SO2_mass_new[0] - self.SO2_mass_old[0]) * rhod[0] * libcom.kaBoNA * libcom.T(th_d[0], rhod[0]) / libcom.M_SO2
+      #print (SO2_mass_new[0] - self.SO2_mass_old[0]) * rhod[0] * libcom.kaBoNA * libcom.T(th_d[0], rhod[0]) / libcom.M_SO2
 
-    new = np.frombuffer(micro.outbuf()) 
-    chem_gas[id] -= (new - old)
+      new = np.frombuffer(micro.outbuf()) 
+      chem_gas[id] -= (new - old)
 
 def _stats(state, info):
   state["T"] = np.array([common.T(state["th_d"][0], state["rhod"][0])])
@@ -84,14 +89,15 @@ def _histo(bins, micro, opts, chem_aq):
     micro.diag_wet_mom(0) # #/kg dry air
     bins["conc"][i] = np.frombuffer(micro.outbuf())
 
-    for id in _Chem_aq_id:
-      micro.diag_chem(_Chem_id[id])
-      chem_aq[id][i] = np.frombuffer(micro.outbuf())
+    if micro.opts_init.chem_switch:
+      for id in _Chem_aq_id:
+        micro.diag_chem(_Chem_id[id])
+        chem_aq[id][i] = np.frombuffer(micro.outbuf())
 
     r_min = r_max
     i += 1
 
-def _output_init(opts):
+def _output_init(micro, opts):
   # file & dimensions
   fout = netcdf.netcdf_file(opts["outfile"], 'w')
   fout.createDimension('t', None)
@@ -100,8 +106,9 @@ def _output_init(opts):
   units = {"z" : "m", "t" : "s", "r_v" : "kg/kg", "th_d" : "K", "rhod" : "kg/m3", 
     "p" : "Pa", "T" : "K", "RH" : "1", "conc" : "(kg of dry air)^-1"
   }
-  for id in _Chem_id:
-    units[id] = "kilograms of chem species dissolved within droplets / kilograms of dry air"
+  if micro.opts_init.chem_switch:
+    for id in _Chem_id:
+      units[id] = "kilograms of chem species dissolved within droplets / kilograms of dry air"
 
   for name, unit in units.iteritems():
     if name in _Chem_aq_id + ["conc"]:
@@ -126,8 +133,9 @@ def _output(fout, opts, micro, bins, state, chem_gas, chem_aq, rec):
   _histo(bins, micro, opts, chem_aq)
   _output_save(fout, state, rec)
   _output_save(fout, bins, rec)
-  _output_save(fout, chem_aq, rec) 
-  _output_save(fout, chem_gas, rec)
+  if micro.opts_init.chem_switch:
+    _output_save(fout, chem_aq, rec) 
+    _output_save(fout, chem_gas, rec)
 
  
 def parcel(dt=1., z_max=20., w=1., T_0=300., p_0=101300., r_0=.022, outfile="test.nc", 
@@ -176,9 +184,10 @@ def parcel(dt=1., z_max=20., w=1., T_0=300., p_0=101300., r_0=.022, outfile="tes
   bins = { "conc" : np.empty((radii.shape[0],)) }
   chem_gas = { "SO2" : SO2_0, "O3" : O3_0, "H2O2" : H2O2_0 }
   chem_aq = dict(zip(_Chem_aq_id, len(_Chem_aq_id)*[np.empty(radii.shape[0])]))
-  with _output_init(opts) as fout:
-    # t=0 : init & save
-    micro = _micro_init(opts, state, info)
+
+  micro = _micro_init(opts, state, info)
+  with _output_init(micro, opts) as fout:
+    # save state @ t=0
     _output(fout, opts, micro, bins, state, chem_gas, chem_aq, 0)
 
     # timestepping
