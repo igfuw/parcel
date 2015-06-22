@@ -138,7 +138,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   outfile="test.nc", 
   pprof="pprof_piecewise_const_rhod",
   outfreq=100, sd_conc=64., kappa=.5,
-  mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60e6, 
+  mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
   radii = 1e-6 * pow(10, -3 + np.arange(26) * .2), 
   SO2_0 = 44., O3_0 = 44., H2O2_0 = 44.
 ):
