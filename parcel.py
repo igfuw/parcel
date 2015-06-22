@@ -16,21 +16,26 @@ import pdb
 import subprocess
 parcel_version = subprocess.check_output(["git", "rev-parse", "HEAD"]).rstrip()
 
-_Chem_ga_id = ["SO2", "H2O2", "O3"]
-_Chem_aq_id = _Chem_ga_id + ["HSO3"]
-
-# chem species dissolved within the droplet
-_Chem_id = {
-  "SO2"  : lgrngn.chem_species_t.SO2,
-  "H2O2" : lgrngn.chem_species_t.H2O2,
-  "O3"   : lgrngn.chem_species_t.O3,
-  "HSO3" : lgrngn.chem_species_t.HSO3                                                      
+# id_str     id_int
+_Chem_g_id = {
+  "SO2_g"  : lgrngn.chem_species_t.SO2, 
+  "H2O2_g" : lgrngn.chem_species_t.H2O2, 
+  "O3_g"   : lgrngn.chem_species_t.O3
 }
 
-_molar_mass = {
-  "SO2"  : common.M_SO2,
-  "H2O2" : common.M_H2O2,
-  "O3"   : common.M_O3
+# id_str     id_int
+_Chem_a_id = {
+  "SO2_a"  : lgrngn.chem_species_t.SO2, 
+  "H2O2_a" : lgrngn.chem_species_t.H2O2, 
+  "O3_a"   : lgrngn.chem_species_t.O3,
+  "HSO3_a" : lgrngn.chem_species_t.HSO3 
+}
+
+# id_int   ...
+_molar_mass = { #... TODO molar mass of dissoved one -> + M_H2O
+  lgrngn.chem_species_t.SO2  : common.M_SO2,
+  lgrngn.chem_species_t.H2O2 : common.M_H2O2,
+  lgrngn.chem_species_t.O3   : common.M_O3
 }
 
 def _micro_init(opts, state, info):
@@ -52,51 +57,62 @@ def _micro_init(opts, state, info):
   opts_init.sd_conc_mean = opts["sd_conc"]
   opts_init.dry_distros = {opts["kappa"]:lognormal}
   opts_init.kernel = lgrngn.kernel_t.geometric #TODO: will not be needed soon (libcloud PR #89)
+  opts_init.chem_rho = opts["chem_rho"]
 
   # switching off chemistry if all initial volume conc. equal zero
   opts_init.chem_switch = False
-  for c in _Chem_ga_id:
-    if opts[c + "_0"] != 0: opts_init.chem_switch = True
+  for id_str in _Chem_g_id.iterkeys():
+    if opts[id_str + "_0"] != 0: opts_init.chem_switch = True
 
-  # initialitation
+  # initialisation
   micro = lgrngn.factory(lgrngn.backend_t.serial, opts_init)
   micro.init(state["th_d"], state["r_v"], state["rhod"])
   return micro
 
-def _micro_step(micro, state, info, chem_gas, opts):
+def _micro_step(micro, state, info, opts):
   libopts = lgrngn.opts_t()
   libopts.cond = True
   libopts.chem = micro.opts_init.chem_switch
-  print micro.opts_init.chem_switch
   libopts.coal = False
   libopts.adve = False
   libopts.sedi = False
 
-  tmp = {}
-  for id in chem_gas:
-    tmp[_Chem_id[id]] = chem_gas[id]
-  libopts.chem_gas = tmp
+  if micro.opts_init.chem_switch:
+    tmp = {}
+    for id_str, id_int in _Chem_g_id.iteritems():
+      tmp[id_int] = state[id_str]
+    libopts.chem_gas = tmp
 
+  print "old rv = ", state["r_v"]
   micro.step_sync(libopts, state["th_d"], state["r_v"], state["rhod"]) 
+  print "new rv = ", state["r_v"]
+  print " "
+
   micro.step_async(libopts)
   _stats(state, info) # give updated T needed for chemistry below
 
   if micro.opts_init.chem_switch:
     micro.diag_all() # selecting all particles
-    for id in chem_gas:
+    for id_str, id_int in _Chem_g_id.iteritems():
       if opts['chem_sys'] == 'closed':
-        old = libopts.chem_gas[_Chem_id[id]]
-        micro.diag_chem(_Chem_id[id])
+
+        old = state[id_str.replace('_g', '_a')]
+
+        micro.diag_chem(id_int)
         new = np.frombuffer(micro.outbuf()) 
- 
+      
         # since p & rhod are the "new" ones, for consistency we also use new T (_stats called above)
-        chem_gas[id] -= (new[0] - old) * state["rhod"][0] * common.R * state["T"][0] / _molar_mass[id] / state["p"]
+        state[id_str] -= (new[0] - old) * state["rhod"][0] * common.R * state["T"][0] / _molar_mass[id_int] / state["p"]
+        state[id_str.replace('_g', '_a')] = new[0]
+        #print "state[ ", id_str.replace('_g', '_a'), " ] = ", np.frombuffer(micro.outbuf())[0]
       elif opts['chem_sys'] == 'open':
-        None
+        micro.diag_chem(id_int)
+        state[id_str.replace('_g', '_a')] = np.frombuffer(micro.outbuf())[0]
       else:
-        print "Expected chem_sys options are: 'open', 'closed'."
-        print "Type: parcel.__doc__ for more help."
-        assert False 
+        raise exception(
+          "Expected chem_sys options are: 'open', 'closed'."
+          "Type: help(parcel) for more help."
+        )
  
 def _stats(state, info):
   state["T"] = np.array([common.T(state["th_d"][0], state["rhod"][0])])
@@ -110,13 +126,13 @@ def _histo(bins, micro, opts, chem_aq):
     micro.diag_wet_rng(r_min, r_max)
 
     micro.diag_wet_mom(0) # #/kg dry air
-    bins["conc"][i] = np.frombuffer(micro.outbuf())
+    bins["conc_bins"][i] = np.frombuffer(micro.outbuf())
 
     if micro.opts_init.chem_switch:
-      for id in _Chem_aq_id:
-        micro.diag_chem(_Chem_id[id])
-        chem_aq[id][i] = np.frombuffer(micro.outbuf())
-
+      for id_str, id_int in _Chem_a_id.iteritems():
+        micro.diag_chem(id_int)
+        chem_aq[id_str + '_bins'][i] = np.frombuffer(micro.outbuf())
+    
     r_min = r_max
     i += 1
 
@@ -127,21 +143,25 @@ def _output_init(micro, opts):
   fout.createDimension('radii', opts["radii"].shape[0]) #TODO: r_d, cloud only; #TODO: r_w vs. r_v - might be misleading
   
   units = {"z" : "m", "t" : "s", "r_v" : "kg/kg", "th_d" : "K", "rhod" : "kg/m3", 
-    "p" : "Pa", "T" : "K", "RH" : "1", "conc" : "(kg of dry air)^-1"
+    "p" : "Pa", "T" : "K", "RH" : "1", "conc_bins" : "(kg of dry air)^-1" 
   }
   if micro.opts_init.chem_switch:
-    for id in _Chem_id:
-      units[id] = "kilograms of chem species dissolved within droplets / kilograms of dry air"
+    for id_str in _Chem_a_id.iterkeys():
+      unit = "kilograms of chem species dissolved within droplets / kilograms of dry air"
+      units[id_str] = unit 
+      units[id_str +  '_bins'] = unit 
+    for id_str in _Chem_g_id.iterkeys():
+      units[id_str] = "gas volume concentration (mole fraction) [1]"
 
   for name, unit in units.iteritems():
-    if name in _Chem_aq_id + ["conc"]:
+    if name.endswith('_bins'):
       dims = ('t','radii')
     else:
       dims = ('t',)
 
     fout.createVariable(name, 'd', dims)
     fout.variables[name].unit = unit
-
+  
   return fout
 
 def _output_save(fout, state, rec):
@@ -152,21 +172,21 @@ def _save_attrs(fout, dictnr):
   for var, val in dictnr.iteritems():
     setattr(fout, var, val)
 
-def _output(fout, opts, micro, bins, state, chem_gas, chem_aq, rec):
+def _output(fout, opts, micro, bins, state, chem_aq, rec):
   _histo(bins, micro, opts, chem_aq)
   _output_save(fout, state, rec)
   _output_save(fout, bins, rec)
   if micro.opts_init.chem_switch:
     _output_save(fout, chem_aq, rec) 
-    _output_save(fout, chem_gas, rec)
-
  
-def parcel(dt=1., z_max=20., w=1., T_0=300., p_0=101300., r_0=.022, outfile="test.nc", 
-  outfreq=100, sd_conc=64., kappa=.5,
+def parcel(dt=1., z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, outfile="test.nc", 
+  outfreq=10, sd_conc=64., kappa=.5,
   mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
   radii = 1e-6 * pow(10, -3 + np.arange(26) * .2), 
-  SO2_0 = 200e-12, O3_0 = 50e-9, H2O2_0 = 500e-12,
-  chem_sys = 'closed'
+#  SO2_g_0 = 0., O3_g_0 = 0., H2O2_g_0 = 0.,
+  SO2_g_0 = 200e-12, O3_g_0 = 50e-9, H2O2_g_0 = 500e-12,
+  chem_sys = 'closed', 
+  chem_rho = 1.8e-3
 ):
   """
   Args:
@@ -186,9 +206,9 @@ def parcel(dt=1., z_max=20., w=1., T_0=300., p_0=101300., r_0=.022, outfile="tes
                                   conditions (T=20C, p=1013.25 hPa, rv=0) [m-3]
     radii    (Optional[ndarray]): right bin edges for spectrum output [m]
                                   (left edge of the first bin equals 0)
-    SO2_0    (Optional[float]):   initial SO2  gas volume concentration (mole fraction) [1]
-    O3_0     (Optional[float]):   initial O3   gas volume concentration (mole fraction) [1]
-    H2O2_0   (Optional[float]):   initial H2O2 gas volume concentration (mole fraction) [1]
+    SO2_g_0  (Optional[float]):   initial SO2  gas volume concentration (mole fraction) [1]
+    O3_g_0   (Optional[float]):   initial O3   gas volume concentration (mole fraction) [1]
+    H2O2_g_0 (Optional[float]):   initial H2O2 gas volume concentration (mole fraction) [1]
     chem_sys (Optional[string]):  accepted values: 'open' or 'closed'
                                   (in open/closed system gas volume concentration in the air doesn't/does change 
                                    due to chemical reactions)
@@ -208,14 +228,19 @@ def parcel(dt=1., z_max=20., w=1., T_0=300., p_0=101300., r_0=.022, outfile="tes
   }
   info = { "RH_max" : 0, "libcloud_Git_revision" : libcloud_version, 
            "parcel_Git_revision" : parcel_version }
-  bins = { "conc" : np.empty((radii.shape[0],)) }
-  chem_gas = { "SO2" : SO2_0, "O3" : O3_0, "H2O2" : H2O2_0 }
-  chem_aq = dict(zip(_Chem_aq_id, len(_Chem_aq_id)*[np.empty(radii.shape[0])]))
+  bins = { "conc_bins" : np.empty((radii.shape[0],)) }
+  tmp = _Chem_a_id.keys()
+  chem_aq = dict(zip([x + '_bins' for x in tmp], len(tmp)*[np.empty(radii.shape[0])]))
 
   micro = _micro_init(opts, state, info)
   with _output_init(micro, opts) as fout:
+    # adding chem state vars
+    if micro.opts_init.chem_switch:
+      state.update({ "SO2_g" : SO2_g_0, "O3_g" : O3_g_0, "H2O2_g" : H2O2_g_0 })
+      state.update({ "SO2_a" : 0.,      "O3_a" : 0.,     "H2O2_a" : 0.      , "HSO3_a" : 0})
+
     # save state @ t=0
-    _output(fout, opts, micro, bins, state, chem_gas, chem_aq, 0)
+    _output(fout, opts, micro, bins, state, chem_aq, 0)
 
     # timestepping
     for it in range(1,nt+1):
@@ -229,15 +254,15 @@ def parcel(dt=1., z_max=20., w=1., T_0=300., p_0=101300., r_0=.022, outfile="tes
       state["rhod"][0] = common.rhod(state["p"], th_0, r_0)
 
       # microphysics
-      _micro_step(micro, state, info, chem_gas, opts)
-    
+      _micro_step(micro, state, info, opts)
+   
       # TODO: only if user wants to stop @ RH_max
       #if (state["RH"] < info["RH_max"]): break
-
+ 
       # output
       if (it % outfreq == 0): 
         rec = it/outfreq
-        _output(fout, opts, micro, bins, state, chem_gas, chem_aq, rec)
+        _output(fout, opts, micro, bins, state, chem_aq, rec)
  
     _save_attrs(fout, info)
     _save_attrs(fout, opts)
@@ -262,7 +287,7 @@ if __name__ == '__main__':
     )
   args = vars(prsr.parse_args())
 
-  # converting lists into ndarrays (see comment abowe ****)
+  # converting lists into ndarrays (see comment above ****)
   for k in opts:
     if type(opts[k]) == np.ndarray:
       args[k] = np.fromiter(args[k], dtype=opts[k].dtype)

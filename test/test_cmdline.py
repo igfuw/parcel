@@ -9,7 +9,7 @@ import pytest
                                 {"w" : 2., "p_0" : 1e5}, 
                                 {"dt" : 1., "outfreq" : 1},
                                 {"sd_conc" : 32., "kappa" : 1.}, 
-                                {"SO2_0" : 0., "O3_0" : 0., "H2O2_0" : 0.},
+                                {"SO2_g_0" : 0., "O3_g_0" : 0., "H2O2_g_0" : 0.},
               pytest.mark.xfail({"gstdev" : 1.}), # gstdev=1 -> monodisperse distribution
               pytest.mark.xfail({"outfreq" : 1.}) # outfreq has to be int
                                 ])
