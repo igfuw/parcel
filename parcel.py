@@ -128,6 +128,15 @@ def output(fout, opts, micro, bins, state, chem_gas, chem_aq, rec):
   output_save(fout, chem_aq, rec) 
   output_save(fout, chem_gas, rec)
 
+
+def _p_hydro_const_rho(dz, p, rho):
+  # hydrostatic pressure assuming constatnt density
+  return p - rho * common.g * dz
+
+def _p_hydro_const_th_rv(dz, p, th_std, r_v):
+  # hydrostatic pressure assuming constatnt theta and r_v
+  z_0 = 0.
+  return common.p_hydro(z_0+dz, th_std, r_v, z_0, p)
  
 def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022, 
   outfile="test.nc", 
@@ -172,23 +181,22 @@ def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022,
 
       # pressure
       if pprof == Pprof.hydro_const_th_rv:
-        p_hydro = common.p_hydro(state["z"], th_0, r_0, 0, p_0)
-
+        p_hydro = _p_hydro_const_th_rv(state["z"], p_0, th_0, r_0)
+                                           #  ^ this is actually dz (z_0 == 0)
       elif pprof == Pprof.hydro_const_rhod:
         rho = 1.13 # kg/m3  1.13 
-        state["p"] -= rho * common.g * w * dt
+        state["p"] = _p_hydro_const_rho(state["z"], p_0, rho) 
 
       elif pprof == Pprof.hydro_piecewise_const_th_rv:
-        state["p"] = common.p_hydro(
-          state["z"], 
+        state["p"] = _p_hydro_const_th_rv(
+          w*dt, 
+          state["p"],
           common.th_dry2std(state["th_d"][0], state["r_v"][0]), 
-          state["r_v"][0], 
-          state["z"]-w*dt, 
-          state["p"]
+          state["r_v"][0] 
         )
 
       elif pprof == Pprof.hydro_old_drops:
-        state["p"] -= state["rhod"][0] * common.g * w * dt       
+        state["p"] = _p_hydro_const_rho(w*dt, state["p"], state["rhod"][0])
 
       else: assert(False)
 
@@ -200,12 +208,14 @@ def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022,
           state["r_v"][0],
           common.T(state["th_d"][0], state["rhod"][0])
         )
+
       else:
         state["rhod"][0] = common.rhod(
           state["p"], 
           common.th_dry2std(state["th_d"][0], state["r_v"][0]), 
           state["r_v"][0]
         )
+
         assert np.isclose(common.p(
           state["rhod"][0],
           state["r_v"][0],

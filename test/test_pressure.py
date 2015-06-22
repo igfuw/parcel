@@ -65,7 +65,7 @@ def test_pressure(dt):
 	[f.variables["RH"][:].max()] * z.shape[0], z, style[i]
       )
 
-    plt.savefig("plot.svg")
+    plt.savefig("plot_pressure.svg")
 
     # ... and checking wheather those four different methods dont differ too much
     z_all = p_all = thd_all = T_all = rhod_all = rv_all = RH_max = [] 
