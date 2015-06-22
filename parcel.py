@@ -12,15 +12,6 @@ import pdb
 import subprocess
 parcel_version = subprocess.check_output(["git", "rev-parse", "HEAD"]).rstrip()
 
-from enum import Enum # https://pypi.python.org/pypi/enum34
-
-class Pprof(Enum):
-  hydro_const_rhod = 0, # as in WWG & LPW 2009
-  hydro_const_th_rv = 1, # as in icicle
-  hydro_piecewise_const_th_rv = 2, # better than both above? (not really?) 
-  hydro_old_drops = 3 # as in old parcel model
-  # ... rho or p given as a profile, ...
-
 Chem_ga_id = ["SO2", "H2O2", "O3"]
 Chem_aq_id = Chem_ga_id + ["HSO3"]
 
@@ -128,7 +119,6 @@ def output(fout, opts, micro, bins, state, chem_gas, chem_aq, rec):
   output_save(fout, chem_aq, rec) 
   output_save(fout, chem_gas, rec)
 
-
 def _p_hydro_const_rho(dz, p, rho):
   # hydrostatic pressure assuming constatnt density
   return p - rho * common.g * dz
@@ -140,7 +130,7 @@ def _p_hydro_const_th_rv(dz, p, th_std, r_v):
  
 def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022, 
   outfile="test.nc", 
-  pprof=Pprof.hydro_const_th_rv,
+  pprof="pprof_const_th_rv",
   outfreq=1, sd_conc_mean=64, kappa=.5,
   mean_r = .04e-6 / 2, stdev  = 1.4, n_tot  = 60e6, 
   radii = 1e-6 * pow(10, -3 + np.arange(26) * .2), 
@@ -180,28 +170,26 @@ def parcel(dt=.1, z_max=200, w=1, T_0=300, p_0=101300, r_0=.022,
       state["t"] = it * dt
 
       # pressure
-      if pprof == Pprof.hydro_const_th_rv:
+      if pprof == "pprof_const_th_rv":
+        # as in icicle model
+        print "aqq"
         p_hydro = _p_hydro_const_th_rv(state["z"], p_0, th_0, r_0)
                                            #  ^ this is actually dz (z_0 == 0)
-      elif pprof == Pprof.hydro_const_rhod:
+      elif pprof == "pprof_const_rhod":
+        # as in Grabowski and Wang 2009
         rho = 1.13 # kg/m3  1.13 
         state["p"] = _p_hydro_const_rho(state["z"], p_0, rho) 
 
-      elif pprof == Pprof.hydro_piecewise_const_th_rv:
-        state["p"] = _p_hydro_const_th_rv(
-          w*dt, 
-          state["p"],
-          common.th_dry2std(state["th_d"][0], state["r_v"][0]), 
-          state["r_v"][0] 
-        )
-
-      elif pprof == Pprof.hydro_old_drops:
+      elif pprof == "pprof_piecewise_const_rhod":
+        # as in Grabowski and Wang 2009 but calculating pressure
+        # for rho piecewise constant per each time step
         state["p"] = _p_hydro_const_rho(w*dt, state["p"], state["rhod"][0])
 
       else: assert(False)
 
       # dry air density
-      if pprof == Pprof.hydro_const_th_rv:
+      if pprof == "pprof_const_th_rv":
+        print "bqq"
         state["rhod"][0] = common.rhod(p_hydro, th_0, r_0)
         state["p"] = common.p(
           state["rhod"][0],

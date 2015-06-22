@@ -4,31 +4,28 @@ sys.path.insert(0, "./")
 from libcloudphxx import common
 import matplotlib.pyplot as plt
 from scipy.io import netcdf
-from parcel import parcel, Pprof
+from parcel import parcel
 import numpy as np
 import pytest
 
 @pytest.mark.parametrize("dt", [1])
 def test_pressure(dt):
     # running parcel model for different ways to solve for pressure  ...
-    parcel(dt=dt, pprof=Pprof.hydro_const_rhod,            outfile="test_hydro_const_rhod.nc")
-    parcel(dt=dt, pprof=Pprof.hydro_const_th_rv,           outfile="test_hydro_const_th_rv.nc")
-    parcel(dt=dt, pprof=Pprof.hydro_piecewise_const_th_rv, outfile="test_hydro_piecewise_const_th_rv.nc")
-    parcel(dt=dt, pprof=Pprof.hydro_old_drops,             outfile="test_hydro_old_drops.nc")
+    parcel(dt=dt, pprof="pprof_const_rhod",            outfile="test_const_rhod.nc")
+    parcel(dt=dt, pprof="pprof_const_th_rv",           outfile="test_const_th_rv.nc")
+    parcel(dt=dt, pprof="pprof_piecewise_const_rhod",  outfile="test_piecewise_const_rhod.nc")
 
     # ... plotting the results ...
     f_out = {
-      "WWG-LPW"   : netcdf.netcdf_file("test_hydro_const_rhod.nc", "r"),
-      "icicle"    : netcdf.netcdf_file("test_hydro_const_th_rv.nc", "r"),
-      "piecewise" : netcdf.netcdf_file("test_hydro_piecewise_const_th_rv.nc", "r"),
-      "drops"     : netcdf.netcdf_file("test_hydro_old_drops.nc", "r")
+      "WWG-LPW"   : netcdf.netcdf_file("test_const_rhod.nc", "r"),
+      "icicle"    : netcdf.netcdf_file("test_const_th_rv.nc", "r"),
+      "piecewise" : netcdf.netcdf_file("test_piecewise_const_rhod.nc", "r")
     }
 
     style = {
       "WWG-LPW"   : "g.-",
       "icicle"    : "b.-",
-      "piecewise" : "r.-",
-      "drops"     : "m.-"
+      "piecewise" : "r.-"
     }
 
     plt.figure(1, figsize=(18,10))
