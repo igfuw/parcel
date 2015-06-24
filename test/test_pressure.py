@@ -2,6 +2,8 @@ import sys
 sys.path.insert(0, "../")
 sys.path.insert(0, "./")
 from libcloudphxx import common
+import matplotlbi
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
 from scipy.io import netcdf
