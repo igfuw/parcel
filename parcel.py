@@ -158,7 +158,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
     gstdev  (Optional[float]):   lognormal distribution geometric standard deviation [1]
     n_tot   (Optional[float]):   lognormal distribution total concentration under standard 
                                  conditions (T=20C, p=1013.25 hPa, rv=0) [m-3]
-    radii   (Optional[ndarray]): right bin edges for spectrum output [m]
+    radii   (Optional[ndarray]): right bin edges for wet radius spectrum output [m]
                                  (left edge of the first bin equals 0)
     SO2_0   (Optional[float]):   initial SO2 TODO [TODO]
     O3_0    (Optional[float]):   initial O3 TODO [TODO]
@@ -261,7 +261,6 @@ def _arguments_checking(args):
   if (args["T_0"] < 273.15): raise Exception("temperature should be larger than 0C - microphysics works only for warm clouds")
   if (args["r_0"] < 0): raise Exception("water vapour should be larger than 0")
   if (args["w"] < 0): raise Exception("vertical velocity should be larger than 0")
-
 
 
 # ensuring that pure "import parcel" does not trigger any simulation
