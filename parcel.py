@@ -125,8 +125,18 @@ def _output(fout, opts, micro, bins, state, chem_gas, chem_aq, rec):
   _output_save(fout, chem_aq, rec) 
   _output_save(fout, chem_gas, rec)
 
+def _p_hydro_const_rho(dz, p, rho):
+  # hydrostatic pressure assuming constatnt density
+  return p - rho * common.g * dz
+
+def _p_hydro_const_th_rv(dz, p, th_std, r_v):
+  # hydrostatic pressure assuming constatnt theta and r_v
+  z_0 = 0.
+  return common.p_hydro(z_0+dz, th_std, r_v, z_0, p)
  
-def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, outfile="test.nc", 
+def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, 
+  outfile="test.nc", 
+  pprof="pprof_piecewise_const_rhod",
   outfreq=100, sd_conc=64., kappa=.5,
   mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
   radii = 1e-6 * pow(10, -3 + np.arange(26) * .2), 
@@ -153,6 +163,9 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, outfile="te
     SO2_0   (Optional[float]):   initial SO2 TODO [TODO]
     O3_0    (Optional[float]):   initial O3 TODO [TODO]
     H2O2_0  (Optional[float]):   initial H2O2 TODO [TODO]
+    pprof   (Optional[string]):  method to calculate pressure profile used to calculate 
+                                 dry air density that is used by the super-droplet scheme
+                                 valid options are: pprof_const_th_rv, pprof_const_rhod, pprof_piecewise_const_rhod
   """
   # packing function arguments into "opts" dictionary
   args, _, _, _ = inspect.getargvalues(inspect.currentframe())
@@ -185,8 +198,45 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, outfile="te
       # - same as in 2D kinematic model
       state["z"] += w * dt
       state["t"] = it * dt
-      state["p"] = common.p_hydro(state["z"], th_0, r_0, 0, p_0)
-      state["rhod"][0] = common.rhod(state["p"], th_0, r_0)
+
+      # pressure
+      if pprof == "pprof_const_th_rv":
+        # as in icicle model
+        p_hydro = _p_hydro_const_th_rv(state["z"], p_0, th_0, r_0)
+                                           #  ^ this is actually dz (z_0 == 0)
+      elif pprof == "pprof_const_rhod":
+        # as in Grabowski and Wang 2009
+        rho = 1.13 # kg/m3  1.13 
+        state["p"] = _p_hydro_const_rho(state["z"], p_0, rho) 
+
+      elif pprof == "pprof_piecewise_const_rhod":
+        # as in Grabowski and Wang 2009 but calculating pressure
+        # for rho piecewise constant per each time step
+        state["p"] = _p_hydro_const_rho(w*dt, state["p"], state["rhod"][0])
+
+      else: assert(False)
+
+      # dry air density
+      if pprof == "pprof_const_th_rv":
+        state["rhod"][0] = common.rhod(p_hydro, th_0, r_0)
+        state["p"] = common.p(
+          state["rhod"][0],
+          state["r_v"][0],
+          common.T(state["th_d"][0], state["rhod"][0])
+        )
+
+      else:
+        state["rhod"][0] = common.rhod(
+          state["p"], 
+          common.th_dry2std(state["th_d"][0], state["r_v"][0]), 
+          state["r_v"][0]
+        )
+
+        assert np.isclose(common.p(
+          state["rhod"][0],
+          state["r_v"][0],
+          common.T(state["th_d"][0], state["rhod"][0])
+        ), state["p"])
 
       # microphysics
       _micro_step(micro, state, info, chem_gas)
