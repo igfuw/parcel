@@ -10,8 +10,8 @@ import pytest
                                 {"dt" : 1., "outfreq" : 1},
                                 {"sd_conc" : 32., "kappa" : 1.}, 
                                 {"SO2_0" : 0., "O3_0" : 0., "H2O2_0" : 0.},
-              pytest.mark.xfail({"gstdev" : 1.}), # gstdev=1 -> monodisperse distribution
-              pytest.mark.xfail({"outfreq" : 1.}) # outfreq has to be int
+                                {"gstdev" : 1.1}, 
+                                {"outfreq" : 2} 
                                 ])
 
 def test_cmdline(tmpdir, arg):
