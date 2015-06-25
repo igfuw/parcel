@@ -154,6 +154,8 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, outfile="te
     O3_0    (Optional[float]):   initial O3 TODO [TODO]
     H2O2_0  (Optional[float]):   initial H2O2 TODO [TODO]
   """
+  _arguments_checking(locals())
+
   # packing function arguments into "opts" dictionary
   args, _, _, _ = inspect.getargvalues(inspect.currentframe())
   opts = dict(zip(args, [locals()[k] for k in args]))
@@ -202,6 +204,14 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, outfile="te
  
     _save_attrs(fout, info)
     _save_attrs(fout, opts)
+
+    
+def _arguments_checking(args):
+  if (args["gstdev"] == 1): raise Exception("standar deviation should be != 1 to avoid monodisperse distribution")
+  if (args["T_0"] < 273.15): raise Exception("temperature should be larger than 0C - microphysics works only for warm clouds")
+  if (args["r_0"] < 0): raise Exception("water vapour should be larger than 0")
+  if (args["w"] < 0): raise Exception("vertical velocity should be larger than 0")
+
 
 
 # ensuring that pure "import parcel" does not trigger any simulation
