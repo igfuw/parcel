@@ -8,6 +8,7 @@ import pytest
 import Gnuplot
 import os
 import filecmp
+import subprocess
 
 def test_timestep(eps=0.2):
 
@@ -41,24 +42,26 @@ def test_timestep(eps=0.2):
     for var in (RH_list, N_list):
         for val in var:
             assert abs(val - var[0]) <= eps * var[0]
-  
-    g = Gnuplot.Gnuplot()
+ 
+    # save all the gnuplot commands and data needed for the plots in a file 
+    Gnuplot.GnuplotOpts.prefer_inline_data = 1
+    g = Gnuplot.Gnuplot(filename="test_timestep_gnuplot")
     g('set term svg enhanced')
     g('set logscale x')
     g('set xlabel "dt [s]"')
-
     g('set output "plot_timestep_RH.svg" ')
     g('set ylabel "RH_{max}"')
     g.plot(Gnuplot.Data(dt_list, RH_list))
-
     g('set output "plot_timestep_N.svg"')
     g('set ylabel "koncentracja koncowa [1/mg]"')
     g.plot(Gnuplot.Data(dt_list, N_list))
-
     del g # necessary to create the svg files before comparison
 
+    # do the plotting
+    subprocess.call(["gnuplot", "test_timestep_gnuplot"])   
+
+    # check if the plots are created
     assert(os.path.isfile('plot_timestep_RH.svg'))
     assert(os.path.isfile('plot_timestep_N.svg'))
-    # checking if the plots are the same
-    assert(filecmp.cmp('plot_timestep_RH.svg', 'test/refdata/plot_timestep_RH_orig.svg'))
-    assert(filecmp.cmp('plot_timestep_N.svg',  'test/refdata/plot_timestep_N_orig.svg'))
+    # check if the plots stay the same
+    assert(filecmp.cmp('test_timestep_gnuplot', 'test/refdata/test_timestep_gnuplot_orig'))
