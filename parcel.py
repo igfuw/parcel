@@ -129,9 +129,8 @@ def _p_hydro_const_rho(dz, p, rho):
   # hydrostatic pressure assuming constatnt density
   return p - rho * common.g * dz
 
-def _p_hydro_const_th_rv(dz, p, th_std, r_v):
+def _p_hydro_const_th_rv(dz, p, th_std, r_v, z_0=0.):
   # hydrostatic pressure assuming constatnt theta and r_v
-  z_0 = 0.
   return common.p_hydro(z_0+dz, th_std, r_v, z_0, p)
  
 def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, 
