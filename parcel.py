@@ -233,12 +233,6 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
           state["r_v"][0]
         )
 
-        assert np.isclose(common.p(
-          state["rhod"][0],
-          state["r_v"][0],
-          common.T(state["th_d"][0], state["rhod"][0])
-        ), state["p"])
-
       # microphysics
       _micro_step(micro, state, info, chem_gas)
       _stats(state, info)
