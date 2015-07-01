@@ -251,7 +251,8 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
       if (it % outfreq == 0): 
         rec = it/outfreq
         _output(fout, opts, micro, bins, state, chem_gas, chem_aq, rec)
- 
+
+      _variables_checking(state) 
     _save_attrs(fout, info)
     _save_attrs(fout, opts)
 
@@ -262,7 +263,10 @@ def _arguments_checking(args):
   if (args["r_0"] < 0): raise Exception("water vapour should be larger than 0")
   if (args["w"] < 0): raise Exception("vertical velocity should be larger than 0")
 
-
+def _variables_checking(state):
+  if (state["T"][0] < 273.15): raise Exception("temperature should be larger than 0C - something is wrong with the model...")
+  if (state["r_v"][0] < 0): raise Exception("water vapour should be larger than 0 - something is wrong with the model...")
+  if (state["rhod"][0] < 0): raise Exception("density should be larger than 0 - something is wrong with the model...")
 
 # ensuring that pure "import parcel" does not trigger any simulation
 if __name__ == '__main__':
