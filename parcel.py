@@ -129,9 +129,9 @@ def _p_hydro_const_rho(dz, p, rho):
   # hydrostatic pressure assuming constatnt density
   return p - rho * common.g * dz
 
-def _p_hydro_const_th_rv(dz, p, th_std, r_v, z_0=0.):
+def _p_hydro_const_th_rv(z_lev, p_0, th_std, r_v, z_0=0.):
   # hydrostatic pressure assuming constatnt theta and r_v
-  return common.p_hydro(z_0+dz, th_std, r_v, z_0, p)
+  return common.p_hydro(z_lev, th_std, r_v, z_0, p_0)
  
 def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, 
   outfile="test.nc", 
@@ -204,7 +204,6 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
       if pprof == "pprof_const_th_rv":
         # as in icicle model
         p_hydro = _p_hydro_const_th_rv(state["z"], p_0, th_0, r_0)
-                                           #  ^ this is actually dz (z_0 == 0)
       elif pprof == "pprof_const_rhod":
         # as in Grabowski and Wang 2009
         rho = 1.13 # kg/m3  1.13 
