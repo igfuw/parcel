@@ -10,7 +10,7 @@ before_install:
   - sudo apt-get update
 
 install:
-  - sudo apt-get install --no-install-recommends g++ gnuplot python-tk python-matplotlib python-scipy python-pytest python-gnuplot libblitz0-dev cmake libboost-python-dev libthrust-dev 
+  - sudo apt-get install --no-install-recommends g++ gnuplot-nox python-tk python-matplotlib python-scipy python-pytest python-gnuplot libblitz0-dev cmake libboost-python-dev libthrust-dev 
 
   # libcloudphxx
   - cd ..
