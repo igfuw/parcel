@@ -73,6 +73,7 @@ def _micro_step(micro, state, info, opts):
   libopts = lgrngn.opts_t()
   libopts.cond = True
   libopts.chem = micro.opts_init.chem_switch
+  if opts["chem_sys"] == 'none': libopts.chem = False
   libopts.coal = False
   libopts.adve = False
   libopts.sedi = False
@@ -108,6 +109,8 @@ def _micro_step(micro, state, info, opts):
       elif opts['chem_sys'] == 'open':
         micro.diag_chem(id_int)
         state[id_str.replace('_g', '_a')] = np.frombuffer(micro.outbuf())[0]
+      elif opts['chem_sys'] == 'none':
+        pass
       else:
         raise exception(
           "Expected chem_sys options are: 'open', 'closed'."
@@ -209,9 +212,9 @@ def parcel(dt=1., z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, outfile="te
     SO2_g_0  (Optional[float]):   initial SO2  gas volume concentration (mole fraction) [1]
     O3_g_0   (Optional[float]):   initial O3   gas volume concentration (mole fraction) [1]
     H2O2_g_0 (Optional[float]):   initial H2O2 gas volume concentration (mole fraction) [1]
-    chem_sys (Optional[string]):  accepted values: 'open' or 'closed'
+    chem_sys (Optional[string]):  accepted values: 'open', 'closed', 'none'
                                   (in open/closed system gas volume concentration in the air doesn't/does change 
-                                   due to chemical reactions)
+                                   due to chemical reactions; option 'none' does no chemistry)
   """
   # packing function arguments into "opts" dictionary
   args, _, _, _ = inspect.getargvalues(inspect.currentframe())
