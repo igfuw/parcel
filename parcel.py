@@ -71,24 +71,22 @@ def _stats(state, info):
   state["RH"] = state["p"] * state["r_v"] / (state["r_v"] + common.eps) / common.p_vs(state["T"][0])
   info["RH_max"] = max(info["RH_max"], state["RH"])
 
-def _output_bins(fout, micro, opts):
-  for dim in fout.dimensions:
-    print dim
-
-  #r_min = 0
-  #i = 0
-  #for r_max in opts["radii"]:
-  #  micro.diag_wet_rng(r_min, r_max)
-  # 
-  #  micro.diag_wet_mom(0) # #/kg dry air
-  #  bins["conc"][i] = np.frombuffer(micro.outbuf())
-  #
-  #  for id in _Chem_aq_id:
-  #    micro.diag_chem(_Chem_id[id])
-  #    chem_aq[id][i] = np.frombuffer(micro.outbuf())
-  #
-  #  r_min = r_max
-  #  i += 1
+def _output_bins(fout, t, micro, opts):
+  for dim, nbin in fout.dimensions.iteritems():
+    if (dim == 't'): continue
+    for b in range(nbin):
+      micro.diag_wet_rng(
+	fout.variables[dim+"_rl"][b],
+	fout.variables[dim+"_rl"][b] + fout.variables[dim+"_dr"][b]
+      )
+      for v in fout.variables.iterkeys():
+        if v.startswith(dim+"_"): 
+          #TODO: chemia
+          rgxp = re.search('^'+dim+'_m(\d+)$', v)
+          if rgxp != None:
+            m = int(rgxp.groups()[0])
+            micro.diag_wet_mom(m)
+            fout.variables[dim+'_m'+str(m)][t, b] = np.frombuffer(micro.outbuf())
 
 def _output_init(opts):
   # file & dimensions
@@ -150,10 +148,9 @@ def _save_attrs(fout, dictnr):
   for var, val in dictnr.iteritems():
     setattr(fout, var, val)
 
-def _output(fout, opts, micro, state, chem_gas, chem_aq, rec):
-  _output_bins(fout, micro, opts)
+def _output(fout, opts, micro, state, chem_gas, rec):
+  _output_bins(fout, rec, micro, opts)
   _output_save(fout, state, rec)
-  _output_save(fout, chem_aq, rec) 
   _output_save(fout, chem_gas, rec)
 
 def _p_hydro_const_rho(dz, p, rho):
@@ -171,7 +168,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
   out_wet = ["radii:1e-9/1e-4/26/log/0"], 
   #radii = 1e-6 * pow(10, -3 + np.arange(26) * .2), 
-  SO2_0 = 44., O3_0 = 44., H2O2_0 = 44.
+  SO2_0 = 0., O3_0 = 0., H2O2_0 = 0.
 ):
   """
   Args:
@@ -203,8 +200,6 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   """
   _arguments_checking(locals())
 
-  print out_wet
- 
   # packing function arguments into "opts" dictionary
   args, _, _, _ = inspect.getargvalues(inspect.currentframe())
   opts = dict(zip(args, [locals()[k] for k in args]))
@@ -221,13 +216,11 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   info = { "RH_max" : 0, "libcloud_Git_revision" : libcloud_version, 
            "parcel_Git_revision" : parcel_version }
   #bins = { "conc" : np.empty((radii.shape[0],)) }
-  chem_gas = { "SO2" : SO2_0, "O3" : O3_0, "H2O2" : H2O2_0 }
-  ##### !!!!
-  #chem_aq = dict(zip(_Chem_aq_id, len(_Chem_aq_id)*[np.empty(radii.shape[0])]))
+  chem_gas = { }#"SO2" : SO2_0, "O3" : O3_0, "H2O2" : H2O2_0 }
   with _output_init(opts) as fout:
     # t=0 : init & save
     micro = _micro_init(opts, state, info)
-    _output(fout, opts, micro, state, chem_gas, chem_aq, 0)
+    _output(fout, opts, micro, state, chem_gas, 0)
 
     # timestepping
     for it in range(1,nt+1):
@@ -280,7 +273,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
       # output
       if (it % outfreq == 0): 
         rec = it/outfreq
-        _output(fout, opts, micro, bins, state, chem_gas, chem_aq, rec)
+        _output(fout, opts, micro, state, chem_gas, rec)
  
     _save_attrs(fout, info)
     _save_attrs(fout, opts)
