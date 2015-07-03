@@ -16,14 +16,26 @@ import pdb
 import subprocess
 parcel_version = subprocess.check_output(["git", "rev-parse", "HEAD"]).rstrip()
 
-_Chem_ga_id = ["SO2", "H2O2", "O3"]
-_Chem_aq_id = _Chem_ga_id + ["HSO3"]
+# id_str     id_int
+_Chem_g_id = {
+  "SO2_g"  : lgrngn.chem_species_t.SO2, 
+  "H2O2_g" : lgrngn.chem_species_t.H2O2, 
+  "O3_g"   : lgrngn.chem_species_t.O3
+}
 
-_Chem_id = {
-  "SO2"  : lgrngn.chem_species_t.SO2,
-  "H2O2" : lgrngn.chem_species_t.H2O2,
-  "O3"   : lgrngn.chem_species_t.O3,
-  "HSO3" : lgrngn.chem_species_t.HSO3                                                      
+# id_str     id_int
+_Chem_a_id = {
+  "SO2_a"  : lgrngn.chem_species_t.SO2, 
+  "H2O2_a" : lgrngn.chem_species_t.H2O2, 
+  "O3_a"   : lgrngn.chem_species_t.O3,
+  "HSO3_a" : lgrngn.chem_species_t.HSO3 
+}
+
+# id_int   ...
+_molar_mass = { #... TODO molar mass of dissoved one -> + M_H2O
+  lgrngn.chem_species_t.SO2  : common.M_SO2,
+  lgrngn.chem_species_t.H2O2 : common.M_H2O2,
+  lgrngn.chem_species_t.O3   : common.M_O3
 }
 
 def _micro_init(opts, state, info):
@@ -45,27 +57,66 @@ def _micro_init(opts, state, info):
   opts_init.sd_conc_mean = opts["sd_conc"]
   opts_init.dry_distros = {opts["kappa"]:lognormal}
   opts_init.kernel = lgrngn.kernel_t.geometric #TODO: will not be needed soon (libcloud PR #89)
-  opts_init.chem_switch = True 
+  opts_init.chem_rho = opts["chem_rho"]
 
-  # initialitation
+  # switching off chemistry if all initial volume conc. equal zero
+  opts_init.chem_switch = False
+  for id_str in _Chem_g_id.iterkeys():
+    if opts[id_str + "_0"] != 0: opts_init.chem_switch = True
+
+  # initialisation
   micro = lgrngn.factory(lgrngn.backend_t.serial, opts_init)
   micro.init(state["th_d"], state["r_v"], state["rhod"])
   return micro
 
-def _micro_step(micro, state, info, chem_gas):
+def _micro_step(micro, state, info, opts):
   libopts = lgrngn.opts_t()
-  for id in chem_gas:
-    libopts.chem_gas[_Chem_id[id]] = chem_gas[id]
+  libopts.cond = True
+  libopts.chem = micro.opts_init.chem_switch
+  if opts["chem_sys"] == 'none': libopts.chem = False
+  libopts.coal = False
+  libopts.adve = False
+  libopts.sedi = False
 
+  if micro.opts_init.chem_switch:
+    tmp = {}
+    for id_str, id_int in _Chem_g_id.iteritems():
+      tmp[id_int] = state[id_str]
+    libopts.chem_gas = tmp
+
+  print "old rv = ", state["r_v"]
   micro.step_sync(libopts, state["th_d"], state["r_v"], state["rhod"]) 
+  print "new rv = ", state["r_v"]
+  print " "
 
-  # new = diag_chem(_Chem_id[id])
-  for id in chem_gas:
-    old = 0 #libopts.chem_gas[_Chem_id[id]]
-    
-    new = 0 #np.frombuffer(micro.outbuf())    
-    chem_gas[id] -= (new - old)
+  micro.step_async(libopts)
+  _stats(state, info) # give updated T needed for chemistry below
 
+  if micro.opts_init.chem_switch:
+    micro.diag_all() # selecting all particles
+    for id_str, id_int in _Chem_g_id.iteritems():
+      if opts['chem_sys'] == 'closed':
+
+        old = state[id_str.replace('_g', '_a')]
+
+        micro.diag_chem(id_int)
+        new = np.frombuffer(micro.outbuf()) 
+      
+        # since p & rhod are the "new" ones, for consistency we also use new T (_stats called above)
+        state[id_str] -= (new[0] - old) * state["rhod"][0] * common.R * state["T"][0] / _molar_mass[id_int] / state["p"]
+        state[id_str.replace('_g', '_a')] = new[0]
+        #print "state[ ", id_str.replace('_g', '_a'), " ] = ", np.frombuffer(micro.outbuf())[0]
+      elif opts['chem_sys'] == 'open':
+        micro.diag_chem(id_int)
+        state[id_str.replace('_g', '_a')] = np.frombuffer(micro.outbuf())[0]
+      elif opts['chem_sys'] == 'none':
+        pass
+      else:
+        raise exception(
+          "Expected chem_sys options are: 'open', 'closed'."
+          "Type: help(parcel) for more help."
+        )
+ 
 def _stats(state, info):
   state["T"] = np.array([common.T(state["th_d"][0], state["rhod"][0])])
   state["RH"] = state["p"] * state["r_v"] / (state["r_v"] + common.eps) / common.p_vs(state["T"][0])
@@ -80,6 +131,7 @@ def _output_bins(fout, t, micro, opts):
 	fout.variables[dim+"_rl"][b] + fout.variables[dim+"_dr"][b]
       )
       for v in fout.variables.iterkeys():
+        print v # TODO ???
         if v.startswith(dim+"_"): 
           #TODO: chemia
           rgxp = re.search('^'+dim+'_m(\d+)$', v)
@@ -88,7 +140,7 @@ def _output_bins(fout, t, micro, opts):
             micro.diag_wet_mom(m)
             fout.variables[dim+'_m'+str(m)][t, b] = np.frombuffer(micro.outbuf())
 
-def _output_init(opts):
+def _output_init(micro, opts):
   # file & dimensions
   fout = netcdf.netcdf_file(opts["outfile"], 'w')
   fout.createDimension('t', None)
@@ -137,7 +189,7 @@ def _output_init(opts):
   for name, unit in units.iteritems():
     fout.createVariable(name, 'd', ('t',))
     fout.variables[name].unit = unit
-
+  
   return fout
 
 def _output_save(fout, state, rec):
@@ -148,10 +200,9 @@ def _save_attrs(fout, dictnr):
   for var, val in dictnr.iteritems():
     setattr(fout, var, val)
 
-def _output(fout, opts, micro, state, chem_gas, rec):
+def _output(fout, opts, micro, state, rec):
   _output_bins(fout, rec, micro, opts)
   _output_save(fout, state, rec)
-  _output_save(fout, chem_gas, rec)
 
 def _p_hydro_const_rho(dz, p, rho):
   # hydrostatic pressure assuming constatnt density
@@ -166,9 +217,12 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   pprof="pprof_piecewise_const_rhod",
   outfreq=100, sd_conc=64., kappa=.5,
   mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
-  out_wet = ["radii:1e-9/1e-4/26/log/0"], 
+  out_wet = ["radii:1e-9/1e-4/26/log/0", "chem:0/1/1/lin/HSO3_a,O3_a,H2O2_a,SO2_a"], 
   #radii = 1e-6 * pow(10, -3 + np.arange(26) * .2), 
-  SO2_0 = 0., O3_0 = 0., H2O2_0 = 0.
+  #SO2_g_0 = 0., O3_g_0 = 0., H2O2_g_0 = 0.,
+  SO2_g_0 = 200e-12, O3_g_0 = 50e-9, H2O2_g_0 = 500e-12,
+  chem_sys = 'closed', 
+  chem_rho = 1.8e-3
 ):
   """
   Args:
@@ -191,13 +245,16 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
                                   will generate five output spectra:
                                   - 0-th spectrum moment for 26 bins spaced logarithmically between 0 and 1e-4 m
                                   - 0,1,2 & 3-rd moments for 49 bins spaced linearly between .5e-6 and 25e-6
-    SO2_0   (Optional[float]):    initial SO2 TODO [TODO]
-    O3_0    (Optional[float]):    initial O3 TODO [TODO]
-    H2O2_0  (Optional[float]):    initial H2O2 TODO [TODO]
+    SO2_g_0  (Optional[float]):   initial SO2  gas volume concentration (mole fraction) [1]
+    O3_g_0   (Optional[float]):   initial O3   gas volume concentration (mole fraction) [1]
+    H2O2_g_0 (Optional[float]):   initial H2O2 gas volume concentration (mole fraction) [1]
+    chem_sys (Optional[string]):  accepted values: 'open', 'closed', 'none'
+                                  (in open/closed system gas volume concentration in the air doesn't/does change 
+                                   due to chemical reactions; option 'none' does no chemistry)
     pprof   (Optional[string]):   method to calculate pressure profile used to calculate 
                                   dry air density that is used by the super-droplet scheme
                                   valid options are: pprof_const_th_rv, pprof_const_rhod, pprof_piecewise_const_rhod
-  """
+   """
   _arguments_checking(locals())
 
   # packing function arguments into "opts" dictionary
@@ -215,12 +272,16 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   }
   info = { "RH_max" : 0, "libcloud_Git_revision" : libcloud_version, 
            "parcel_Git_revision" : parcel_version }
-  #bins = { "conc" : np.empty((radii.shape[0],)) }
-  chem_gas = { }#"SO2" : SO2_0, "O3" : O3_0, "H2O2" : H2O2_0 }
-  with _output_init(opts) as fout:
+
+  micro = _micro_init(opts, state, info)
+  with _output_init(micro, opts) as fout:
+    # adding chem state vars
+    if micro.opts_init.chem_switch:
+      state.update({ "SO2_g" : SO2_g_0, "O3_g" : O3_g_0, "H2O2_g" : H2O2_g_0 })
+      state.update({ "SO2_a" : 0.,      "O3_a" : 0.,     "H2O2_a" : 0.      , "HSO3_a" : 0})
+
     # t=0 : init & save
-    micro = _micro_init(opts, state, info)
-    _output(fout, opts, micro, state, chem_gas, 0)
+    _output(fout, opts, micro, state, 0)
 
     # timestepping
     for it in range(1,nt+1):
@@ -264,16 +325,15 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
         )
 
       # microphysics
-      _micro_step(micro, state, info, chem_gas)
-      _stats(state, info)
-    
+      _micro_step(micro, state, info, opts)
+   
       # TODO: only if user wants to stop @ RH_max
       #if (state["RH"] < info["RH_max"]): break
-
+ 
       # output
       if (it % outfreq == 0): 
         rec = it/outfreq
-        _output(fout, opts, micro, state, chem_gas, rec)
+        _output(fout, opts, micro, state, rec)
  
     _save_attrs(fout, info)
     _save_attrs(fout, opts)
