@@ -181,13 +181,23 @@ def _output(fout, opts, micro, bins, state, chem_aq, rec):
   _output_save(fout, bins, rec)
   if micro.opts_init.chem_switch:
     _output_save(fout, chem_aq, rec) 
+
+def _p_hydro_const_rho(dz, p, rho):
+  # hydrostatic pressure assuming constatnt density
+  return p - rho * common.g * dz
+
+def _p_hydro_const_th_rv(z_lev, p_0, th_std, r_v, z_0=0.):
+  # hydrostatic pressure assuming constatnt theta and r_v
+  return common.p_hydro(z_lev, th_std, r_v, z_0, p_0)
  
-def parcel(dt=1., z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, outfile="test.nc", 
-  outfreq=10, sd_conc=64., kappa=.5,
+def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, 
+  outfile="test.nc", 
+  pprof="pprof_piecewise_const_rhod",
+  outfreq=100, sd_conc=64., kappa=.5,
   mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
   radii = 1e-6 * pow(10, -3 + np.arange(26) * .2), 
-#  SO2_g_0 = 0., O3_g_0 = 0., H2O2_g_0 = 0.,
-  SO2_g_0 = 200e-12, O3_g_0 = 50e-9, H2O2_g_0 = 500e-12,
+  SO2_g_0 = 0., O3_g_0 = 0., H2O2_g_0 = 0.,
+#  SO2_g_0 = 200e-12, O3_g_0 = 50e-9, H2O2_g_0 = 500e-12,
   chem_sys = 'closed', 
   chem_rho = 1.8e-3
 ):
@@ -215,7 +225,12 @@ def parcel(dt=1., z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, outfile="te
     chem_sys (Optional[string]):  accepted values: 'open', 'closed', 'none'
                                   (in open/closed system gas volume concentration in the air doesn't/does change 
                                    due to chemical reactions; option 'none' does no chemistry)
+    pprof   (Optional[string]):   method to calculate pressure profile used to calculate 
+                                  dry air density that is used by the super-droplet scheme
+                                  valid options are: pprof_const_th_rv, pprof_const_rhod, pprof_piecewise_const_rhod
   """
+  _arguments_checking(locals())
+
   # packing function arguments into "opts" dictionary
   args, _, _, _ = inspect.getargvalues(inspect.currentframe())
   opts = dict(zip(args, [locals()[k] for k in args]))
@@ -253,8 +268,38 @@ def parcel(dt=1., z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, outfile="te
       # - same as in 2D kinematic model
       state["z"] += w * dt
       state["t"] = it * dt
-      state["p"] = common.p_hydro(state["z"], th_0, r_0, 0, p_0)
-      state["rhod"][0] = common.rhod(state["p"], th_0, r_0)
+
+      # pressure
+      if pprof == "pprof_const_th_rv":
+        # as in icicle model
+        p_hydro = _p_hydro_const_th_rv(state["z"], p_0, th_0, r_0)
+      elif pprof == "pprof_const_rhod":
+        # as in Grabowski and Wang 2009
+        rho = 1.13 # kg/m3  1.13 
+        state["p"] = _p_hydro_const_rho(state["z"], p_0, rho) 
+
+      elif pprof == "pprof_piecewise_const_rhod":
+        # as in Grabowski and Wang 2009 but calculating pressure
+        # for rho piecewise constant per each time step
+        state["p"] = _p_hydro_const_rho(w*dt, state["p"], state["rhod"][0])
+
+      else: assert(False)
+
+      # dry air density
+      if pprof == "pprof_const_th_rv":
+        state["rhod"][0] = common.rhod(p_hydro, th_0, r_0)
+        state["p"] = common.p(
+          state["rhod"][0],
+          state["r_v"][0],
+          common.T(state["th_d"][0], state["rhod"][0])
+        )
+
+      else:
+        state["rhod"][0] = common.rhod(
+          state["p"], 
+          common.th_dry2std(state["th_d"][0], state["r_v"][0]), 
+          state["r_v"][0]
+        )
 
       # microphysics
       _micro_step(micro, state, info, opts)
@@ -269,6 +314,14 @@ def parcel(dt=1., z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, outfile="te
  
     _save_attrs(fout, info)
     _save_attrs(fout, opts)
+
+    
+def _arguments_checking(args):
+  if (args["gstdev"] == 1): raise Exception("standar deviation should be != 1 to avoid monodisperse distribution")
+  if (args["T_0"] < 273.15): raise Exception("temperature should be larger than 0C - microphysics works only for warm clouds")
+  if (args["r_0"] < 0): raise Exception("water vapour should be larger than 0")
+  if (args["w"] < 0): raise Exception("vertical velocity should be larger than 0")
+
 
 
 # ensuring that pure "import parcel" does not trigger any simulation
