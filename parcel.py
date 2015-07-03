@@ -10,7 +10,7 @@ from scipy import __version__ as scipy_version
 assert StrictVersion(scipy_version) >= StrictVersion("0.13"), "see https://github.com/scipy/scipy/pull/491"
 
 from scipy.io import netcdf
-import inspect, numpy as np
+import re, inspect, numpy as np
 import pdb
 
 import subprocess
@@ -71,41 +71,73 @@ def _stats(state, info):
   state["RH"] = state["p"] * state["r_v"] / (state["r_v"] + common.eps) / common.p_vs(state["T"][0])
   info["RH_max"] = max(info["RH_max"], state["RH"])
 
-def _histo(bins, micro, opts, chem_aq):
-  r_min = 0
-  i = 0
-  for r_max in opts["radii"]:
-    micro.diag_wet_rng(r_min, r_max)
+def _output_bins(fout, micro, opts):
+  for dim in fout.dimensions:
+    print dim
 
-    micro.diag_wet_mom(0) # #/kg dry air
-    bins["conc"][i] = np.frombuffer(micro.outbuf())
-
-    for id in _Chem_aq_id:
-      micro.diag_chem(_Chem_id[id])
-      chem_aq[id][i] = np.frombuffer(micro.outbuf())
-
-    r_min = r_max
-    i += 1
+  #r_min = 0
+  #i = 0
+  #for r_max in opts["radii"]:
+  #  micro.diag_wet_rng(r_min, r_max)
+  # 
+  #  micro.diag_wet_mom(0) # #/kg dry air
+  #  bins["conc"][i] = np.frombuffer(micro.outbuf())
+  #
+  #  for id in _Chem_aq_id:
+  #    micro.diag_chem(_Chem_id[id])
+  #    chem_aq[id][i] = np.frombuffer(micro.outbuf())
+  #
+  #  r_min = r_max
+  #  i += 1
 
 def _output_init(opts):
   # file & dimensions
   fout = netcdf.netcdf_file(opts["outfile"], 'w')
   fout.createDimension('t', None)
-  fout.createDimension('radii', opts["radii"].shape[0]) #TODO: r_d, cloud only; #TODO: r_w vs. r_v - might be misleading
+  for e in opts["out_wet"]:
+    (
+      name   ,left      ,rght      ,nbin   ,lnli ,moms 
+    ) = [t(s) for t,s in zip((
+      str    ,float     ,float     ,int    ,str  ,str
+    ),re.search(
+      '^(\w+):([\d.e-]+)/([\d.e-]+)/([\d]+)/(\w+)/([\d,]+)$', 
+      e
+    ).groups())]
+    fout.createDimension(name, nbin) 
+    fout.createVariable(name+'_rl', 'd', (name,))
+    fout.createVariable(name+'_dr', 'd', (name,))
+    if lnli == 'log':
+      from math import exp, log
+      dlnr = (log(rght) - log(left)) / nbin
+      allbins = np.exp(log(left) + np.arange(nbin+1) * dlnr)
+      fout.variables[name+'_rl'][:] = allbins[0:-1]
+      fout.variables[name+'_dr'][:] = allbins[1:] - allbins[0:-1]
+    elif lnli == 'lin':
+      dr = (rght - left) / nbin
+      fout.variables[name+'_rl'][:] = left * np.arange(nbin) * dr
+      fout.variables[name+'_dr'][:] = dr
+    else:
+      raise exception('scale type can be either log or lin')
+    for m in moms.split(','):
+      #TODO
+      #if (m in _Chem_aq_id):
+      #	fout.createVariable(name+'_'+m, 'd', ('t',name))
+      #	fout.variables[name+'_m'+m].unit = 'kg of chem species dissolved in cloud droplets (kg of dry air)^-1'
+      #else
+        assert(str(int(m))==m)
+	fout.createVariable(name+'_m'+m, 'd', ('t',name))
+	fout.variables[name+'_m'+m].unit = 'm^'+m+' (kg of dry air)^-1'
   
   units = {"z" : "m", "t" : "s", "r_v" : "kg/kg", "th_d" : "K", "rhod" : "kg/m3", 
-    "p" : "Pa", "T" : "K", "RH" : "1", "conc" : "(kg of dry air)^-1"
+    "p" : "Pa", "T" : "K", "RH" : "1"
   }
-  for id in _Chem_id:
-    units[id] = "todo"
+
+  # TODO: 
+  # for id_str in _Chem_g_id.iterkeys():
+  #   units[id_str] = "gas volume concentration (mole fraction) [1]"
 
   for name, unit in units.iteritems():
-    if name in _Chem_aq_id + ["conc"]:
-      dims = ('t','radii')
-    else:
-      dims = ('t',)
-
-    fout.createVariable(name, 'd', dims)
+    fout.createVariable(name, 'd', ('t',))
     fout.variables[name].unit = unit
 
   return fout
@@ -118,10 +150,9 @@ def _save_attrs(fout, dictnr):
   for var, val in dictnr.iteritems():
     setattr(fout, var, val)
 
-def _output(fout, opts, micro, bins, state, chem_gas, chem_aq, rec):
-  _histo(bins, micro, opts, chem_aq)
+def _output(fout, opts, micro, state, chem_gas, chem_aq, rec):
+  _output_bins(fout, micro, opts)
   _output_save(fout, state, rec)
-  _output_save(fout, bins, rec)
   _output_save(fout, chem_aq, rec) 
   _output_save(fout, chem_gas, rec)
 
@@ -138,36 +169,42 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   pprof="pprof_piecewise_const_rhod",
   outfreq=100, sd_conc=64., kappa=.5,
   mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
-  radii = 1e-6 * pow(10, -3 + np.arange(26) * .2), 
+  out_wet = ["radii:1e-9/1e-4/26/log/0"], 
+  #radii = 1e-6 * pow(10, -3 + np.arange(26) * .2), 
   SO2_0 = 44., O3_0 = 44., H2O2_0 = 44.
 ):
   """
   Args:
-    dt      (Optional[float]):   timestep [s]
-    z_max   (Optional[float]):   maximum vertical displacement [m]
-    w       (Optional[float]):   updraft velocity [m/s]
-    T_0     (Optional[float]):   initial temperature [K]
-    p_0     (Optional[float]):   initial pressure [Pa]
-    r_0     (Optional[float]):   initial water vapour mass mixing ratio [kg/kg]
-    outfile (Optional[string]):  output netCDF file name
-    outfreq (Optional[int]):     output interval (in number of time steps)
-    sd_conc (Optional[int]):     number of moving bins (super-droplets)
-    kappa   (Optional[float]):   kappa hygroscopicity parameter (see doi:10.5194/acp-7-1961-2007)
-    mean_r  (Optional[float]):   lognormal distribution mode diameter [m]
-    gstdev  (Optional[float]):   lognormal distribution geometric standard deviation [1]
-    n_tot   (Optional[float]):   lognormal distribution total concentration under standard 
-                                 conditions (T=20C, p=1013.25 hPa, rv=0) [m-3]
-    radii   (Optional[ndarray]): right bin edges for wet radius spectrum output [m]
-                                 (left edge of the first bin equals 0)
-    SO2_0   (Optional[float]):   initial SO2 TODO [TODO]
-    O3_0    (Optional[float]):   initial O3 TODO [TODO]
-    H2O2_0  (Optional[float]):   initial H2O2 TODO [TODO]
-    pprof   (Optional[string]):  method to calculate pressure profile used to calculate 
-                                 dry air density that is used by the super-droplet scheme
-                                 valid options are: pprof_const_th_rv, pprof_const_rhod, pprof_piecewise_const_rhod
+    dt      (Optional[float]):    timestep [s]
+    z_max   (Optional[float]):    maximum vertical displacement [m]
+    w       (Optional[float]):    updraft velocity [m/s]
+    T_0     (Optional[float]):    initial temperature [K]
+    p_0     (Optional[float]):    initial pressure [Pa]
+    r_0     (Optional[float]):    initial water vapour mass mixing ratio [kg/kg]
+    outfile (Optional[string]):   output netCDF file name
+    outfreq (Optional[int]):      output interval (in number of time steps)
+    sd_conc (Optional[int]):      number of moving bins (super-droplets)
+    kappa   (Optional[float]):    kappa hygroscopicity parameter (see doi:10.5194/acp-7-1961-2007)
+    mean_r  (Optional[float]):    lognormal distribution mode diameter [m]
+    gstdev  (Optional[float]):    lognormal distribution geometric standard deviation [1]
+    n_tot   (Optional[float]):    lognormal distribution total concentration under standard 
+                                  conditions (T=20C, p=1013.25 hPa, rv=0) [m-3]
+    out_wet (Optional[str list]): array of strings defining spectrum diagnostics, e.g.:
+                                  ["radii:0/1e-4/26/log/0","cloud:.5e-6/25e-6/49/lin/0,1,2,3"]
+                                  will generate five output spectra:
+                                  - 0-th spectrum moment for 26 bins spaced logarithmically between 0 and 1e-4 m
+                                  - 0,1,2 & 3-rd moments for 49 bins spaced linearly between .5e-6 and 25e-6
+    SO2_0   (Optional[float]):    initial SO2 TODO [TODO]
+    O3_0    (Optional[float]):    initial O3 TODO [TODO]
+    H2O2_0  (Optional[float]):    initial H2O2 TODO [TODO]
+    pprof   (Optional[string]):   method to calculate pressure profile used to calculate 
+                                  dry air density that is used by the super-droplet scheme
+                                  valid options are: pprof_const_th_rv, pprof_const_rhod, pprof_piecewise_const_rhod
   """
   _arguments_checking(locals())
 
+  print out_wet
+ 
   # packing function arguments into "opts" dictionary
   args, _, _, _ = inspect.getargvalues(inspect.currentframe())
   opts = dict(zip(args, [locals()[k] for k in args]))
@@ -183,13 +220,14 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   }
   info = { "RH_max" : 0, "libcloud_Git_revision" : libcloud_version, 
            "parcel_Git_revision" : parcel_version }
-  bins = { "conc" : np.empty((radii.shape[0],)) }
+  #bins = { "conc" : np.empty((radii.shape[0],)) }
   chem_gas = { "SO2" : SO2_0, "O3" : O3_0, "H2O2" : H2O2_0 }
-  chem_aq = dict(zip(_Chem_aq_id, len(_Chem_aq_id)*[np.empty(radii.shape[0])]))
+  ##### !!!!
+  #chem_aq = dict(zip(_Chem_aq_id, len(_Chem_aq_id)*[np.empty(radii.shape[0])]))
   with _output_init(opts) as fout:
     # t=0 : init & save
     micro = _micro_init(opts, state, info)
-    _output(fout, opts, micro, bins, state, chem_gas, chem_aq, 0)
+    _output(fout, opts, micro, state, chem_gas, chem_aq, 0)
 
     # timestepping
     for it in range(1,nt+1):
@@ -268,16 +306,10 @@ if __name__ == '__main__':
     prsr.add_argument('--' + k, 
       default=opts[k], 
       help = "(default: %(default)s)",
-      # reading in ndarrays as lists (see comment below ****)
-      type = (type(opts[k]) if type(opts[k]) != np.ndarray else type(opts[k][0])),
-      nargs = ('?'          if type(opts[k]) != np.ndarray else '+')
+      type = (type(opts[k]) if type(opts[k]) != list else type(opts[k][0])),
+      nargs = ('?'          if type(opts[k]) != list else '+')
     )
   args = vars(prsr.parse_args())
-
-  # converting lists into ndarrays (see comment abowe ****)
-  for k in opts:
-    if type(opts[k]) == np.ndarray:
-      args[k] = np.fromiter(args[k], dtype=opts[k].dtype)
 
   # executing parcel() with command-line arguments unpacked - treated as keyword arguments 
   parcel(**args)
