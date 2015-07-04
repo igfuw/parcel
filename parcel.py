@@ -244,7 +244,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
         rec = it/outfreq
         _output(fout, opts, micro, bins, state, chem_gas, chem_aq, rec)
  
-    _save_attrs(fout, info)
+    #_save_attrs(fout, info) # TODO - think about it
     _save_attrs(fout, opts)
 
     
