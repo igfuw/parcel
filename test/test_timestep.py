@@ -54,7 +54,7 @@ def data_all_timesteps(request):
     request.addfinalizer(removing_files)
     return data
 
-
+# jesli dobrze rozumiem, to ten chyba test wypadnie, jak bedzie zbieznosc, tak? 
 def test_timestep_eps(data_all_timesteps, eps=0.2):
     # testing if the values of variables do not differ from ref. more than eps times
     for var in data_all_timesteps.values():
