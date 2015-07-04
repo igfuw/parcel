@@ -181,8 +181,10 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
     "rhod" : np.array([common.rhod(p_0, th_0, r_0)]),
     "T" : None, "RH" : None
   }
-  info = { "RH_max" : 0, "libcloud_Git_revision" : libcloud_version, 
-           "parcel_Git_revision" : parcel_version }
+  info = { "RH_max" : 0}
+ # TODO - think about how to include git repository and testing files   
+#, "libcloud_Git_revision" : libcloud_version, 
+#           "parcel_Git_revision" : parcel_version }
   bins = { "conc" : np.empty((radii.shape[0],)) }
   chem_gas = { "SO2" : SO2_0, "O3" : O3_0, "H2O2" : H2O2_0 }
   chem_aq = dict(zip(_Chem_aq_id, len(_Chem_aq_id)*[np.empty(radii.shape[0])]))
@@ -244,7 +246,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
         rec = it/outfreq
         _output(fout, opts, micro, bins, state, chem_gas, chem_aq, rec)
  
-    #_save_attrs(fout, info) # TODO - think about it
+    _save_attrs(fout, info)
     _save_attrs(fout, opts)
 
     
