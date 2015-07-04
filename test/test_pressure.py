@@ -50,7 +50,7 @@ def test_pressure_opt(data_all_pressure_opt, pprof, eps=0.01):
     assert abs(f_test.variables["RH"][:].max() - f_ref.variables["RH"][:].max()) <= eps * f_ref.variables["RH"][:].max()
 
  
-#@pytest.mark.xfail #TODO                                                  
+@pytest.mark.xfail #TODO                                                  
 @pytest.mark.parametrize("pprof", ["pprof_const_rhod", "pprof_const_th_rv", "pprof_piecewise_const_rhod"])
 def test_pressure_diff(data_all_pressure_opt, pprof):
         filename =  "test_"+pprof+str(data_all_pressure_opt["dt"])+".nc"
