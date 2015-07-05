@@ -16,7 +16,7 @@ Dt_list = [1., 1.5]#[1e-3, 1.5e-3, 2e-3, 3e-3, 4e-3, 8e-3, 1e-2, 2e-2, 4e-2, 8e-
 
 # tu korzystam wlasnie z tych wspomnianych fixture, jesli scope z domyslnego(f-cja) zmienie na module, to wykona sie tylko raz
 @pytest.fixture(scope="module")
-def data_all_timesteps(request):
+def data(request):
     # initial values                                        
     RH_init = .99999
     T_init  = 280.
@@ -55,13 +55,13 @@ def data_all_timesteps(request):
     return data
 
 # jesli dobrze rozumiem, to ten chyba test wypadnie, jak bedzie zbieznosc, tak? 
-def test_timestep_eps(data_all_timesteps, eps=0.2):
+def test_timestep_eps(data, eps=0.2):
     # testing if the values of variables do not differ from ref. more than eps times
-    for var in data_all_timesteps.values():
+    for var in data.values():
         for val in var:
             assert abs(val - var[0]) <= eps * var[0], "see figures...TODO" #dopisalabym sugestie, aby sprawdzic rysunek z plotu, jesli jest cos nie tak
  
-def test_timestep_conv(data_all_timesteps, eps=0.05):
+def test_timestep_conv(data, eps=0.05):
     # szczerze mowiac teraz juz nie pamietam co ma jak zbiegac...
     #RH ma byc jak najmniejsze? zgubilam sie
     pass
@@ -72,7 +72,7 @@ def test_timestep_conv(data_all_timesteps, eps=0.05):
 # zrobilam jednak dla kazdego dt osobno
 @pytest.mark.xfail #TODO
 @pytest.mark.parametrize("dt", Dt_list)
-def test_timestep_diff(data_all_timesteps, dt, eps=0.2):
+def test_timestep_diff(data, dt, eps=0.2):
         filename =  "test_dt=" + str(dt) + ".nc"
         filename_nc4 = filename.replace(".nc", "_nc4.nc")
         subprocess.call(["nccopy", "-k", "4", filename, filename_nc4])
@@ -82,6 +82,6 @@ def test_timestep_diff(data_all_timesteps, dt, eps=0.2):
 #sprawdzam, czy program rysujacy dziala
 # czy powinnam dodawac sprawdzanie stworzenia svg? wydaje mi sie, ze nic nie wnosi, ale moge dodac
 @pytest.mark.xfail #TODO
-def test_timestep_plot(data_all_timesteps):
+def test_timestep_plot(data):
 # zmienic plik gnuplota aby czytal tablice N i RH
     subprocess.check_call(["gnuplot", "test/plots/plot_timestep.gp"])
