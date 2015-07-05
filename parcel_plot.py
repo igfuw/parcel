@@ -14,6 +14,6 @@ def RH_plot(f_out):
     plt.figure(1, figsize=(6,6))
     ax = plt.subplot(1,1,1)
     ax.plot(RH, z, RH_max_l, z)
-    plt.show()
+    #plt.show()
 
     
