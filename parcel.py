@@ -28,7 +28,13 @@ _Chem_a_id = {
   "SO2_a"  : lgrngn.chem_species_t.SO2, 
   "H2O2_a" : lgrngn.chem_species_t.H2O2, 
   "O3_a"   : lgrngn.chem_species_t.O3,
-  "HSO3_a" : lgrngn.chem_species_t.HSO3 
+  "HSO3_a" : lgrngn.chem_species_t.HSO3,
+  "SO3_a"  : lgrngn.chem_species_t.SO3,
+  "HSO4_a" : lgrngn.chem_species_t.HSO4,
+  "SO4_a"  : lgrngn.chem_species_t.SO4,
+  "H"      : lgrngn.chem_species_t.H,
+  "OH"     : lgrngn.chem_species_t.OH,
+  "S_VI"   : lgrngn.chem_species_t.S_VI
 }
 
 # id_int   ...
@@ -58,6 +64,9 @@ def _micro_init(opts, state, info):
   opts_init.dry_distros = {opts["kappa"]:lognormal}
   opts_init.kernel = lgrngn.kernel_t.geometric #TODO: will not be needed soon (libcloud PR #89)
   opts_init.chem_rho = opts["chem_rho"]
+  opts_init.chem_dsl = opts["chem_dsl"]
+  opts_init.chem_dsc = opts["chem_dsc"]
+  opts_init.chem_rct = opts["chem_rct"]
 
   # switching off chemistry if all initial volume conc. equal zero
   opts_init.chem_switch = False
@@ -187,9 +196,10 @@ def _output_init(micro, opts):
            "p" : "Pa", "T" : "K", "RH"  : "1"
   }
 
-  for id_str in _Chem_g_id.iterkeys():
-    units[id_str] = "gas volume concentration (mole fraction) [1]"
-    units[id_str.replace('_g', '_a')] = "kg of chem species dissolved in cloud droplets (kg of dry air)^-1"
+  if micro.opts_init.chem_switch:
+    for id_str in _Chem_g_id.iterkeys():
+      units[id_str] = "gas volume concentration (mole fraction) [1]"
+      units[id_str.replace('_g', '_a')] = "kg of chem species dissolved in cloud droplets (kg of dry air)^-1"
 
   for name, unit in units.iteritems():
     fout.createVariable(name, 'd', ('t',))
@@ -222,9 +232,11 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   pprof="pprof_piecewise_const_rhod",
   outfreq=100, sd_conc=64., kappa=.5,
   mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
-  out_wet = ["radii:1e-9/1e-4/26/log/0", "chem:0/1/1/lin/HSO3_a,O3_a,H2O2_a,SO2_a"], 
+  out_wet = ["radii:1e-9/1e-4/26/log/0"], 
+  #out_wet = ["radii:1e-9/1e-4/26/log/0", "chem:0/1/1/lin/O3_a,H2O2_a,SO2_a,0,1,3"],
   SO2_g_0 = 200e-12, O3_g_0 = 50e-9, H2O2_g_0 = 500e-12,
-  chem_sys = 'closed', 
+  chem_sys = 'closed',
+  chem_dsl = True, chem_dsc = False, chem_rct = False, # TODO: should be in opts, TODO what if chem = false
   chem_rho = 1.8e-3
 ):
   """
