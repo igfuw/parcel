@@ -84,10 +84,10 @@ def _micro_step(micro, state, info, opts):
       tmp[id_int] = state[id_str]
     libopts.chem_gas = tmp
 
-  print "old rv = ", state["r_v"]
+  #print "old rv = ", state["r_v"]
   micro.step_sync(libopts, state["th_d"], state["r_v"], state["rhod"]) 
-  print "new rv = ", state["r_v"]
-  print " "
+  #print "new rv = ", state["r_v"]
+  #print " "
 
   micro.step_async(libopts)
   _stats(state, info) # give updated T needed for chemistry below
@@ -131,14 +131,20 @@ def _output_bins(fout, t, micro, opts):
 	fout.variables[dim+"_rl"][b] + fout.variables[dim+"_dr"][b]
       )
       for v in fout.variables.iterkeys():
-        print v # TODO ???
-        if v.startswith(dim+"_"): 
-          #TODO: chemia
-          rgxp = re.search('^'+dim+'_m(\d+)$', v)
-          if rgxp != None:
-            m = int(rgxp.groups()[0])
-            micro.diag_wet_mom(m)
-            fout.variables[dim+'_m'+str(m)][t, b] = np.frombuffer(micro.outbuf())
+        if v.startswith(dim+"_"):
+          match = re.search('^'+dim+'_(\w+)$', v).groups()[0]
+          if match in ['dr', 'rl']:
+            pass
+          elif match.startswith('m'):
+            # calculating moments (they all have to start with m)
+            mom = int(match[1:])
+            micro.diag_wet_mom(mom)
+            fout.variables[dim+'_'+match][t, b] = np.frombuffer(micro.outbuf())
+          else:
+            # calculate chemistry
+            micro.diag_chem(_Chem_a_id[match])
+            fout.variables[dim+'_'+match][t, b] = np.frombuffer(micro.outbuf())
+                      
 
 def _output_init(micro, opts):
   # file & dimensions
@@ -150,7 +156,7 @@ def _output_init(micro, opts):
     ) = [t(s) for t,s in zip((
       str    ,float     ,float     ,int    ,str  ,str
     ),re.search(
-      '^(\w+):([\d.e-]+)/([\d.e-]+)/([\d]+)/(\w+)/([\d,]+)$', 
+      '^(\w+):([\d.e-]+)/([\d.e-]+)/([\d]+)/(\w+)/([\d,\w]+)$', 
       e
     ).groups())]
     fout.createDimension(name, nbin) 
@@ -169,22 +175,21 @@ def _output_init(micro, opts):
     else:
       raise exception('scale type can be either log or lin')
     for m in moms.split(','):
-      #TODO
-      #if (m in _Chem_aq_id):
-      #	fout.createVariable(name+'_'+m, 'd', ('t',name))
-      #	fout.variables[name+'_m'+m].unit = 'kg of chem species dissolved in cloud droplets (kg of dry air)^-1'
-      #else
+      if (m in _Chem_a_id):
+      	fout.createVariable(name+'_'+m, 'd', ('t',name))
+      	fout.variables[name+'_'+m].unit = 'kg of chem species dissolved in cloud droplets (kg of dry air)^-1'
+      else:
         assert(str(int(m))==m)
 	fout.createVariable(name+'_m'+m, 'd', ('t',name))
 	fout.variables[name+'_m'+m].unit = 'm^'+m+' (kg of dry air)^-1'
   
-  units = {"z" : "m", "t" : "s", "r_v" : "kg/kg", "th_d" : "K", "rhod" : "kg/m3", 
-    "p" : "Pa", "T" : "K", "RH" : "1"
+  units = {"z" : "m",  "t" : "s", "r_v" : "kg/kg", "th_d" : "K", "rhod" : "kg/m3", 
+           "p" : "Pa", "T" : "K", "RH"  : "1"
   }
 
-  # TODO: 
-  # for id_str in _Chem_g_id.iterkeys():
-  #   units[id_str] = "gas volume concentration (mole fraction) [1]"
+  for id_str in _Chem_g_id.iterkeys():
+    units[id_str] = "gas volume concentration (mole fraction) [1]"
+    units[id_str.replace('_g', '_a')] = "kg of chem species dissolved in cloud droplets (kg of dry air)^-1"
 
   for name, unit in units.iteritems():
     fout.createVariable(name, 'd', ('t',))
@@ -218,8 +223,6 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   outfreq=100, sd_conc=64., kappa=.5,
   mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
   out_wet = ["radii:1e-9/1e-4/26/log/0", "chem:0/1/1/lin/HSO3_a,O3_a,H2O2_a,SO2_a"], 
-  #radii = 1e-6 * pow(10, -3 + np.arange(26) * .2), 
-  #SO2_g_0 = 0., O3_g_0 = 0., H2O2_g_0 = 0.,
   SO2_g_0 = 200e-12, O3_g_0 = 50e-9, H2O2_g_0 = 500e-12,
   chem_sys = 'closed', 
   chem_rho = 1.8e-3
@@ -278,7 +281,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
     # adding chem state vars
     if micro.opts_init.chem_switch:
       state.update({ "SO2_g" : SO2_g_0, "O3_g" : O3_g_0, "H2O2_g" : H2O2_g_0 })
-      state.update({ "SO2_a" : 0.,      "O3_a" : 0.,     "H2O2_a" : 0.      , "HSO3_a" : 0})
+      state.update({ "SO2_a" : 0.,      "O3_a" : 0.,     "H2O2_a" : 0.       })
 
     # t=0 : init & save
     _output(fout, opts, micro, state, 0)
