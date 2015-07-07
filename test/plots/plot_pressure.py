@@ -61,5 +61,5 @@ def main(dt=1):
         fnc[pprof] = netcdf.netcdf_file(outfile)
     plot_pressure_opt(fnc)
 
-
-main()
+if __name__ == '__main__':
+    main()

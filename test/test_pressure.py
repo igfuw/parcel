@@ -56,10 +56,7 @@ def test_pressure_diff(data, pprof):
         subprocess.call(["nccopy", "-k", "4", filename, filename_nc4])
         subprocess.check_call(["h5diff", "--delta=1e-18", os.path.join("test/refdata", filename_nc4), filename_nc4])
 
-#TODO  - nie dziala tak jak chce i nie mam pojecia czemu...
-#def test_pressure_plot(data):
-#    try:
-#    plot_pressure_opt(data)
-#    except  KeyError:
-        #pytest.fail("Unexpected MyError ..")
-#        pass
+
+def test_pressure_plot(data):
+    plot_pressure_opt(data)
+
