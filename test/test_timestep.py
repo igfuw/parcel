@@ -4,6 +4,7 @@ sys.path.insert(0, "./")
 from libcloudphxx import common
 from scipy.io import netcdf
 from parcel import parcel
+import numpy as np
 import pytest
 import os, glob
 import filecmp
@@ -22,8 +23,7 @@ def data(request):
     T_init  = 280.
     p_init  = 100000.
     r_init  = common.eps * RH_init * common.p_vs(T_init) / (p_init - RH_init * common.p_vs(T_init))
-
-    # lists to store RH_max and N at the end of the simulation from each test run    
+    # lists to store RH_max and N at the end of the simulation from each test run 
     RH_list = []
     N_list  = []
 
@@ -42,9 +42,7 @@ def data(request):
 
     # fixture moze zwrocic tylko jedna rzecz, weic wlozylam w slownik
     data = {"RH" : RH_list, "N" : N_list}
-
     print "TWORZE data"
-
     # to jest metoda zabijania tego co stworzylam w fixture (nie jest wymagana przez py.tes, ale rozumiem, ze chcemy)
     def removing_files():
         print "\n ZABIJAM data"
@@ -59,7 +57,7 @@ def test_timestep_eps(data, eps=0.2):
     # testing if the values of variables do not differ from ref. more than eps times
     for var in data.values():
         for val in var:
-            assert abs(val - var[0]) <= eps * var[0], "see figures...TODO" #dopisalabym sugestie, aby sprawdzic rysunek z plotu, jesli jest cos nie tak
+            assert np.isclose(val, var[0], atol=0, rtol=eps), "see figures...TODO" #dopisalabym sugestie, aby sprawdzic rysunek z plotu, jesli jest cos nie tak
  
 def test_timestep_conv(data, eps=0.05):
     # szczerze mowiac teraz juz nie pamietam co ma jak zbiegac...
@@ -68,8 +66,7 @@ def test_timestep_conv(data, eps=0.05):
 
 
 # sprawdzam dane ze stworzonymi przeze mnie danymi w katalogu refdata 
-# niespecjalnie wiem dlaczego h5diff daje mi "Some objects are not comparable", ale status jest 0, wiec jest ok...
-# zrobilam jednak dla kazdego dt osobno
+# nie radze sobie z h5diff, jak w mailu
 @pytest.mark.xfail #TODO
 @pytest.mark.parametrize("dt", Dt_list)
 def test_timestep_diff(data, dt, eps=0.2):

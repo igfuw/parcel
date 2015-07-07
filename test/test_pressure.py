@@ -6,6 +6,7 @@ sys.path.insert(0, "plots/comparison/")
 from scipy.io import netcdf
 from parcel import parcel
 from plot_pressure import plot_pressure_opt
+import numpy as np
 import pytest
 import pdb
 
@@ -37,15 +38,14 @@ def test_pressure_opt(data, pprof, eps=0.01):
 
     # the reference option
     pprof_ref = "pprof_piecewise_const_rhod"
-
     # chosing variables that will be tested
     variables = ["p", "th_d", "T", "rhod", "r_v"]
     
     # testing if the values of variables do not differ from ref. more than eps times
     for var in variables:
-        assert abs(data[pprof].variables[var][-1] - data[pprof_ref].variables[var][-1]) <= eps * data[pprof_ref].variables[var][-1]
+        assert np.isclose(data[pprof].variables[var][-1], data[pprof_ref].variables[var][-1], atol=0, rtol=eps)
     # testing maximum value of RH 
-    assert abs(data[pprof].variables["RH"][:].max() - data[pprof_ref].variables["RH"][:].max()) <= eps * data[pprof_ref].variables["RH"][:].max()
+    assert np.isclose(data[pprof].variables["RH"][:].max(), data[pprof_ref].variables["RH"][:].max(), atol=0, rtol=eps)
 
  
 @pytest.mark.xfail #TODO                                                  
