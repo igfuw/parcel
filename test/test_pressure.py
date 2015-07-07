@@ -2,7 +2,7 @@ import sys, glob, os
 import subprocess
 sys.path.insert(0, "../")
 sys.path.insert(0, "./")
-sys.path.insert(0, "test/plots")
+sys.path.insert(0, "plots/comparison/")
 from scipy.io import netcdf
 from parcel import parcel
 from plot_pressure import plot_pressure_opt
