@@ -1,6 +1,7 @@
 import sys
 sys.path.insert(0, "../")
 sys.path.insert(0, "./")
+sys.path.insert(0, "plots/one_simulat")
 import subprocess
 from scipy.io import netcdf
 from parcel import parcel
