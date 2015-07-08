@@ -69,8 +69,8 @@ def test_timestep_diff(data, dt, eps=0.2):
     f_test = netcdf.netcdf_file(filename, "r")
     f_ref  = netcdf.netcdf_file(os.path.join("test/refdata", filename), "r")
     for var in f_ref.variables:
-        assert np.isclose(f_ref.variables[var][:], f_test.variables[var][:], atol=1.e-6, rtol=0).all()
-
+         assert np.isclose(f_ref.variables[var][:], f_test.variables[var][:], atol=1.e-6, rtol=0).all(), "differs e.g. " + str(var)  
+        
 
 #sprawdzam, czy program rysujacy dziala
 # czy powinnam dodawac sprawdzanie stworzenia svg? wydaje mi sie, ze nic nie wnosi, ale moge dodac
