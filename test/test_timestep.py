@@ -59,11 +59,6 @@ def test_timestep_eps(data, eps=0.2):
         for val in var:
             assert np.isclose(val, var[0], atol=0, rtol=eps), "see figures...TODO" #dopisalabym sugestie, aby sprawdzic rysunek z plotu, jesli jest cos nie tak
  
-def test_timestep_conv(data, eps=0.05):
-    # szczerze mowiac teraz juz nie pamietam co ma jak zbiegac...
-    #RH ma byc jak najmniejsze? zgubilam sie
-    pass
-
 
 # sprawdzam dane ze stworzonymi przeze mnie danymi w katalogu refdata 
 # nie radze sobie z h5diff, jak w mailu
