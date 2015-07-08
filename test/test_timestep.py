@@ -29,7 +29,7 @@ def data(request):
 
     for dt in Dt_list:
         print "\nt time step", dt
-        outfile_nc = "test_dt=" + str(dt) + ".nc" 
+        outfile_nc = "timesteptest_dt=" + str(dt) + ".nc" 
         parcel(dt=dt, outfreq = 1,   outfile = outfile_nc,\
                 w = 1., T_0 = T_init, p_0 = p_init, r_0 = r_init, z_max = 20, \
                 mean_r = 5e-8, gstdev = 1.5, n_tot = 1e9, sd_conc = 1000.)
@@ -47,7 +47,7 @@ def data(request):
     def removing_files():
         print "\n ZABIJAM data"
         # cos mi * przy rm nie dzialala - TODO
-        for file in glob.glob("test_dt*"):
+        for file in glob.glob("timesteptest_dt*"):
             subprocess.call(["rm", file])
     request.addfinalizer(removing_files)
     return data
@@ -65,10 +65,11 @@ def test_timestep_eps(data, eps=0.2):
 @pytest.mark.xfail #TODO
 @pytest.mark.parametrize("dt", Dt_list)
 def test_timestep_diff(data, dt, eps=0.2):
-        filename =  "test_dt=" + str(dt) + ".nc"
-        filename_nc4 = filename.replace(".nc", "_nc4.nc")
-        subprocess.call(["nccopy", "-k", "4", filename, filename_nc4])
-        subprocess.check_call(["h5diff", "--delta=1e-18", os.path.join("test/refdata", filename_nc4), filename_nc4])
+    filename = "timesteptest_dt=" + str(dt) + ".nc"
+    f_test = netcdf.netcdf_file(filename, "r")
+    f_ref  = netcdf.netcdf_file(os.path.join("test/refdata", filename), "r")
+    for var in f_ref.variables:
+        assert np.isclose(f_ref.variables[var][:], f_test.variables[var][:], atol=1.e-8, rtol=0).all()
 
 
 #sprawdzam, czy program rysujacy dziala
