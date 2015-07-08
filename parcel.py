@@ -75,7 +75,7 @@ def _micro_init(opts, state, info):
   micro.init(state["th_d"], state["r_v"], state["rhod"])
   return micro
 
-def _micro_step(micro, state, info, opts):
+def _micro_step(micro, state, info, opts, it):
   libopts = lgrngn.opts_t()
   libopts.cond = True
   libopts.chem = micro.opts_init.chem_switch
@@ -91,7 +91,10 @@ def _micro_step(micro, state, info, opts):
     libopts.chem_gas = tmp
     libopts.chem_dsl = opts["chem_dsl"]
     libopts.chem_dsc = opts["chem_dsc"]
-    libopts.chem_rct = opts["chem_rct"]
+    if it < opts["chem_spn"]:
+        libopts.chem_rct = False
+    else:
+        libopts.chem_rct = opts["chem_rct"]
 
   #print "old rv = ", state["r_v"]
   micro.step_sync(libopts, state["th_d"], state["r_v"], state["rhod"]) 
@@ -236,7 +239,8 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   #out_wet = ["radii:1e-9/1e-4/26/log/0", "chem:0/1/1/lin/O3_a,H2O2_a,SO2_a,0,1,3"],
   SO2_g_0 = 200e-12, O3_g_0 = 50e-9, H2O2_g_0 = 500e-12,
   chem_sys = 'closed',
-  chem_dsl = False, chem_dsc = False, chem_rct = False, # TODO: should be in opts, TODO what if chem = false
+  chem_dsl = False, chem_dsc = False, chem_rct = False, #TODO what if chem = false
+  chem_spn = 1,
   chem_rho = 1.8e-3
 ):
   """
@@ -269,6 +273,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
     chem_dsl (Optional[bool]):    on/off for dissolving chem species into droplets
     chem_dsc (Optional[bool]):    on/off for dissociation of chem species in droplets
     chem_rct (Optional[bool]):    on/off for oxidation of S_IV to S_VI
+    chem_spn (Optional[int]):     number of spinup timesteps before enabling chemical reactions
     pprof   (Optional[string]):   method to calculate pressure profile used to calculate 
                                   dry air density that is used by the super-droplet scheme
                                   valid options are: pprof_const_th_rv, pprof_const_rhod, pprof_piecewise_const_rhod
@@ -343,7 +348,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
         )
 
       # microphysics
-      _micro_step(micro, state, info, opts)
+      _micro_step(micro, state, info, opts, it)
    
       # TODO: only if user wants to stop @ RH_max
       #if (state["RH"] < info["RH_max"]): break
