@@ -15,7 +15,7 @@ def test_chem_plot():
     O3_g_init   = 0.#50e-9
     H2O2_g_init = 500e-12
     outfreq = 1    
-    z_max = 305.
+    z_max = 250.
     dt = .1
     w  = 1.
 
@@ -25,7 +25,7 @@ def test_chem_plot():
     chem_spn = 10
 
     #spn_idx = int(math.ceil(float(chem_spn)/float(outfreq)))
-    spn_idx = 2940
+    spn_idx = 2000
     #spn_idx = 0
 
     out_bin_chem = ["radii:0/1/1/lin/wet/0,1,3", 

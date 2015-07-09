@@ -116,6 +116,7 @@ def _micro_step(micro, state, info, opts, it):
       
         # since p & rhod are the "new" ones, for consistency we also use new T (_stats called above)
         state[id_str] -= (new[0] - old) * state["rhod"][0] * common.R * state["T"][0] / _molar_mass[id_int] / state["p"]
+        assert state[id_str] >= 0
         state[id_str.replace('_g', '_a')] = new[0]
         #print "state[ ", id_str.replace('_g', '_a'), " ] = ", np.frombuffer(micro.outbuf())[0]
       elif opts['chem_sys'] == 'open':
@@ -377,7 +378,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
       # microphysics
       _micro_step(micro, state, info, opts, it)
       #if it > 2800 and it < 3050:
-      #    print it, opts["chem_sys"], state["H2O2_g"]  
+      #print it#, opts["chem_sys"], state["H2O2_g"]  
       # TODO: only if user wants to stop @ RH_max
       #if (state["RH"] < info["RH_max"]): break
  
