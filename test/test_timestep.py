@@ -62,14 +62,14 @@ def test_timestep_eps(data, eps=0.2):
 
 # sprawdzam dane ze stworzonymi przeze mnie danymi w katalogu refdata 
 # nie radze sobie z h5diff, jak w mailu
-@pytest.mark.xfail #TODO
+#@pytest.mark.xfail #TODO
 @pytest.mark.parametrize("dt", Dt_list)
 def test_timestep_diff(data, dt, eps=0.2):
     filename = "timesteptest_dt=" + str(dt) + ".nc"
     f_test = netcdf.netcdf_file(filename, "r")
     f_ref  = netcdf.netcdf_file(os.path.join("test/refdata", filename), "r")
     for var in f_ref.variables:
-         assert np.isclose(f_ref.variables[var][:], f_test.variables[var][:], atol=1.e-6, rtol=0).all(), "differs e.g. " + str(var)  
+         assert np.isclose(f_ref.variables[var][:], f_test.variables[var][:], atol=0, rtol=1.e-6).all(), "differs e.g. " + str(var)  
         
 
 def test_timestep_plot(data):
