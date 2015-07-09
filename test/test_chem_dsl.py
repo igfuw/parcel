@@ -20,7 +20,7 @@ def test_chem_dsl():
     parcel(dt = 1., z_max = z_max, outfreq = outfreq, SO2_g_0 = SO2_g_init, O3_g_0 = O3_g_init, H2O2_g_0 = H2O2_g_init,\
             chem_sys = 'open',   outfile="test_chem_dsl.nc",\
             chem_dsl = True, chem_dsc = False, chem_rct = False,\
-            out_wet = ["radii:0/1/1/lin/3", "chem:0/1/1/lin/O3_a,H2O2_a,SO2_a"],)
+            out_bin = ["radii:0/1/1/lin/wet/3", "chem:0/1/1/lin/wet/O3_a,H2O2_a,SO2_a"],)
 
     f = netcdf.netcdf_file("test_chem_dsl.nc",   "r")
 

@@ -138,19 +138,32 @@ def _output_bins(fout, t, micro, opts):
   for dim, nbin in fout.dimensions.iteritems():
     if (dim == 't'): continue
     for b in range(nbin):
-      micro.diag_wet_rng(
-	fout.variables[dim+"_rl"][b],
-	fout.variables[dim+"_rl"][b] + fout.variables[dim+"_dr"][b]
-      )
+      drwt = 'wet' if dim+"_r_wet" in fout.variables else 'dry'
+      if drwt == 'wet':
+	micro.diag_wet_rng(
+	  fout.variables[dim+"_r_wet"][b],
+	  fout.variables[dim+"_r_wet"][b] + fout.variables[dim+"_dr_wet"][b]
+	)
+      elif drwt == 'dry':
+	micro.diag_dry_rng(
+	  fout.variables[dim+"_r_dry"][b],
+	  fout.variables[dim+"_r_dry"][b] + fout.variables[dim+"_dr_dry"][b]
+	)
+      else: assert False
+       
       for v in fout.variables.iterkeys():
         if v.startswith(dim+"_"):
           match = re.search('^'+dim+'_(\w+)$', v).groups()[0]
-          if match in ['dr', 'rl']:
+          if match in ['dr_wet', 'r_wet', 'dr_dry', 'r_dry']:
             pass
           elif match.startswith('m'):
             # calculating moments (they all have to start with m)
             mom = int(match[1:])
-            micro.diag_wet_mom(mom)
+            if drwt == 'wet':
+	      micro.diag_wet_mom(mom)
+            elif drwt == 'dry':
+	      micro.diag_dry_mom(mom)
+            else: assert False
             fout.variables[dim+'_'+match][t, b] = np.frombuffer(micro.outbuf())
           else:
             # calculate chemistry
@@ -162,28 +175,40 @@ def _output_init(micro, opts):
   # file & dimensions
   fout = netcdf.netcdf_file(opts["outfile"], 'w')
   fout.createDimension('t', None)
-  for e in opts["out_wet"]:
+  for e in opts["out_bin"]:
     (
-      name   ,left      ,rght      ,nbin   ,lnli ,moms 
+      name   ,left      ,rght      ,nbin   ,lnli ,drwt  ,moms 
     ) = [t(s) for t,s in zip((
-      str    ,float     ,float     ,int    ,str  ,str
+      str    ,float     ,float     ,int    ,str  ,str   ,str
     ),re.search(
-      '^(\w+):([\d.e-]+)/([\d.e-]+)/([\d]+)/(\w+)/([\d,\w]+)$', 
+      '^(\w+):([\d.e-]+)/([\d.e-]+)/([\d]+)/(\w+)/(\w+)/([\d,\w]+)$', 
       e
     ).groups())]
+    assert '_' not in name
+    if drwt not in ['dry', 'wet']:
+      raise exception('radius type can be either dry or wet')
     fout.createDimension(name, nbin) 
-    fout.createVariable(name+'_rl', 'd', (name,))
-    fout.createVariable(name+'_dr', 'd', (name,))
+
+    tmp = name + '_r_' + drwt
+    fout.createVariable(tmp, 'd', (name,))
+    fout.variables[tmp].unit = "m"
+    fout.variables[tmp].description = "particle wet radius (left bin edge)"
+
+    tmp = name + '_dr_' + drwt
+    fout.createVariable(tmp, 'd', (name,))
+    fout.variables[tmp].unit = "m"
+    fout.variables[tmp].description = "bin width"
+    
     if lnli == 'log':
       from math import exp, log
       dlnr = (log(rght) - log(left)) / nbin
       allbins = np.exp(log(left) + np.arange(nbin+1) * dlnr)
-      fout.variables[name+'_rl'][:] = allbins[0:-1]
-      fout.variables[name+'_dr'][:] = allbins[1:] - allbins[0:-1]
+      fout.variables[name+'_r_'+drwt][:] = allbins[0:-1]
+      fout.variables[name+'_dr_'+drwt][:] = allbins[1:] - allbins[0:-1]
     elif lnli == 'lin':
       dr = (rght - left) / nbin
-      fout.variables[name+'_rl'][:] = left * np.arange(nbin) * dr
-      fout.variables[name+'_dr'][:] = dr
+      fout.variables[name+'_r_'+drwt][:] = left * np.arange(nbin) * dr
+      fout.variables[name+'_dr_'+drwt][:] = dr
     else:
       raise exception('scale type can be either log or lin')
     for m in moms.split(','):
@@ -235,13 +260,12 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   pprof="pprof_piecewise_const_rhod",
   outfreq=100, sd_conc=64., kappa=.5,
   mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
-  out_wet = ["radii:1e-9/1e-4/26/log/0"], 
-  #out_wet = ["radii:1e-9/1e-4/26/log/0", "chem:0/1/1/lin/O3_a,H2O2_a,SO2_a,0,1,3"],
+  out_bin = ["radii:1e-9/1e-4/26/log/wet/0"], 
   SO2_g_0 = 200e-12, O3_g_0 = 50e-9, H2O2_g_0 = 500e-12,
   chem_sys = 'closed',
   chem_dsl = False, chem_dsc = False, chem_rct = False, #TODO what if chem = false
   chem_spn = 1,
-  chem_rho = 1.8e-3
+  chem_rho = 1.8e3
 ):
   """
   Args:
@@ -259,11 +283,14 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
     gstdev  (Optional[float]):    lognormal distribution geometric standard deviation [1]
     n_tot   (Optional[float]):    lognormal distribution total concentration under standard 
                                   conditions (T=20C, p=1013.25 hPa, rv=0) [m-3]
-    out_wet (Optional[str list]): array of strings defining spectrum diagnostics, e.g.:
-                                  ["radii:0/1e-4/26/log/0","cloud:.5e-6/25e-6/49/lin/0,1,2,3"]
+    out_bin (Optional[str list]): array of strings defining spectrum diagnostics, e.g.:
+                                  ["radii:0/1e-4/26/log/dry/0","cloud:.5e-6/25e-6/49/lin/wet/0,1,2,3"]
                                   will generate five output spectra:
-                                  - 0-th spectrum moment for 26 bins spaced logarithmically between 0 and 1e-4 m
+                                  - 0-th spectrum moment for 26 bins spaced logarithmically between 0 and 1e-4 m 
+                                    for dry radius
                                   - 0,1,2 & 3-rd moments for 49 bins spaced linearly between .5e-6 and 25e-6
+                                    for wet radius
+                                    (TODO - add chemistry output description)
     SO2_g_0  (Optional[float]):   initial SO2  gas volume concentration (mole fraction) [1]
     O3_g_0   (Optional[float]):   initial O3   gas volume concentration (mole fraction) [1]
     H2O2_g_0 (Optional[float]):   initial H2O2 gas volume concentration (mole fraction) [1]
@@ -349,7 +376,8 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
 
       # microphysics
       _micro_step(micro, state, info, opts, it)
-   
+      #if it > 2800 and it < 3050:
+      #    print it, opts["chem_sys"], state["H2O2_g"]  
       # TODO: only if user wants to stop @ RH_max
       #if (state["RH"] < info["RH_max"]): break
  

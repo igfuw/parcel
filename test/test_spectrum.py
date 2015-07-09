@@ -24,7 +24,8 @@ def test_spectrum_plot():
     ymax = 1e4
     ymin = 1e-1
 
-    r = f_out.radii * 1e6
+    r = f_out.variables["radii_r_wet"][:] * 1e6
+    #TODO - add test if it is == to dr in netcdf
     dr = np.empty(r.shape) 
     dr[0] = r[0] - 0
     dr[1:] = (r[1:] - r[0:-1]) * 1e6
@@ -45,7 +46,7 @@ def test_spectrum_plot():
 
         g('set xlabel "particle radius [μm]" ')
 
-        n = f_out.variables['conc'][t,:] / dr
+        n = f_out.variables['radii_m0'][t,:] / dr
        
         g.plot(Gnuplot.Data(r, n, with_='fsteps')) #... _bins
 
