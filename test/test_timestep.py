@@ -69,7 +69,7 @@ def test_timestep_diff(data, dt, eps=0.2):
     f_test = netcdf.netcdf_file(filename, "r")
     f_ref  = netcdf.netcdf_file(os.path.join("test/refdata", filename), "r")
     for var in f_ref.variables:
-         assert np.isclose(f_ref.variables[var][:], f_test.variables[var][:], atol=0, rtol=1.e-7).all(), "differs e.g. " + str(var) + "; max(absolute diff) = " + str(abs(f_ref.variables[var][:] - f_test.variables[var][:]).max()) + "; max(absolute ref) = " + str(f_ref.variables[var][:].max())   
+         assert np.isclose(f_test.variables[var][:], f_ref.variables[var][:], atol=0, rtol=1.e-6).all(), "differs e.g. " + str(var) + "; max(ref diff) = " + str(np.where(f_ref.variables[var][:] != 0., abs((f_test.variables[var][:]-f_ref.variables[var][:])/f_ref.variables[var][:]), 0.).max())
         
 
 def test_timestep_plot(data):
