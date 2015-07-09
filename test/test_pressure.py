@@ -18,14 +18,14 @@ def data(request):
     data = {}
     data["dt"] = request.param
     for pprof in Pprof_list:
-        filename = "test_" + pprof + str(request.param) + ".nc"
+        filename = "profopttest_" + pprof + str(request.param) + ".nc"
         parcel(dt=request.param, outfreq = 10, pprof = pprof, outfile=filename)
         data[pprof] = netcdf.netcdf_file(filename)
 
     def removing_files():
         print "\n ZABIJAM data, dt = ", request.param
         # cos mi * przy rm nie dzialala - TODO                          
-        for file in glob.glob("test_pprof*"):
+        for file in glob.glob("profopttest_pprof*"):
             subprocess.call(["rm", file])
     request.addfinalizer(removing_files)
     return data
@@ -51,10 +51,10 @@ def test_pressure_opt(data, pprof, eps=0.01):
 @pytest.mark.xfail #TODO                                                  
 @pytest.mark.parametrize("pprof", Pprof_list)
 def test_pressure_diff(data, pprof):
-        filename =  "test_"+pprof+str(data["dt"])+".nc"
-        filename_nc4 = filename.replace(".nc", "_nc4.nc")
-        subprocess.call(["nccopy", "-k", "4", filename, filename_nc4])
-        subprocess.check_call(["h5diff", "--delta=1e-18", os.path.join("test/refdata", filename_nc4), filename_nc4])
+    f_ref  = netcdf.netcdf_file(os.path.join("test/refdata", 
+                               "profopttest_" + pprof + str(data["dt"]) + ".nc"), "r")
+    for var in f_ref.variables:
+        assert np.isclose(f_ref.variables[var][:], data[pprof].variables[var][:], atol=1.e-5, rtol=0).all()
 
 
 def test_pressure_plot(data):
