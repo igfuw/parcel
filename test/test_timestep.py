@@ -1,9 +1,11 @@
 import sys
 sys.path.insert(0, "../")
 sys.path.insert(0, "./")
+sys.path.insert(0, "plots/comparison/")
 from libcloudphxx import common
 from scipy.io import netcdf
 from parcel import parcel
+from timestep_plot import timestep_plot
 import numpy as np
 import pytest
 import os, glob
@@ -43,7 +45,7 @@ def data(request):
         print "\nt time step", dt
         outfile_nc = "timesteptest_dt=" + str(dt) + ".nc" 
         parcel(dt=dt, outfreq = int(100/dt),   outfile = outfile_nc,\
-                w = 1., T_0 = T_init, p_0 = p_init, r_0 = r_init, z_max = 20, \
+                w = 1., T_0 = T_init, p_0 = p_init, r_0 = r_init, z_max = 200, \
                 mean_r = 5e-8, gstdev = 1.5, n_tot = 1e9, sd_conc = 1000., \
                 radii = 1e-6 * pow(10, -3 + np.arange(26) * .2)
               )
@@ -54,7 +56,7 @@ def data(request):
         RH_list.append((RH_max - 1)*100)  # [%]                                      
         N_list.append(N_end / 1e6)        # [1/mg]           
 
-    data = {"RH" : RH_list, "N" : N_list}
+    data = {"RH" : RH_list, "N" : N_list, "dt" : Dt_list}
 
     # removing all netcdf files after all tests
     def removing_files():
@@ -64,16 +66,18 @@ def data(request):
     return data
 
 
-def test_timestep_eps(data, eps=0.2):
+def test_timestep_eps(data, eps=0.01):
     """
     checking if the results obtained from simulations with different timesteps   
     do not differ from the referential one (the one with the smallest timestep) 
     more than eps times 
+    (Unitill we think of a better convergence test, the check is done for the 
+    smallest 7 of timesteps. This is done in order to avoid too big epsilon.
     """
-    for var in data.values():
-        for val in var:
-            assert np.isclose(val, var[0], atol=0, rtol=eps), "see figures...TODO Ania" 
- 
+    for var, val in data.iteritems():
+        if var in ["RH", "N"]:
+            for idx in range(7):
+                assert np.isclose(val[idx], val[0], atol=0, rtol=eps), str(val[idx]) + str(val[0]) 
 
 
 @pytest.mark.parametrize("dt", Dt_list_diff)
@@ -91,4 +95,4 @@ def test_timestep_diff(data, dt, eps=1e-14):
         
 
 def test_timestep_plot(data):
-    pass # TODO - Ania
+    timestep_plot(data, output_folder="plots/outputs")
