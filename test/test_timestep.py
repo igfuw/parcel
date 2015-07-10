@@ -81,7 +81,7 @@ def test_timestep_eps(data, eps=0.01):
 
 
 @pytest.mark.parametrize("dt", Dt_list_diff)
-def test_timestep_diff(data, dt, eps=1e-14):
+def test_timestep_diff(data, dt, eps=2e-4):
     """
     checking if the results are close to the referential ones 
     (stored in refdata folder)
