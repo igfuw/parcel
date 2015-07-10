@@ -11,12 +11,22 @@ import filecmp
 import subprocess
 import pdb
 
+"""
+ This set of test checks how the timestep of the simulation affects 
+the maximum supersaturation (RH) and the concentration of the activated 
+particles (N).                                      
+ The expected result is to see nearly constant RH and N for small timesteps 
+(.001 - .03 for this setup) and then decrease of RH and increase of N 
+for bigger timesteps. 
+"""
 
-# chwilowo tylko, aby szybko sie liczylo   
+# TODO - using full list
 Dt_list = [1e-3, 1e-2, 1e-1, 1.]
 #Dt_list = [1e-3, 1.5e-3, 2e-3, 3e-3, 4e-3, 8e-3, 1e-2, 2e-2, 4e-2, 8e-2, 1e-1, 2e-1, 4e-1, 8e-1, 1.] 
 
-# tu korzystam wlasnie z tych wspomnianych fixture, jesli scope z domyslnego(f-cja) zmienie na module, to wykona sie tylko raz
+# runs all simulations 
+# returns data with values of RH_max and N at the end of simulations
+# keep the netcdf alive for all tests
 @pytest.fixture(scope="module")
 def data(request):
     # initial values                                        
@@ -41,31 +51,36 @@ def data(request):
         RH_list.append((RH_max - 1)*100)  # [%]                                      
         N_list.append(N_end / 1e6)        # [1/mg]           
 
-    # fixture moze zwrocic tylko jedna rzecz, weic wlozylam w slownik
     data = {"RH" : RH_list, "N" : N_list}
     print "TWORZE data"
-    # to jest metoda zabijania tego co stworzylam w fixture (nie jest wymagana przez py.tes, ale rozumiem, ze chcemy)
+    # removing all netcdf files after all tests
     def removing_files():
-        print "\n ZABIJAM data"
-        # cos mi * przy rm nie dzialala - TODO
-        for file in glob.glob("timesteptest_dt*"):
+         for file in glob.glob("timesteptest_dt*"):
             subprocess.call(["rm", file])
     request.addfinalizer(removing_files)
     return data
 
-# jesli dobrze rozumiem, to ten chyba test wypadnie, jak bedzie zbieznosc, tak? 
+
 def test_timestep_eps(data, eps=0.2):
-    # testing if the values of variables do not differ from ref. more than eps times
+    """
+    checking if the results obtained from simulations with different timesteps   
+    do not differ from the referential one (the one with the smallest timestep) 
+    more than eps times 
+    """
     for var in data.values():
         for val in var:
-            assert np.isclose(val, var[0], atol=0, rtol=eps), "see figures...TODO" #dopisalabym sugestie, aby sprawdzic rysunek z plotu, jesli jest cos nie tak
+            assert np.isclose(val, var[0], atol=0, rtol=eps), "see figures...TODO Ania" 
  
 
-# sprawdzam dane ze stworzonymi przeze mnie danymi w katalogu refdata 
-# nie radze sobie z h5diff, jak w mailu
+
 @pytest.mark.xfail #TODO
 @pytest.mark.parametrize("dt", Dt_list)
 def test_timestep_diff(data, dt, eps=0.2):
+    """
+    checking if the results are close to the referential ones 
+    (stored in refdata folder)
+    """
+
     filename = "timesteptest_dt=" + str(dt) + ".nc"
     f_test = netcdf.netcdf_file(filename, "r")
     f_ref  = netcdf.netcdf_file(os.path.join("test/refdata", filename), "r")

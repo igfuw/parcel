@@ -8,6 +8,9 @@ from parcel import parcel
 from parcel_plot import RH_plot
 import pytest
 
+"""
+sets of test checking if ploting functions work correctly
+"""
 
 @pytest.fixture(scope="module")
 def data(request):

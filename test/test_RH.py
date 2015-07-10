@@ -7,6 +7,9 @@ import pytest
 
 @pytest.mark.parametrize("kappa", [0.1, 0.5, 0.8])
 def test_RH_gt1(tmpdir, kappa):
+    """ checking if RH at the end of simulation is close to 1 
+    (i.e. cloud is created) 
+    """
     str_f = str(tmpdir.join("test_pcl.nc"))
     pc.parcel(outfile=str_f,  outfreq=1, kappa=kappa)
     f_out = netcdf.netcdf_file(str_f, "r")
