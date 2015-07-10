@@ -58,5 +58,5 @@ def test_pressure_diff(data, pprof):
 
 
 def test_pressure_plot(data):
-    plot_pressure_opt(data)
+    plot_pressure_opt(data, output_folder="plots/outputs")
 

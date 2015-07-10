@@ -1,4 +1,4 @@
-import sys
+import sys, os, subprocess
 sys.path.insert(0, "../")
 sys.path.insert(0, "./")
 from libcloudphxx import common
@@ -12,7 +12,7 @@ import numpy as np
 
 pprof_list = ["pprof_const_rhod", "pprof_const_th_rv", "pprof_piecewise_const_rhod"]
 
-def plot_pressure_opt(fnc):
+def plot_pressure_opt(fnc, output_folder="plots/outputs"):
     # ... plotting the results ...
     plt.figure(1, figsize=(18,10))
     plots    = []
@@ -50,7 +50,9 @@ def plot_pressure_opt(fnc):
         )
         legend_l.append(pprof)
     plots[0].legend(legend_l, loc=1, prop = FontProperties(size=10))
-    plt.savefig("plot_pressure.svg")
+    if not os.path.exists(output_folder):
+        subprocess.call(["mkdir", output_folder])
+    plt.savefig(os.path.join(output_folder, "plot_pressure.svg"))
 
 def main(dt=1):
     # running parcel model for different ways to solve for pressure  ...            
