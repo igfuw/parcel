@@ -12,17 +12,18 @@ import subprocess
 import pdb
 
 """
- This set of test checks how the timestep of the simulation affects 
+This set of tests checks how the timestep of the simulation affects 
 the maximum supersaturation (RH) and the concentration of the activated 
 particles (N).                                      
- The expected result is to see nearly constant RH and N for small timesteps 
+The expected result is to see nearly constant RH and N for small timesteps 
 (.001 - .03 for this setup) and then decrease of RH and increase of N 
 for bigger timesteps. 
 """
 
-# TODO - using full list
-Dt_list = [1e-3, 1e-2, 1e-1, 1.]
-#Dt_list = [1e-3, 1.5e-3, 2e-3, 3e-3, 4e-3, 8e-3, 1e-2, 2e-2, 4e-2, 8e-2, 1e-1, 2e-1, 4e-1, 8e-1, 1.] 
+# list of times for test_timestep_diff 
+Dt_list_diff = [1e-3, 2e-3, 4e-3, 8e-3, 1e-2, 2e-2, 4e-2, 1e-1, 2e-1, 1.]
+# list of times for test_timestep_eps 
+Dt_list = Dt_list_diff + [1.5e-3, 3e-3, 4e-2, 8e-2, 4e-1, 8e-1] 
 
 # runs all simulations 
 # returns data with values of RH_max and N at the end of simulations
@@ -41,18 +42,20 @@ def data(request):
     for dt in Dt_list:
         print "\nt time step", dt
         outfile_nc = "timesteptest_dt=" + str(dt) + ".nc" 
-        parcel(dt=dt, outfreq = 1,   outfile = outfile_nc,\
+        parcel(dt=dt, outfreq = int(100/dt),   outfile = outfile_nc,\
                 w = 1., T_0 = T_init, p_0 = p_init, r_0 = r_init, z_max = 20, \
-                mean_r = 5e-8, gstdev = 1.5, n_tot = 1e9, sd_conc = 1000.)
+                mean_r = 5e-8, gstdev = 1.5, n_tot = 1e9, sd_conc = 1000., \
+                radii = 1e-6 * pow(10, -3 + np.arange(26) * .2)
+              )
 
         f_out  = netcdf.netcdf_file(outfile_nc, "r")
-        RH_max = f_out.variables["RH"][:].max()
+        RH_max = f_out.RH_max
         N_end  = sum(f_out.variables["conc"][-1, -9:]) # concentration of drops > 1e-6 m                                                                                  
         RH_list.append((RH_max - 1)*100)  # [%]                                      
         N_list.append(N_end / 1e6)        # [1/mg]           
 
     data = {"RH" : RH_list, "N" : N_list}
-    print "TWORZE data"
+
     # removing all netcdf files after all tests
     def removing_files():
          for file in glob.glob("timesteptest_dt*"):
@@ -73,9 +76,8 @@ def test_timestep_eps(data, eps=0.2):
  
 
 
-#@pytest.mark.xfail #TODO
-@pytest.mark.parametrize("dt", Dt_list)
-def test_timestep_diff(data, dt, eps=0.2):
+@pytest.mark.parametrize("dt", Dt_list_diff)
+def test_timestep_diff(data, dt, eps=1e-6):
     """
     checking if the results are close to the referential ones 
     (stored in refdata folder)
@@ -84,8 +86,8 @@ def test_timestep_diff(data, dt, eps=0.2):
     filename = "timesteptest_dt=" + str(dt) + ".nc"
     f_test = netcdf.netcdf_file(filename, "r")
     f_ref  = netcdf.netcdf_file(os.path.join("test/refdata", filename), "r")
-    for var in f_ref.variables:
-         assert np.isclose(f_test.variables[var][:], f_ref.variables[var][:], atol=0, rtol=1.e-4).all(), "differs e.g. " + str(var) + "; max(ref diff) = " + str(np.where(f_ref.variables[var][:] != 0., abs((f_test.variables[var][:]-f_ref.variables[var][:])/f_ref.variables[var][:]), 0.).max())
+    for var in ["t", "z", "th_d", "T", "p", "r_v", "rhod", "RH"]:
+         assert np.isclose(f_test.variables[var][:], f_ref.variables[var][:], atol=0, rtol=eps).all(), "differs e.g. " + str(var) + "; max(ref diff) = " + str(np.where(f_ref.variables[var][:] != 0., abs((f_test.variables[var][:]-f_ref.variables[var][:])/f_ref.variables[var][:]), 0.).max())
         
 
 def test_timestep_plot(data):
