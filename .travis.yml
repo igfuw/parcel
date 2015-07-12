@@ -26,6 +26,4 @@ install:
 
 script:
   - cd parcel
-  - python test/test_RH.py
-  - python test/test_smax.py
   - py.test
