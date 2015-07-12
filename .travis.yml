@@ -11,7 +11,7 @@ before_install:
 
 install:
   - sudo apt-get install libpango-1.0-0 libpangocairo-1.0-0	
-  - sudo apt-get install --no-install-recommends g++ gnuplot-nox python-tk python-matplotlib python-scipy python-pytest libblitz0-dev cmake libboost-python-dev libthrust-dev 
+  - sudo apt-get install --no-install-recommends g++ gnuplot-nox python-gnuplot python-tk python-matplotlib python-scipy python-pytest libblitz0-dev cmake libboost-python-dev libthrust-dev 
 
   # libcloudphxx
   - cd ..
