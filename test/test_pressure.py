@@ -53,9 +53,8 @@ def test_pressure_opt(data, pprof, eps=0.01):
     assert np.isclose(data[pprof].variables["RH"][:].max(), data[pprof_ref].variables["RH"][:].max(), atol=0, rtol=eps)
 
  
-@pytest.mark.xfail #TODO                                                  
 @pytest.mark.parametrize("pprof", Pprof_list)
-def test_pressure_diff(data, pprof, eps=1.e-6):
+def test_pressure_diff(data, pprof, eps=1.e-10):
     """     
     checking if the results for all pprof option are close to the referential ones
     (stored in refdata folder)                                             
