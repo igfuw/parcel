@@ -19,7 +19,7 @@ Pprof_list = ["pprof_const_rhod", "pprof_const_th_rv",  "pprof_piecewise_const_r
 
 # runs all simulations 
 # returns opened netcdfile files
-@pytest.fixture(scope="module", params = [0.1, 1, 10])
+@pytest.fixture(scope="module", params = [0.1, 1])
 def data(request):
     data = {}
     data["dt"] = request.param
@@ -55,7 +55,7 @@ def test_pressure_opt(data, pprof, eps=0.01):
  
 @pytest.mark.xfail #TODO                                                  
 @pytest.mark.parametrize("pprof", Pprof_list)
-def test_pressure_diff(data, pprof):
+def test_pressure_diff(data, pprof, eps=1.e-6):
     """     
     checking if the results for all pprof option are close to the referential ones
     (stored in refdata folder)                                             
@@ -63,8 +63,8 @@ def test_pressure_diff(data, pprof):
 
     f_ref  = netcdf.netcdf_file(os.path.join("test/refdata", 
                              "profopttest_" + pprof + str(data["dt"]) + ".nc"), "r")
-    for var in f_ref.variables:
-        assert np.isclose(f_ref.variables[var][:], data[pprof].variables[var][:], atol=1.e-5, rtol=0).all()
+    for var in ["t", "z", "th_d", "T", "p", "r_v", "rhod", "RH"]:
+        assert np.isclose(f_ref.variables[var][:], data[pprof].variables[var][:], atol=0, rtol=eps).all(), "differs e.g. " + str(var) + "; max(ref diff) = " + str(np.where(f_ref.variables[var][:] != 0., abs((f_test.variables[var][:]-f_ref.variables[var][:])/f_ref.variables[var][:]), 0.).max())
 
 
 def test_pressure_plot(data):
