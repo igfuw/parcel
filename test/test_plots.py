@@ -1,4 +1,4 @@
-import sys
+import sys, os
 sys.path.insert(0, "../")
 sys.path.insert(0, "./")
 sys.path.insert(0, "plots/one_simulat")
@@ -6,7 +6,9 @@ import subprocess
 from scipy.io import netcdf
 from parcel import parcel
 from parcel_plot import RH_plot
+from profiles_plot import plot_profiles
 import pytest
+import pdb
 
 """
 sets of test checking if ploting functions work correctly
@@ -22,9 +24,11 @@ def data(request):
     request.addfinalizer(removing_files)
     return fnc
 
+
 def test_RH_plot(data):
     RH_plot(data)
 
 
-# TODO adding other plots for one simulations as pytest.params
+def test_profiles(data):
+    plot_profiles(data)
 
