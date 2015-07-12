@@ -54,7 +54,7 @@ def test_pressure_opt(data, pprof, eps=0.01):
 
  
 @pytest.mark.parametrize("pprof", Pprof_list)
-def test_pressure_diff(data, pprof, eps=1.e-10):
+def test_pressure_diff(data, pprof, eps=1.e-8):
     """     
     checking if the results for all pprof option are close to the referential ones
     (stored in refdata folder)                                             
