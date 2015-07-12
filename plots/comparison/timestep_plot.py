@@ -6,9 +6,9 @@ from libcloudphxx import common
 from scipy.io import netcdf
 from parcel import parcel
 import numpy as np
-import Gnuplot
 
 def timestep_plot(data, output_folder="../outputs"):
+    import Gnuplot
 
     RH_list = data['RH']
     N_list  = data['N']
@@ -25,10 +25,7 @@ def timestep_plot(data, output_folder="../outputs"):
     g('set ylabel "koncentracja koncowa [1/mg]"')
     g.plot(Gnuplot.Data(dt_list, N_list))
 
-def main():
-
-    Dt_list_diff = [1e-3, 2e-3, 4e-3, 8e-3, 1e-2, 2e-2, 4e-2, 1e-1, 2e-1, 1.]
-    Dt_list = Dt_list_diff + [1.5e-3, 3e-3, 4e-2, 8e-2, 4e-1, 8e-1]
+def main(dt_list = [1e-3, 1.5e-3, 2e-3, 3e-3, 4e-3, 8e-3, 1e-2, 2e-2, 4e-2, 8e-2, 1e-1, 2e-1,  4e-1, 8e-1, 1.]):
 
     # initial values
     z_max  = 200.
@@ -42,7 +39,7 @@ def main():
     RH_list = []
     N_list  = []
 
-    for dt in Dt_list:
+    for dt in dt_list:
         print "\nt time step", dt
         outfile_nc = "timesteptest_dt=" + str(dt) + ".nc"
         parcel(dt=dt, outfreq = int(z_max/w/dt),   outfile = outfile_nc,\
@@ -59,7 +56,7 @@ def main():
 
         subprocess.call(["rm", outfile_nc])          
 
-    data = {"RH" : RH_list, "N" : N_list, "dt" : Dt_list}
+    data = {"RH" : RH_list, "N" : N_list, "dt" : dt_list}
     timestep_plot(data)
 
 if __name__ == '__main__':
