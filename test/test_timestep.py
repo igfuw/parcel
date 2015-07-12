@@ -23,9 +23,9 @@ for bigger timesteps.
 """
 
 # list of times for test_timestep_diff 
-Dt_list_diff = [1e-3, 4e-3, 1e-2, 4e-2, 1e-1, 2e-1, 1.]
+Dt_list_diff = [1e-3, 2e-3, 4e-3, 8e-3, 1e-2, 2e-2, 4e-2, 1e-1, 2e-1, 1.]
 # list of times for test_timestep_eps 
-Dt_list = Dt_list_diff + [1.5e-3, 2e-3, 3e-3, 8e-3, 2e-2, 4e-2, 8e-2, 4e-1, 8e-1] 
+Dt_list = Dt_list_diff #+ [1.5e-3, 3e-3, 4e-2, 8e-2, 4e-1, 8e-1]
 
 # runs all simulations 
 # returns data with values of RH_max and N at the end of simulations
