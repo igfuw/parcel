@@ -1,5 +1,5 @@
 import sys, os, subprocess
-sys.path.insert(0, "../")
+sys.path.insert(0, "../../")
 sys.path.insert(0, "./")
 from libcloudphxx import common
 import matplotlib
@@ -10,8 +10,7 @@ from scipy.io import netcdf
 from parcel import parcel
 import numpy as np
 
-
-def plot_profiles(fnc, output_folder="plots/outputs"):
+def plot_profiles(fnc, output_folder="../outputs"):
     # ... plotting the results ...
     plt.figure(1, figsize=(18,10))
     plots    = []
@@ -46,12 +45,13 @@ def plot_profiles(fnc, output_folder="plots/outputs"):
         subprocess.call(["mkdir", output_folder])
     plt.savefig(os.path.join(output_folder, "plot_profiles_onesim.svg"))
 
+
 def main(dt=1):
     # running parcel model for different ways to solve for pressure  ...            
     outfile = "onesim_plot.nc"
     parcel(dt=dt, outfreq = 10, outfile=outfile)
     fnc = netcdf.netcdf_file(outfile)
-    plot_pressure_opt(fnc)
+    plot_profiles(fnc)
     fnc.close()
     subprocess.call(["rm", outfile])
 
