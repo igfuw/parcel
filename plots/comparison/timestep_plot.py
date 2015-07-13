@@ -2,10 +2,11 @@ import sys, os, subprocess
 sys.path.insert(0, "../")
 sys.path.insert(0, "./")
 sys.path.insert(0, "../../")
-from libcloudphxx import common
-from scipy.io import netcdf
-from parcel import parcel
 import numpy as np
+from scipy.io import netcdf
+
+from libcloudphxx import common
+from parcel import parcel
 
 def timestep_plot(data, output_folder="../outputs"):
     import Gnuplot

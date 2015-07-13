@@ -1,18 +1,21 @@
 import sys, os, subprocess
 sys.path.insert(0, "../")
 sys.path.insert(0, "./")
-from libcloudphxx import common
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-from matplotlib.font_manager import FontProperties
+sys.path.insert(0, "../../")
 from scipy.io import netcdf
-from parcel import parcel
 import numpy as np
+
+from libcloudphxx import common
+from parcel import parcel
 
 pprof_list = ["pprof_const_rhod", "pprof_const_th_rv", "pprof_piecewise_const_rhod"]
 
-def plot_pressure_opt(fnc, output_folder="plots/outputs"):
+def plot_pressure_opt(fnc, output_folder="../outputs"):
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    from matplotlib.font_manager import FontProperties
+
     # ... plotting the results ...
     plt.figure(1, figsize=(18,10))
     plots    = []
@@ -54,14 +57,15 @@ def plot_pressure_opt(fnc, output_folder="plots/outputs"):
         subprocess.call(["mkdir", output_folder])
     plt.savefig(os.path.join(output_folder, "plot_pressure.svg"))
 
-def main(dt=1):
+def main(dt=0.1):
     # running parcel model for different ways to solve for pressure  ...            
     fnc = {}
     for pprof in pprof_list:
         outfile = "test_" + pprof + ".nc"
-        parcel(dt=dt, outfreq = 10, pprof = pprof, outfile=outfile)
+        parcel(dt=dt, outfreq = 100, pprof = pprof, outfile=outfile)
         fnc[pprof] = netcdf.netcdf_file(outfile)
     plot_pressure_opt(fnc)
+    subprocess.call(["rm", outfile])
 
 if __name__ == '__main__':
     main()

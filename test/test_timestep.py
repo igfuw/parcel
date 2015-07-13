@@ -2,14 +2,15 @@ import sys
 sys.path.insert(0, "../")
 sys.path.insert(0, "./")
 sys.path.insert(0, "plots/comparison/")
+
 from libcloudphxx import common
-from scipy.io import netcdf
 from parcel import parcel
 from timestep_plot import timestep_plot
+
+from scipy.io import netcdf
 import numpy as np
 import pytest
 import os, glob
-import filecmp
 import subprocess
 import pdb
 
@@ -22,10 +23,7 @@ The expected result is to see nearly constant RH and N for small timesteps
 for bigger timesteps. 
 """
 
-# list of times for test_timestep_diff 
-Dt_list_diff = [1e-3, 2e-3, 4e-3, 8e-3, 1e-2, 2e-2, 4e-2, 1e-1, 2e-1, 1.]
-# list of times for test_timestep_eps 
-Dt_list = Dt_list_diff #+ [1.5e-3, 3e-3, 4e-2, 8e-2, 4e-1, 8e-1]
+Dt_list = [1e-3, 2e-3, 4e-3, 8e-3, 1e-2, 2e-2, 4e-2, 1e-1, 2e-1, 1.]
 
 # runs all simulations 
 # returns data with values of RH_max and N at the end of simulations
@@ -66,21 +64,25 @@ def data(request):
     return data
 
 
-def test_timestep_eps(data, eps=0.01):
+def test_timestep_eps(data, eps=0.01, dt_lim=0.01):
     """
     checking if the results obtained from simulations with different timesteps   
     do not differ from the referential one (the one with the smallest timestep) 
     more than eps times 
     (Unitill we think of a better convergence test, the check is done for the 
-    smallest 7 of timesteps. This is done in order to avoid too big epsilon.
+    smallest timesteps. This is done in order to avoid too big epsilon.
     """
     for var, val in data.iteritems():
+        # check for RH and N
         if var in ["RH", "N"]:
-            for idx in range(7):
-                assert np.isclose(val[idx], val[0], atol=0, rtol=eps), str(val[idx]) + str(val[0]) 
+            # for simulations with small timesteps
+            for idx in range(len(data["dt"])):
+                if data["dt"][idx] < dt_lim: 
+                    # assert that the results are close to the one with the smallest timestep
+                    assert np.isclose(val[idx], val[0], atol=0, rtol=eps), str(val[idx]) + str(val[0]) 
 
 
-@pytest.mark.parametrize("dt", Dt_list_diff)
+@pytest.mark.parametrize("dt", Dt_list)
 def test_timestep_diff(data, dt, eps=2e-4):
     """
     checking if the results are close to the referential ones 
