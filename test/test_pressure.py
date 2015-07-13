@@ -4,11 +4,12 @@ sys.path.insert(0, "../")
 sys.path.insert(0, "./")
 sys.path.insert(0, "plots/comparison/")
 from scipy.io import netcdf
-from parcel import parcel
-from pressure_plot import plot_pressure_opt
 import numpy as np
 import pytest
 import pdb
+
+from parcel import parcel
+from pressure_plot import plot_pressure_opt
 
 """
  This set of test checks how the option pprof (choosing the method of calculating
@@ -19,13 +20,13 @@ Pprof_list = ["pprof_const_rhod", "pprof_const_th_rv",  "pprof_piecewise_const_r
 
 # runs all simulations 
 # returns opened netcdfile files
-@pytest.fixture(scope="module", params = [0.1, 1])
+@pytest.fixture(scope="module", params = [0.1])
 def data(request):
     data = {}
     data["dt"] = request.param
     for pprof in Pprof_list:
         filename = "profopttest_" + pprof + str(request.param) + ".nc"
-        parcel(dt=request.param, outfreq = 10, pprof = pprof, outfile=filename)
+        parcel(dt=request.param, outfreq = 100, pprof = pprof, outfile=filename)
         data[pprof] = netcdf.netcdf_file(filename)
     # removing all netcdf files after all tests
     def removing_files():
