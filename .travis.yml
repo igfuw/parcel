@@ -26,9 +26,10 @@ script:
   - sudo make install
   - cd ../..
 
-  # run parcel tests (unit and long TODO) using Release mode of libcloudphxx
+  # run parcel tests using Release mode of libcloudphxx
   - cd parcel
   - py.test -s -v unit_test/
+  - py.test -s -v long_test/
 
   # install libcloudphxx in Debug mode
   - cd ..
