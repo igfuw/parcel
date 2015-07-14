@@ -10,7 +10,8 @@ before_install:
   - sudo apt-get update
 
 install:
-  - sudo apt-get install --no-install-recommends g++ python-tk python-matplotlib python-scipy python-pytest libblitz0-dev cmake libboost-python-dev libthrust-dev 
+  - sudo apt-get install libpango-1.0-0 libpangocairo-1.0-0	
+  - sudo apt-get install --no-install-recommends g++ gnuplot-nox python-gnuplot python-tk python-matplotlib python-scipy python-pytest libblitz0-dev cmake libboost-python-dev libthrust-dev 
 
   # libcloudphxx
   - cd ..
@@ -25,6 +26,4 @@ install:
 
 script:
   - cd parcel
-  - python test/test_RH.py
-  - python test/test_smax.py
   - py.test

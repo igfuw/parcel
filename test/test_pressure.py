@@ -1,82 +1,77 @@
-import sys
+import sys, glob, os
+import subprocess
 sys.path.insert(0, "../")
 sys.path.insert(0, "./")
-from libcloudphxx import common
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-from matplotlib.font_manager import FontProperties
+sys.path.insert(0, "plots/comparison/")
 from scipy.io import netcdf
-from parcel import parcel
 import numpy as np
 import pytest
+import pdb
 
-pprof_list = ["pprof_const_rhod", "pprof_const_th_rv", "pprof_piecewise_const_rhod"]
+from parcel import parcel
+from pressure_plot import plot_pressure_opt
 
-@pytest.mark.parametrize("dt", [1])
-def test_pressure(dt):
+"""
+ This set of test checks how the option pprof (choosing the method of calculating
+pressure  profiles) affects results. 
+"""
 
-    # running parcel model for different ways to solve for pressure  ...
-    for pprof in pprof_list:
-        parcel(dt=dt, outfreq = 10, pprof = pprof, outfile="test_" + pprof + ".nc")
+Pprof_list = ["pprof_const_rhod", "pprof_const_th_rv",  "pprof_piecewise_const_rhod"]
 
-    # ... plotting the results ...
-    plt.figure(1, figsize=(18,10))
-    plots    = []
-    legend_l = []
+# runs all simulations 
+# returns opened netcdfile files
+@pytest.fixture(scope="module", params = [0.1])
+def data(request):
+    data = {}
+    data["dt"] = request.param
+    for pprof in Pprof_list:
+        filename = "profopttest_" + pprof + str(request.param) + ".nc"
+        parcel(dt=request.param, outfreq = 100, pprof = pprof, outfile=filename)
+        data[pprof] = netcdf.netcdf_file(filename)
+    # removing all netcdf files after all tests
+    def removing_files():
+        for file in glob.glob("profopttest_pprof*"):
+            subprocess.call(["rm", file])
+    request.addfinalizer(removing_files)
+    return data
 
-    for i in range(6):
-        plots.append(plt.subplot(2,3,i+1))
 
-    plots[0].set_xlabel('p [hPa]')
+@pytest.mark.parametrize("pprof", ["pprof_const_rhod", "pprof_const_th_rv"])
+def test_pressure_opt(data, pprof, eps=0.01):
+    """    
+    checking if the results obtained from simulations with different pprof      
+    do not differ from the referential one  more than eps times
+    """
+    # the reference option
+    pprof_ref = "pprof_piecewise_const_rhod"
+    # chosing variables that will be tested
+    variables = ["p", "th_d", "T", "rhod", "r_v"]
+    
+    # testing if the values of variables do not differ from ref. more than eps times
+    for var in variables:
+        assert np.isclose(data[pprof].variables[var][-1], data[pprof_ref].variables[var][-1], atol=0, rtol=eps)
+    # testing maximum value of RH 
+    assert np.isclose(data[pprof].variables["RH"][:].max(), data[pprof_ref].variables["RH"][:].max(), atol=0, rtol=eps)
 
-    plots[1].ticklabel_format(useOffset=False) 
-    plots[1].set_xlabel('th_d [K]')
-    plots[2].set_xlabel('T [K]')
-    # the different ways of solving for pressure come from different assumptions about the density profile
-    # but those assumptions are just used when calculating the profile of pressure
-    # later on the rho_d profile can be calculated (and is not the same as the one assumed)
-    # so the kappa here is the actual profile of rho_d during the simulation (different than the one assumed)
-    plots[3].set_xlabel('kappa(rho_d :)) [kg/m3]')  
-    plots[4].set_xlabel('rv [g/kg]')
-    plots[5].set_xlabel('RH')
+ 
+@pytest.mark.parametrize("pprof", Pprof_list)
+def test_pressure_diff(data, pprof, eps=5.e-4):
+    """     
+    checking if the results for all pprof option are close to the referential ones
+    (stored in refdata folder)                                             
+    """
 
-    for ax in plots:
-        ax.set_ylabel('z [m]')
+    f_ref  = netcdf.netcdf_file(os.path.join("test/refdata", 
+                             "profopttest_" + pprof + str(data["dt"]) + ".nc"), "r")
+    for var in ["t", "z", "th_d", "T", "p", "r_v", "rhod", "RH"]:
+        assert np.isclose(f_ref.variables[var][:], data[pprof].variables[var][:], atol=0, rtol=eps).all(), "differs e.g. " + str(var) + "; max(ref diff) = " + str(np.where(f_ref.variables[var][:] != 0., abs((data[pprof].variables[var][:]-f_ref.variables[var][:])/f_ref.variables[var][:]), 0.).max())
 
-    style = ["g.-", "b.-","r.-"]
-    for i, pprof_val in enumerate(pprof_list):
-        f = netcdf.netcdf_file("test_"+pprof_val+".nc", "r")
-        z = f.variables["z"][:]
-        plots[0].plot(f.variables["p"][:] / 100.   , z, style[i])
-        plots[1].plot(f.variables["th_d"][:]       , z, style[i])
-        plots[2].plot(f.variables["T"][:]          , z, style[i])
-        plots[3].plot(f.variables["rhod"][:]       , z, style[i])
-        plots[4].plot(f.variables["r_v"][:] * 1000 , z, style[i])
-        plots[5].plot(
-	  f.variables["RH"][:]                     , z, style[i], 
-	  [f.variables["RH"][:].max()] * z.shape[0], z, style[i]
-        )
-        legend_l.append(pprof_val)
-    plots[0].legend(legend_l, loc=1, prop = FontProperties(size=10))
-    plt.savefig("plot_pressure.svg")
 
-    # ... and checking wheather those four different methods dont differ too much
-    z_all = p_all = thd_all = T_all = rhod_all = rv_all = RH_max = [] 
-    for pprof_val in pprof_list:
-        f = netcdf.netcdf_file("test_"+pprof+".nc", "r")
-        z_all    = np.append(z_all,    f.variables["z"][-1])
-        p_all    = np.append(p_all,    f.variables["p"][-1])
-        thd_all  = np.append(thd_all,  f.variables["th_d"][-1])
-        T_all    = np.append(T_all,    f.variables["T"][-1])
-        rhod_all = np.append(rhod_all, f.variables["rhod"][-1])
-        rv_all   = np.append(rv_all,   f.variables["r_v"][-1])
-        RH_max   = np.append(RH_max,   f.variables["RH"][:].max()) 
+def test_pressure_plot(data):
+    """
+    checking if the plot function works correctly
+    returning the plot showing differences between simulations 
+    with different pprof options
+    """
+    plot_pressure_opt(data, output_folder="plots/outputs")
 
-    assert (z_all == 200).all()
-    assert (p_all >= 99039).all     and (p_all <= 99338).all
-    assert (thd_all >= 302.50).all  and (thd_all <= 302.66).all
-    assert (T_all >= 299.14).all    and (T_all <= 299.23).all
-    assert (rhod_all >= 1.118).all  and (rhod_all <= 1.121).all
-    assert (rv_all >= 0.02168).all  and (rv_all <= 0.02174).all
-    assert (RH_max >= 1.0040).all   and (RH_max <= 1.0047).all
