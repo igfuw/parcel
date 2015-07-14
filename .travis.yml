@@ -28,7 +28,7 @@ script:
 
   # run parcel tests (unit and long TODO) using Release mode of libcloudphxx
   - cd parcel
-  - py.test unit_test/
+  - py.test -s -v unit_test/
 
   # install libcloudphxx in Debug mode
   - cd ..
@@ -40,5 +40,5 @@ script:
 
   # run parcel unit tests using Debug mode of libcloudphxx
   - cd parcel
-  - py.test unit_test/
+  - py.test -s -v unit_test/
 
