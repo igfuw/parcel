@@ -37,7 +37,7 @@ def data(request):
 
 
 @pytest.mark.parametrize("pprof", ["pprof_const_rhod", "pprof_const_th_rv"])
-def test_pressure_opt(data, pprof, eps=0.01):
+def test_pressure_opt(data, pprof, eps=0.005):
     """    
     checking if the results obtained from simulations with different pprof      
     do not differ from the referential one  more than eps times
@@ -51,11 +51,11 @@ def test_pressure_opt(data, pprof, eps=0.01):
     for var in variables:
         assert np.isclose(data[pprof].variables[var][-1], data[pprof_ref].variables[var][-1], atol=0, rtol=eps)
     # testing maximum value of RH 
-    assert np.isclose(data[pprof].variables["RH"][:].max(), data[pprof_ref].variables["RH"][:].max(), atol=0, rtol=eps)
+    assert np.isclose(data[pprof].RH_max, data[pprof_ref].RH_max, atol=0, rtol=eps)
 
  
 @pytest.mark.parametrize("pprof", Pprof_list)
-def test_pressure_diff(data, pprof, eps=5.e-4):
+def test_pressure_diff(data, pprof, eps=3.e-4):
     """     
     checking if the results for all pprof option are close to the referential ones
     (stored in refdata folder)                                             
@@ -63,9 +63,10 @@ def test_pressure_diff(data, pprof, eps=5.e-4):
 
     f_ref  = netcdf.netcdf_file(os.path.join("unit_test/refdata", 
                              "profopttest_" + pprof + str(data["dt"]) + ".nc"), "r")
-    for var in ["t", "z", "th_d", "T", "p", "r_v", "rhod", "RH"]:
+    for var in ["t", "z", "th_d", "T", "p", "r_v", "rhod"]:
         assert np.isclose(f_ref.variables[var][:], data[pprof].variables[var][:], atol=0, rtol=eps).all(), "differs e.g. " + str(var) + "; max(ref diff) = " + str(np.where(f_ref.variables[var][:] != 0., abs((data[pprof].variables[var][:]-f_ref.variables[var][:])/f_ref.variables[var][:]), 0.).max())
 
+    assert np.isclose(f_ref.RH_max, data[pprof].RH_max, atol=0, rtol=eps)
 
 def test_pressure_plot(data):
     """
