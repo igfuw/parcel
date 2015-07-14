@@ -26,6 +26,19 @@ script:
   - sudo make install
   - cd ../..
 
-  # run parcel tests (unit and long) TODO
+  # run parcel tests (unit and long TODO) using Release mode of libcloudphxx
   - cd parcel
   - py.test unit_test/
+
+  # install libcloudphxx in Debug mode
+  - cd ..
+  - cd libcloudphxx/build
+  - cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Debug ..
+  - make
+  - sudo make install
+  - cd ../..
+
+  # run parcel unit tests using Debug mode of libcloudphxx
+  - cd parcel
+  - py.test unit_test/
+
