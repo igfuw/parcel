@@ -12,11 +12,11 @@ import math
 def test_chem_plot():
 
     SO2_g_init  = 200e-12 
-    O3_g_init   = 0.#50e-9
+    O3_g_init   = 50e-9
     H2O2_g_init = 500e-12
-    outfreq = 1    
+    outfreq = 1000    
     z_max = 250.
-    dt = .1
+    dt = .01
     w  = 1.
 
     chem_dsl = True
@@ -24,8 +24,8 @@ def test_chem_plot():
     chem_rct = True
     chem_spn = 10
 
-    #spn_idx = int(math.ceil(float(chem_spn)/float(outfreq)))
-    spn_idx = 2000
+    spn_idx = int(math.ceil(float(chem_spn)/float(outfreq)))
+    #spn_idx = 2000
     #spn_idx = 0
 
     out_bin_chem = ["radii:0/1/1/lin/wet/0,1,3", 
@@ -132,23 +132,22 @@ def test_chem_plot():
       pH  = -1 * np.log10(n_H / vol)
 
       plots[9].plot(pH,  z, style[i])
-      plots[10].plot(np.squeeze(f.variables["chem_H"][spn_idx:])   , z, style[i])
+      plots[10].plot(np.squeeze(f.variables["chem_H"][spn_idx:])  , z, style[i])
       plots[11].plot(np.squeeze(f.variables["chem_OH"][spn_idx:]) , z, style[i])
 
       plots[12].plot(f.variables["SO2_g"][spn_idx:]  * 1e12 , z, style[i])
       plots[13].plot(f.variables["O3_g"][spn_idx:]   * 1e12 , z, style[i])
-      plots[14].plot(f.variables["H2O2_g"][spn_idx:] * 1e9 , z, style[i])
+      plots[14].plot(f.variables["H2O2_g"][spn_idx:] * 1e9  , z, style[i])
  
-      plots[15].plot(f.variables["SO2_a"][spn_idx:]   , z, style[i])
+      plots[15].plot(f.variables["SO2_a"][spn_idx:]  , z, style[i])
       plots[16].plot(f.variables["O3_a"][spn_idx:]   , z, style[i])
       plots[17].plot(f.variables["H2O2_a"][spn_idx:] , z, style[i])
 
-      plots[18].plot(np.squeeze(f.variables["chem_HSO3_a"][spn_idx:])   , z, style[i])
-      plots[19].plot(np.squeeze(f.variables["chem_SO3_a"][spn_idx:]) , z, style[i])
+      plots[18].plot(np.squeeze(f.variables["chem_HSO3_a"][spn_idx:]) , z, style[i])
+      plots[19].plot(np.squeeze(f.variables["chem_SO3_a"][spn_idx:])  , z, style[i])
   
       plots[21].plot(np.squeeze(f.variables["chem_HSO4_a"][spn_idx:]) , z, style[i])
-      plots[22].plot(np.squeeze(f.variables["chem_SO4_a"][spn_idx:]) , z, style[i])
+      plots[22].plot(np.squeeze(f.variables["chem_SO4_a"][spn_idx:])  , z, style[i])
       plots[23].plot(np.squeeze(f.variables["chem_S_VI"][spn_idx:])   , z, style[i])
 
     plt.savefig("plot_chem.svg")
-
