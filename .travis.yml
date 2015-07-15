@@ -13,17 +13,33 @@ install:
   - sudo apt-get install libpango-1.0-0 libpangocairo-1.0-0	
   - sudo apt-get install --no-install-recommends g++ gnuplot-nox python-gnuplot python-tk python-matplotlib python-scipy python-pytest libblitz0-dev cmake libboost-python-dev libthrust-dev 
 
-  # libcloudphxx
+script:
+
+  # install libcloudphxx in Release mode
   - cd ..
   - git clone --depth=1 git://github.com/igfuw/libcloudphxx.git
   - cd libcloudphxx
   - mkdir build
   - cd build
-  - cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+  - cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release ..
   - make
   - sudo make install
   - cd ../..
 
-script:
+  # run parcel tests using Release mode of libcloudphxx
   - cd parcel
-  - py.test
+  - py.test -s -v unit_test/
+  - py.test -s -v long_test/
+
+  # install libcloudphxx in Debug mode
+  - cd ..
+  - cd libcloudphxx/build
+  - cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Debug ..
+  - make
+  - sudo make install
+  - cd ../..
+
+  # run parcel unit tests using Debug mode of libcloudphxx
+  - cd parcel
+  - py.test -s -v unit_test/
+

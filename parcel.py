@@ -58,6 +58,7 @@ def _micro_step(micro, state, info, chem_gas):
     libopts.chem_gas[_Chem_id[id]] = chem_gas[id]
 
   micro.step_sync(libopts, state["th_d"], state["r_v"], state["rhod"]) 
+  micro.step_async(libopts)
 
   # new = diag_chem(_Chem_id[id])
   for id in chem_gas:

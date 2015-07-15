@@ -83,7 +83,7 @@ def test_timestep_eps(data, eps=0.01, dt_lim=0.01):
 
 
 @pytest.mark.parametrize("dt", Dt_list)
-def test_timestep_diff(data, dt, eps=2e-4):
+def test_timestep_diff(data, dt, eps=2.e-4):
     """
     checking if the results are close to the referential ones 
     (stored in refdata folder)
@@ -91,8 +91,8 @@ def test_timestep_diff(data, dt, eps=2e-4):
 
     filename = "timesteptest_dt=" + str(dt) + ".nc"
     f_test = netcdf.netcdf_file(filename, "r")
-    f_ref  = netcdf.netcdf_file(os.path.join("test/refdata", filename), "r")
-    for var in ["t", "z", "th_d", "T", "p", "r_v", "rhod", "RH"]:
+    f_ref  = netcdf.netcdf_file(os.path.join("long_test/refdata", filename), "r")
+    for var in ["t", "z", "th_d", "T", "p", "r_v", "rhod"]:
          assert np.isclose(f_test.variables[var][:], f_ref.variables[var][:], atol=0, rtol=eps).all(), "differs e.g. " + str(var) + "; max(ref diff) = " + str(np.where(f_ref.variables[var][:] != 0., abs((f_test.variables[var][:]-f_ref.variables[var][:])/f_ref.variables[var][:]), 0.).max())
         
 
