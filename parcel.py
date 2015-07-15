@@ -208,7 +208,7 @@ def _output_init(micro, opts):
       fout.variables[name+'_dr_'+drwt][:] = allbins[1:] - allbins[0:-1]
     elif lnli == 'lin':
       dr = (rght - left) / nbin
-      fout.variables[name+'_r_'+drwt][:] = left * np.arange(nbin) * dr
+      fout.variables[name+'_r_'+drwt][:] = left + np.arange(nbin) * dr
       fout.variables[name+'_dr_'+drwt][:] = dr
     else:
       raise exception('scale type can be either log or lin')
