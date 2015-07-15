@@ -396,7 +396,7 @@ def _arguments_checking(args):
   if (args["T_0"] < 273.15): raise Exception("temperature should be larger than 0C - microphysics works only for warm clouds")
   if (args["r_0"] < 0): raise Exception("water vapour should be larger than 0")
   if (args["w"] < 0): raise Exception("vertical velocity should be larger than 0")
-
+  if (args["kappa"] <= 0): raise Exception("kappa hygroscopicity parameter should be larger than 0 ")
 
 # ensuring that pure "import parcel" does not trigger any simulation
 if __name__ == '__main__':
