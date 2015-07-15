@@ -39,8 +39,9 @@ def test_chem_dsl(eps = 1e-13):
     diff_O3   = f.variables["O3_a"][:]   - f.variables["O3_g"][:]   * f.variables["p"][:] * cm.H_O3   * cm.M_O3   * vol
     diff_H2O2 = f.variables["H2O2_a"][:] - f.variables["H2O2_g"][:] * f.variables["p"][:] * cm.H_H2O2 * cm.M_H2O2 * vol
  
-    assert(np.all(diff_SO2 < eps))
-    assert(np.all(diff_O3 < eps))
-    assert(np.all(diff_H2O2 < eps))
+    assert np.all(diff_SO2 < eps)
+    assert np.all(diff_O3 < eps)
+    assert np.all(diff_H2O2 < eps)
     
+    # cleanup
     subprocess.call(["rm", outfile])

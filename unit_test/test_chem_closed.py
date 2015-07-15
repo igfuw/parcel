@@ -13,7 +13,7 @@ from parcel import parcel
 def test_chem_closed(eps = 1e-11):
     """
     Checking if the total mass of SO_2, O_3 and H2O2 in the closed chemical system 
-    with only dissocoation present remains constatnt
+    with only dissocoation present remains constant
 
     """
     SO2_g_init  =  200e-12
@@ -23,6 +23,7 @@ def test_chem_closed(eps = 1e-11):
     z_max = 200.
     outfile = "test_chem_closed.nc"
 
+    # run parcel
     parcel(dt = .1, z_max = z_max, outfreq = outfreq, SO2_g_0 = SO2_g_init, O3_g_0 = O3_g_init, H2O2_g_0 = H2O2_g_init,\
             chem_sys = 'closed',   outfile = outfile,\
             chem_dsl = True, chem_dsc = False, chem_rct = False,\
@@ -34,13 +35,11 @@ def test_chem_closed(eps = 1e-11):
     Mass      = [cm.M_SO2, cm.M_O3, cm.M_H2O2]
     chem_list = ["SO2",       "O3",    "H2O2"]
     for chem in chem_list : 
+        #initial gas phase - current gas phase - mass dissolved into droplets
         all_chem  = (f.variables[chem+"_g"][0] - f.variables[chem+"_g"][:]) * \
                       Mass[chem_list.index(chem)] / M_dry - f.variables[chem+"_a"][:]
  
-        for idx in all_chem:
-            assert abs(idx) <= eps 
-
-        #TODO - why this doesn't work?
-        #assert np.isclose(abs(all_chem), 0, atol=0, rtol=eps).all() 
-
+        assert np.all(abs(all_chem) <= eps) 
+   
+    # cleanup
     subprocess.call(["rm", outfile])

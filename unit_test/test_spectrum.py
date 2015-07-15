@@ -46,7 +46,7 @@ def test_spectrum_bins(data):
           assert  dr[it] == dr_nc[it]
 
         #TODO - why this doesn't work?
-        #assert (dr[:] == dr_nc[:-1]).all()
+        #assert np.all(dr[:] - dr_nc[:-1] == 0)
 
     # for log bins
     bin_checker(data.variables["wradii_r_wet"][:], data.variables["wradii_dr_wet"][:])
