@@ -10,7 +10,7 @@ import subprocess
 from libcloudphxx import common as cm
 from parcel import parcel
 
-def test_chem_dsl(eps = 1e-13):
+def test_chem_dsl(eps = 2e-5):
     """
     Checking if dissolving chemical compounds into cloud droplets follows Henrys law
     http://www.henrys-law.org/
@@ -34,14 +34,16 @@ def test_chem_dsl(eps = 1e-13):
     # average drop volume
     vol = np.squeeze(f.variables["radii_m3"][:]) * 4/3. * math.pi
 
-    # check if:  dissolved chem spec     = partial pressure of chem_spec                  * Henry cnst * (convert to kg)
-    diff_SO2  = f.variables["SO2_a"][:]  - f.variables["SO2_g"][:]  * f.variables["p"][:] * cm.H_SO2  * cm.M_SO2  * vol
-    diff_O3   = f.variables["O3_a"][:]   - f.variables["O3_g"][:]   * f.variables["p"][:] * cm.H_O3   * cm.M_O3   * vol
-    diff_H2O2 = f.variables["H2O2_a"][:] - f.variables["H2O2_g"][:] * f.variables["p"][:] * cm.H_H2O2 * cm.M_H2O2 * vol
+    def henry_checker(conc_aq, conc_g, p, H, M, vol):
+    # dissolved  = partial prs * Henry_const * molar mass * drop volume
+        henry_aq = conc_g[1:] * p[1:] * H * M * vol[1:]
+        conc_aq  = conc_aq[1:]
+
+        assert np.isclose(conc_aq, henry_aq, atol=0, rtol=eps).all()
  
-    assert np.all(diff_SO2 < eps)
-    assert np.all(diff_O3 < eps)
-    assert np.all(diff_H2O2 < eps)
-    
+    henry_checker(f.variables["SO2_a"][:],  f.variables["SO2_g"][:],  f.variables["p"][:], cm.H_SO2,  cm.M_SO2, vol)
+    henry_checker(f.variables["O3_a"][:],   f.variables["O3_g"][:],   f.variables["p"][:], cm.H_O3,   cm.M_O3, vol)
+    henry_checker(f.variables["H2O2_a"][:], f.variables["H2O2_g"][:], f.variables["p"][:], cm.H_H2O2, cm.M_H2O2, vol)
+   
     # cleanup
     subprocess.call(["rm", outfile])

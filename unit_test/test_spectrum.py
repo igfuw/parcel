@@ -29,7 +29,7 @@ def data(request):
     def removing_files():
         subprocess.call(["rm", outfile])
 
-    #request.addfinalizer(removing_files)
+    request.addfinalizer(removing_files)
     return data
 
 def test_spectrum_bins(data):
@@ -56,34 +56,38 @@ def test_spectrum_bins(data):
     bin_checker(data.variables["linwradii_r_wet"][:], data.variables["linwradii_dr_wet"][:])
     bin_checker(data.variables["lindradii_r_dry"][:], data.variables["lindradii_dr_dry"][:])
 
-def test_spectrum_diff(data, eps = 1e-15):
+def test_spectrum_diff(data, eps_d = 1e-15):
     """
     Compare the results with the referential simulation
     (stored in refdata folder)                                             
     """
-
+    # the referential simulation against which we compare ...
     f_ref  = netcdf.netcdf_file("unit_test/refdata/test_spectrum.nc", "r")
 
-    # bin edges and bin sizes
+    # ... bin edges and bin sizes ...
     for var in ["wradii_r_wet", "wradii_dr_wet", "dradii_r_dry", "dradii_dr_dry",
                 "linwradii_r_wet", "linwradii_dr_wet", "lindradii_r_dry", "lindradii_dr_dry"]:
 
         assert (f_ref.variables[var][:] == data.variables[var][:]).all()
 
-    # 0th, 1st, 3rd moment
-    for var in ["wradii_m0", "dradii_m0", "lindradii_m0", "linwradii_m0", 
-                "wradii_m1", "dradii_m1", "lindradii_m1", "linwradii_m1", 
-                "wradii_m3", "dradii_m3", "lindradii_m3", "linwradii_m3"
-               ]:
-
-        refdata = f_ref.variables[var][:]
-        cmpdata = data.variables[var][:]
+    def mom_checker(mom, eps):
+        refdata = f_ref.variables[mom][:]
+        cmpdata = data.variables[mom][:]
         refdata = np.reshape(refdata, np.product(refdata.shape))
         cmpdata = np.reshape(cmpdata, np.product(cmpdata.shape))
- 
+
         assert np.isclose(cmpdata, refdata, atol=0, rtol=eps).all(),\
             "differs e.g. " + str(var) + "; max(ref diff) = " +\
-            str(np.where(refdata != 0.,abs((cmpdata - refdata) / refdata), 0.).max())
+            str(np.where(refdata != 0.,abs((cmpdata - refdata) / refdata), abs(cmpdata - refdata)).max())
+
+
+    # ... and 0th, 1st, 3rd moment of wet and dry radius size distribution
+    for var, val in {"wradii_m0":eps_d, "dradii_m0":eps_d, "lindradii_m0":eps_d, "linwradii_m0":eps_d,
+                     "wradii_m1":4e-5, "dradii_m1":eps_d, "lindradii_m1":eps_d, "linwradii_m1":9e-7,
+                     "wradii_m3":1e-4, "dradii_m3":eps_d, "lindradii_m3":eps_d, "linwradii_m3":3e-6
+                    }.iteritems():
+
+        mom_checker(var, val)
 
 
 def test_spectrum_plot(data):
