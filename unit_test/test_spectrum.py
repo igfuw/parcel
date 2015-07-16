@@ -89,7 +89,7 @@ def test_spectrum_diff(data, eps = 1e-20):
         assert np.isclose(cmpdata, refdata, atol=0, rtol=eps).all(),\
             "differs e.g. " + str(var) + "; max(ref diff) = " +\
             str(np.where(refdata != 0.,\
-            abs((data - refdata) / refdata), 0.).max())
+            abs((cmpdata - refdata) / refdata), 0.).max())
 
 
 def test_spectrum_plot(data):
