@@ -42,11 +42,12 @@ def test_spectrum_bins(data):
         dr = np.empty(r_nc.shape[0] - 1)
         dr[:] = (r_nc[1:] - r_nc[0:-1]) 
         
+        # TODO
+        # why this works ...
         for it in dr:
           assert  dr[it] == dr_nc[it]
-
-        #TODO - why this doesn't work?
-        #assert np.all(dr[:] - dr_nc[:-1] == 0)
+        # .... while this doesn't?
+        #assert (dr[:] == dr_nc[:-1]).all()
 
     # for log bins
     bin_checker(data.variables["wradii_r_wet"][:], data.variables["wradii_dr_wet"][:])
@@ -55,23 +56,40 @@ def test_spectrum_bins(data):
     bin_checker(data.variables["linwradii_r_wet"][:], data.variables["linwradii_dr_wet"][:])
     bin_checker(data.variables["lindradii_r_dry"][:], data.variables["lindradii_dr_dry"][:])
 
-def test_spectrum_diff(data, eps = 1):
+def test_spectrum_diff(data, eps = 1e-20):
     """
     Compare the results with the referential simulation
     (stored in refdata folder)                                             
     """
-#TODO
 
-#    f_ref  = netcdf.netcdf_file("unit_test/refdata/test_spectrum.nc", "r")
+    f_ref  = netcdf.netcdf_file("unit_test/refdata/test_spectrum.nc", "r")
 
-#    for var in ["wradii_r_wet", "wradii_dr_wet", "dradii_r_dry", "dradii_dr_dry",
-#                "linwradii_r_wet", "linwradii_dr_wet", "lindradii_r_dry", "lindradii_dr_dry",
-#                "wradii_m0", "dradii_m0", "lindradii_m0", "linwradii_m0"
-#               ]:
-#        assert np.isclose(f_ref.variables[var][:], data.variables[var][:], atol=0, rtol=eps).all(),\
-#            "differs e.g. " + str(var) + "; max(ref diff) = " +\
-#            str(np.where(f_ref.variables[var][:] != 0.,\
-#            abs((data.variables[var][:] - f_ref.variables[var][:]) / f_ref.variables[var][:]), 0.).max())
+    # bin edges and bin sizes
+    for var in ["wradii_r_wet", "wradii_dr_wet", "dradii_r_dry", "dradii_dr_dry",
+                "linwradii_r_wet", "linwradii_dr_wet", "lindradii_r_dry", "lindradii_dr_dry"]:
+
+        assert (f_ref.variables[var][:] == data.variables[var][:]).all()
+
+    # 0th moment
+    for var in ["wradii_m0", "dradii_m0", "lindradii_m0", "linwradii_m0"]:
+
+        refdata = f_ref.variables[var][:]
+        cmpdata = data.variables[var][:]
+        refdata = np.reshape(refdata, np.product(refdata.shape))
+        cmpdata = np.reshape(cmpdata, np.product(cmpdata.shape))
+ 
+        diff    = abs(refdata[:] - cmpdata[:])
+        ind_max = np.argmax(diff)
+        print " "
+        print var
+        print "the difference = " , diff[ind_max]
+        print "the reference  = " , refdata[ind_max]
+        print "the data       = " , cmpdata[ind_max]
+
+        assert np.isclose(cmpdata, refdata, atol=0, rtol=eps).all(),\
+            "differs e.g. " + str(var) + "; max(ref diff) = " +\
+            str(np.where(refdata != 0.,\
+            abs((data - refdata) / refdata), 0.).max())
 
 
 def test_spectrum_plot(data):
