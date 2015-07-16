@@ -20,8 +20,8 @@ def data(request):
 
     # running parcel model for open / closed chem system  ...
     parcel(dt = .5, sd_conc = 1024, outfreq = 40,  outfile=outfile,\
-           out_bin = ["wradii:1e-9/1e-4/26/log/wet/0", "dradii:1e-9/1e-6/26/log/dry/0",\
-                      "linwradii:1e-9/1e-4/26/lin/wet/0", "lindradii:1e-9/1e-6/26/lin/dry/0"])
+           out_bin = ["wradii:1e-9/1e-4/26/log/wet/0,1,3", "dradii:1e-9/1e-6/26/log/dry/0,1,3",\
+                      "linwradii:1e-9/1e-4/26/lin/wet/0,1,3", "lindradii:1e-9/1e-6/26/lin/dry/0,1,3"])
 
     data = netcdf.netcdf_file(outfile, "r")
 
@@ -56,7 +56,7 @@ def test_spectrum_bins(data):
     bin_checker(data.variables["linwradii_r_wet"][:], data.variables["linwradii_dr_wet"][:])
     bin_checker(data.variables["lindradii_r_dry"][:], data.variables["lindradii_dr_dry"][:])
 
-def test_spectrum_diff(data, eps = 1e-20):
+def test_spectrum_diff(data, eps = 1e-15):
     """
     Compare the results with the referential simulation
     (stored in refdata folder)                                             
@@ -70,26 +70,20 @@ def test_spectrum_diff(data, eps = 1e-20):
 
         assert (f_ref.variables[var][:] == data.variables[var][:]).all()
 
-    # 0th moment
-    for var in ["wradii_m0", "dradii_m0", "lindradii_m0", "linwradii_m0"]:
+    # 0th, 1st, 3rd moment
+    for var in ["wradii_m0", "dradii_m0", "lindradii_m0", "linwradii_m0", 
+                "wradii_m1", "dradii_m1", "lindradii_m1", "linwradii_m1", 
+                "wradii_m3", "dradii_m3", "lindradii_m3", "linwradii_m3"
+               ]:
 
         refdata = f_ref.variables[var][:]
         cmpdata = data.variables[var][:]
         refdata = np.reshape(refdata, np.product(refdata.shape))
         cmpdata = np.reshape(cmpdata, np.product(cmpdata.shape))
  
-        diff    = abs(refdata[:] - cmpdata[:])
-        ind_max = np.argmax(diff)
-        print " "
-        print var
-        print "the difference = " , diff[ind_max]
-        print "the reference  = " , refdata[ind_max]
-        print "the data       = " , cmpdata[ind_max]
-
         assert np.isclose(cmpdata, refdata, atol=0, rtol=eps).all(),\
             "differs e.g. " + str(var) + "; max(ref diff) = " +\
-            str(np.where(refdata != 0.,\
-            abs((cmpdata - refdata) / refdata), 0.).max())
+            str(np.where(refdata != 0.,abs((cmpdata - refdata) / refdata), 0.).max())
 
 
 def test_spectrum_plot(data):
