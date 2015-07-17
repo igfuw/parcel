@@ -65,10 +65,8 @@ def _micro_init(opts, state, info):
   opts_init.kernel = lgrngn.kernel_t.geometric #TODO: will not be needed soon (libcloud PR #89)
   opts_init.chem_rho = opts["chem_rho"]
 
-   # switching off chemistry if all initial volume conc. equal zero
+  # switching on chemistry if either dissolving, dissociation or reactions are chosen
   opts_init.chem_switch = False
-#  for id_str in _Chem_g_id.iterkeys():
-#    if opts[id_str + "_0"] != 0: opts_init.chem_switch = True
   if opts["chem_dsl"] or opts["chem_dsc"] or opts["chem_rct"]: opts_init.chem_switch = True
 
   # initialisation
@@ -79,7 +77,6 @@ def _micro_init(opts, state, info):
 def _micro_step(micro, state, info, opts, it):
   libopts = lgrngn.opts_t()
   libopts.cond = True
-  libopts.chem = micro.opts_init.chem_switch
   libopts.coal = False
   libopts.adve = False
   libopts.sedi = False
@@ -108,7 +105,7 @@ def _micro_step(micro, state, info, opts, it):
 
         #TODO - some smarter way to add up decrease of gases due to dissolving into droplets
         # right now it's big - small all the way
-        # init_state = opts[id_str+'_0'] - (sum of all changes)
+
         old = state[id_str.replace('_g', '_a')]
 
         micro.diag_chem(id_int)
@@ -119,8 +116,6 @@ def _micro_step(micro, state, info, opts, it):
         assert state[id_str] >= 0
 
         state[id_str.replace('_g', '_a')] = new[0]
-
-        #print "state[ ", id_str.replace('_g', '_a'), " ] = ", np.frombuffer(micro.outbuf())[0]
 
       elif opts['chem_sys'] == 'open':
         micro.diag_chem(id_int)
