@@ -3,7 +3,6 @@ sys.path.insert(0, "../")
 sys.path.insert(0, "./")
 from scipy.io import netcdf
 import numpy as np
-import pytest
 import math
 import subprocess
 

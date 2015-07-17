@@ -67,8 +67,9 @@ def _micro_init(opts, state, info):
 
    # switching off chemistry if all initial volume conc. equal zero
   opts_init.chem_switch = False
-  for id_str in _Chem_g_id.iterkeys():
-    if opts[id_str + "_0"] != 0: opts_init.chem_switch = True
+#  for id_str in _Chem_g_id.iterkeys():
+#    if opts[id_str + "_0"] != 0: opts_init.chem_switch = True
+  if opts["chem_dsl"] or opts["chem_dsc"] or opts["chem_rct"]: opts_init.chem_switch = True
 
   # initialisation
   micro = lgrngn.factory(lgrngn.backend_t.serial, opts_init)
@@ -79,7 +80,6 @@ def _micro_step(micro, state, info, opts, it):
   libopts = lgrngn.opts_t()
   libopts.cond = True
   libopts.chem = micro.opts_init.chem_switch
-  if opts["chem_sys"] == 'none': libopts.chem = False
   libopts.coal = False
   libopts.adve = False
   libopts.sedi = False
@@ -96,10 +96,7 @@ def _micro_step(micro, state, info, opts, it):
     else:
         libopts.chem_rct = opts["chem_rct"]
 
-  #print "old rv = ", state["r_v"]
   micro.step_sync(libopts, state["th_d"], state["r_v"], state["rhod"]) 
-  #print "new rv = ", state["r_v"]
-  #print " "
 
   micro.step_async(libopts)
   _stats(state, info) # give updated T needed for chemistry below
@@ -109,6 +106,9 @@ def _micro_step(micro, state, info, opts, it):
     for id_str, id_int in _Chem_g_id.iteritems():
       if opts['chem_sys'] == 'closed':
 
+        #TODO - some smarter way to add up decrease of gases due to dissolving into droplets
+        # right now it's big - small all the way
+        # init_state = opts[id_str+'_0'] - (sum of all changes)
         old = state[id_str.replace('_g', '_a')]
 
         micro.diag_chem(id_int)
@@ -117,13 +117,14 @@ def _micro_step(micro, state, info, opts, it):
         # since p & rhod are the "new" ones, for consistency we also use new T (_stats called above)
         state[id_str] -= (new[0] - old) * state["rhod"][0] * common.R * state["T"][0] / _molar_mass[id_int] / state["p"]
         assert state[id_str] >= 0
+
         state[id_str.replace('_g', '_a')] = new[0]
+
         #print "state[ ", id_str.replace('_g', '_a'), " ] = ", np.frombuffer(micro.outbuf())[0]
+
       elif opts['chem_sys'] == 'open':
         micro.diag_chem(id_int)
         state[id_str.replace('_g', '_a')] = np.frombuffer(micro.outbuf())[0]
-      elif opts['chem_sys'] == 'none':
-        pass
       else:
         raise exception(
           "Expected chem_sys options are: 'open', 'closed'."
@@ -262,8 +263,8 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   outfreq=100, sd_conc=64., kappa=.5,
   mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
   out_bin = ["radii:1e-9/1e-4/26/log/wet/0"], 
-  SO2_g_0 = 200e-12, O3_g_0 = 50e-9, H2O2_g_0 = 500e-12,
-  chem_sys = 'closed',
+  SO2_g_0 = 0., O3_g_0 = 0., H2O2_g_0 = 0.,
+  chem_sys = 'open',
   chem_dsl = False, chem_dsc = False, chem_rct = False, #TODO what if chem = false
   chem_spn = 1,
   chem_rho = 1.8e3
@@ -295,9 +296,9 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
     SO2_g_0  (Optional[float]):   initial SO2  gas volume concentration (mole fraction) [1]
     O3_g_0   (Optional[float]):   initial O3   gas volume concentration (mole fraction) [1]
     H2O2_g_0 (Optional[float]):   initial H2O2 gas volume concentration (mole fraction) [1]
-    chem_sys (Optional[string]):  accepted values: 'open', 'closed', 'none'
+    chem_sys (Optional[string]):  accepted values: 'open', 'closed'
                                   (in open/closed system gas volume concentration in the air doesn't/does change 
-                                   due to chemical reactions; option 'none' does no chemistry)
+                                   due to chemical reactions)
     chem_dsl (Optional[bool]):    on/off for dissolving chem species into droplets
     chem_dsc (Optional[bool]):    on/off for dissociation of chem species in droplets
     chem_rct (Optional[bool]):    on/off for oxidation of S_IV to S_VI
@@ -377,8 +378,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
 
       # microphysics
       _micro_step(micro, state, info, opts, it)
-      #if it > 2800 and it < 3050:
-      #print it#, opts["chem_sys"], state["H2O2_g"]  
+
       # TODO: only if user wants to stop @ RH_max
       #if (state["RH"] < info["RH_max"]): break
  

@@ -9,11 +9,13 @@ import parcel as pc
 #checking if chemistry is indeed switched on/off 
 def test_chem_off():
   outfile_on = "test_on.nc"
-  pc.parcel(outfile=outfile_on, SO2_g_0=100)
+  pc.parcel(outfile=outfile_on, chem_dsl = True, chem_dsc = True, chem_rct = True,
+            SO2_g_0 = 200e-12, O3_g_0 = 50e-9, H2O2_g_0 = 500e-12
+           )
   nc_on = nc.netcdf_file(outfile_on)
 
   outfile_off = "test_off.nc"
-  pc.parcel(outfile=outfile_off, SO2_g_0=0, O3_g_0=0, H2O2_g_0=0)
+  pc.parcel(outfile=outfile_off, chem_dsl = False, chem_dsc = False, chem_rct = False)
   nc_off = nc.netcdf_file(outfile_off)
 
   assert(nc_on.SO2_g_0 > 0)
