@@ -4,10 +4,10 @@ sys.path.insert(0, "./")
 sys.path.insert(0, "plots/one_simulat")
 import subprocess
 from scipy.io import netcdf
-from parcel import parcel
-from profiles_plot import plot_profiles
 import pytest
 
+from parcel import parcel
+from profiles_plot import plot_profiles
 """
 sets of test checking if ploting functions work correctly
 """
