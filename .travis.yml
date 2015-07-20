@@ -20,7 +20,6 @@ before_install:
 install:
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo apt-get install libpango-1.0-0 libpangocairo-1.0-0; fi
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo apt-get install --no-install-recommends g++ gnuplot-nox python-gnuplot python-tk python-matplotlib python-scipy python-pytest libblitz0-dev cmake libboost-python-dev libthrust-dev; fi 
-  - if [[ $TRAVIS_OS_NAME == 'linux' && $CXX == 'g++'     ]]; then sudo apt-get install --no-install-recommends -t nvidia-cuda-toolkit; fi
 
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then brew install blitz boost-python; fi
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then sudo pip install -U pytest; fi
