@@ -50,7 +50,8 @@ def data(request):
 
         f_out  = netcdf.netcdf_file(outfile_nc, "r")
         RH_max = f_out.RH_max
-        N_end  = f_out.variables["radii_m0"][0] # concentration of drops > 1e-6 m                                                                                  
+        N_end  = f_out.variables["radii_m0"][-1,0] # concentration of drops > 1e-6 m
+    
         RH_list.append((RH_max - 1)*100)  # [%]                                      
         N_list.append(N_end / 1e6)        # [1/mg]           
 
