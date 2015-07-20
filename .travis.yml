@@ -1,17 +1,31 @@
 language: cpp
-os:
-  - linux
+os: 
+    - linux
+    - osx
 compiler:
-  - clang
-  - gcc
+    - gcc
+    - clang
+matrix:
+    exclude:
+        - os: osx
+          compiler: gcc
+
+osx_image: xcode611
 
 before_install:
-  - sudo add-apt-repository "deb http://us.archive.ubuntu.com/ubuntu/ trusty main universe multiverse"
-  - sudo apt-get update
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo add-apt-repository "deb http://us.archive.ubuntu.com/ubuntu/ trusty main universe multiverse"; fi
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo apt-get update; fi
+  - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then brew update; fi
 
 install:
-  - sudo apt-get install libpango-1.0-0 libpangocairo-1.0-0	
-  - sudo apt-get install --no-install-recommends g++ gnuplot-nox python-gnuplot python-tk python-matplotlib python-scipy python-pytest libblitz0-dev cmake libboost-python-dev libthrust-dev 
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo apt-get install libpango-1.0-0 libpangocairo-1.0-0; fi
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo apt-get install --no-install-recommends g++ gnuplot-nox python-gnuplot python-tk python-matplotlib python-scipy python-pytest libblitz0-dev cmake libboost-python-dev libthrust-dev; fi 
+  - if [[ $TRAVIS_OS_NAME == 'linux' && $CXX == 'g++'     ]]; then sudo apt-get install --no-install-recommends -t nvidia-cuda-toolkit; fi
+
+  - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then brew install blitz boost-python; fi
+  - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then sudo pip install -U pytest; fi
+  - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then git clone --depth=1 git://github.com/thrust/thrust.git; fi
+  - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then sudo ln -s `pwd`/thrust/thrust /usr/local/include/thrust; fi
 
 script:
 
@@ -42,4 +56,3 @@ script:
   # run parcel unit tests using Debug mode of libcloudphxx
   - cd parcel
   - py.test -s -v unit_test/
-
