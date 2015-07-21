@@ -85,7 +85,7 @@ def test_spectrum_diff(data, eps_d = 1e-15):
     # TODO - are those epsilons reasonable??
     for var, val in {"wradii_m0":eps_d, "dradii_m0":eps_d, "lindradii_m0":eps_d, "linwradii_m0":eps_d,
                      "wradii_m1":4e-5, "dradii_m1":5e-15, "lindradii_m1":4e-15, "linwradii_m1":2e-6,
-                     "wradii_m3":2e-4, "dradii_m3":2e-14, "lindradii_m3":2e-14, "linwradii_m3":3e-6
+                     "wradii_m3":2e-4, "dradii_m3":2e-14, "lindradii_m3":2e-14, "linwradii_m3":5e-6
                     }.iteritems():
 
         mom_checker(var, val)
