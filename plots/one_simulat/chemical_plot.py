@@ -13,7 +13,10 @@ from parcel import parcel
 
 def plot_chem(data, output_folder = "/outputs"):
 
+    import matplotlib
+    matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
     import matplotlib.pyplot as plt
+
     # TODO - copy keys and values from data dictionary
     f_out_chem = {
       "open"   : netcdf.netcdf_file("test_chem_open.nc",   "r"),
