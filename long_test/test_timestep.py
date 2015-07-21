@@ -45,12 +45,13 @@ def data(request):
         parcel(dt=dt, outfreq = int(100/dt),   outfile = outfile_nc,\
                 w = 1., T_0 = T_init, p_0 = p_init, r_0 = r_init, z_max = 200, \
                 mean_r = 5e-8, gstdev = 1.5, n_tot = 1e9, sd_conc = 1000., \
-                radii = 1e-6 * pow(10, -3 + np.arange(26) * .2)
+                out_bin = ["radii:1e-6/1/1/lin/wet/0"]
               )
 
         f_out  = netcdf.netcdf_file(outfile_nc, "r")
         RH_max = f_out.RH_max
-        N_end  = sum(f_out.variables["conc"][-1, -9:]) # concentration of drops > 1e-6 m                                                                                  
+        N_end  = f_out.variables["radii_m0"][-1,0] # concentration of drops > 1e-6 m
+    
         RH_list.append((RH_max - 1)*100)  # [%]                                      
         N_list.append(N_end / 1e6)        # [1/mg]           
 
