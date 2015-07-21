@@ -11,7 +11,7 @@ before_install:
 
 install:
   - sudo apt-get install libpango-1.0-0 libpangocairo-1.0-0	
-  - sudo apt-get install --no-install-recommends g++ gnuplot-nox python-gnuplot python-tk python-matplotlib python-scipy python-pytest libblitz0-dev cmake libboost-python-dev libthrust-dev 
+  - sudo apt-get install --no-install-recommends g++ gnuplot-nox python-gnuplot python-tk python-matplotlib python-scipy python-pytest libblitz0-dev cmake libboost-python1.54-dev libthrust-dev 
 
 script:
 
@@ -28,6 +28,7 @@ script:
 
   # run parcel tests using Release mode of libcloudphxx
   - cd parcel
+  - mkdir plots/outputs/
   - py.test -s -v unit_test/
   - py.test -s -v long_test/
 
