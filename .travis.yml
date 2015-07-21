@@ -12,6 +12,9 @@ before_install:
 install:
   - sudo apt-get install libpango-1.0-0 libpangocairo-1.0-0	
   - sudo apt-get install --no-install-recommends g++ gnuplot-nox python-gnuplot python-tk python-matplotlib python-scipy python-pytest libblitz0-dev cmake libboost-python1.54-dev libthrust-dev 
+  - git clone --depth=1 https://github.com/boostorg/odeint.git
+  - sudo mv `pwd`/odeint/include/boost/numeric/odeint.hpp /usr/include/boost/numeric/odeint.hpp
+  - sudo cp -r `pwd`/odeint/include/boost/numeric/odeint /usr/include/boost/numeric/
 
 script:
 
