@@ -241,7 +241,11 @@ def _output_save(fout, state, rec):
 
 def _save_attrs(fout, dictnr):
   for var, val in dictnr.iteritems():
-    setattr(fout, var, val)
+    if var == 'out_bin' and len(val)>1:
+      for i,v in enumerate(val):
+        setattr(fout, var + "_" + str(i), v)
+    else:
+      setattr(fout, var, val)
 
 def _output(fout, opts, micro, state, rec):
   _output_bins(fout, rec, micro, opts)

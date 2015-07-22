@@ -13,7 +13,8 @@ import pytest
                                 {"gstdev" : 1.1}, 
                                 {"outfreq" : 2}, 
                                 {"out_bin" : ["radii:0/1/1/lin/wet/3"]},
-                                {"out_bin" : ["r1:0/1/1/lin/wet/3","r2:1e-10/1e10/1/log/wet/3"]} 
+                                {"out_bin" : ["r1:0/1/1/lin/wet/3","r2:1e-10/1e10/1/log/wet/3"]}, 
+                                {"chem_dsl" : 1, "out_bin" : ["chem1:0/1/2/lin/wet/O3_a,H2O2_a", "chem1:0/1/2/lin/wet/SO2_a"]} 
                                 ])
 
 def test_cmdline(tmpdir, arg):
