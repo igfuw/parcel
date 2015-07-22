@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-import sys
-sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
+#import sys
+#sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
 
 from argparse import ArgumentParser, RawTextHelpFormatter
 
@@ -263,7 +263,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   out_bin = ["radii:1e-9/1e-4/26/log/wet/0"], 
   SO2_g_0 = 0., O3_g_0 = 0., H2O2_g_0 = 0.,
   chem_sys = 'open',
-  chem_dsl = False, chem_dsc = False, chem_rct = False, #TODO what if chem = false
+  chem_dsl = False, chem_dsc = False, chem_rct = False, 
   chem_spn = 1,
   chem_rho = 1.8e3
 ):

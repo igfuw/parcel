@@ -11,7 +11,9 @@ import pytest
                                 {"sd_conc" : 32., "kappa" : 1.}, 
                                 {"SO2_g_0" : 0., "O3_g_0" : 0., "H2O2_g_0" : 0.},
                                 {"gstdev" : 1.1}, 
-                                {"outfreq" : 2} 
+                                {"outfreq" : 2}, 
+                                {"out_bin" : ["radii:0/1/1/lin/wet/3"]},
+                                {"out_bin" : ["r1:0/1/1/lin/wet/3","r2:1e-10/1e10/1/log/wet/3"]} 
                                 ])
 
 def test_cmdline(tmpdir, arg):
@@ -25,7 +27,16 @@ def test_cmdline(tmpdir, arg):
   # creating a list with all provided arguments
   list_arg = ["python", "parcel.py", "--outfile="+file]
   for key, value in arg.items():
-    list_arg.append("--" + key + "=" + str(value))
+    # arg name
+    list_arg.append("--" + key)
+
+    # arg value
+    if type(value) == list:
+      for v in value:
+        list_arg.append(str(v))
+    else:
+      list_arg.append(str(value))
+
   subprocess.check_call(list_arg)
 
   # comparing if the output is the same
