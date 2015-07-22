@@ -13,20 +13,18 @@ matrix:
 before_install:
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo add-apt-repository "deb http://us.archive.ubuntu.com/ubuntu/ trusty main universe multiverse"; fi
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo apt-get update; fi
+
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then brew update; fi
 
 install:
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo apt-get install libpango-1.0-0 libpangocairo-1.0-0; fi
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo apt-get install --no-install-recommends g++ gnuplot-nox python-gnuplot python-tk python-matplotlib python-scipy python-pytest libblitz0-dev cmake libboost-python-dev libthrust-dev; fi 
 
-
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then sudo pip install http://prdownloads.sourceforge.net/gnuplot-py/gnuplot-py-1.8.tar.gz?download; fi
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then brew tap homebrew/python; fi
-  - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then brew install scipy gnuplot; fi
+  - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then brew install scipy gnuplot blitz boost-python; fi
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then mkdir -p /Users/travis/Library/Python/2.7/lib/python/site-packages; fi
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then echo 'import sys; sys.path.insert(1, "/usr/local/lib/python2.7/site-packages")' >> /Users/travis/Library/Python/2.7/lib/python/site-packages/homebrew.pth; fi
-
-  - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then brew install blitz boost-python; fi
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then sudo pip install -U pytest; fi
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then git clone --depth=1 git://github.com/thrust/thrust.git; fi
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then sudo ln -s `pwd`/thrust/thrust /usr/local/include/thrust; fi
