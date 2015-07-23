@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-import sys
-sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
+#import sys
+#sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
 
 from argparse import ArgumentParser, RawTextHelpFormatter
 
