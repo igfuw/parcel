@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-#import sys
-#sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
+import sys
+sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
 
 from argparse import ArgumentParser, RawTextHelpFormatter
 
@@ -67,7 +67,11 @@ def _micro_init(opts, state, info):
   opts_init.dry_distros = {opts["kappa"]:lognormal}
   opts_init.kernel = lgrngn.kernel_t.geometric #TODO: will not be needed soon (libcloud PR #89)
   opts_init.chem_rho = opts["chem_rho"]
-
+  
+  # switch off sedimentation and collisions
+  opts_init.sedi_switch = False
+  opts_init.coal_switch = False
+  
   # switching on chemistry if either dissolving, dissociation or reactions are chosen
   opts_init.chem_switch = False
   if opts["chem_dsl"] or opts["chem_dsc"] or opts["chem_rct"]: opts_init.chem_switch = True
