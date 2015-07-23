@@ -112,9 +112,6 @@ def _micro_step(micro, state, info, opts, it):
     for id_str, id_int in _Chem_g_id.iteritems():
       if opts['chem_sys'] == 'closed':
 
-        #TODO - some smarter way to add up decrease of gases due to dissolving into droplets
-        # right now it's big - small all the way
-
         old = state[id_str.replace('_g', '_a')]
 
         micro.diag_chem(id_int)
