@@ -45,7 +45,7 @@ def data(request):
         parcel(dt=dt, outfreq = int(100/dt),   outfile = outfile_nc,\
                 w = 1., T_0 = T_init, p_0 = p_init, r_0 = r_init, z_max = 200, \
                 mean_r = 5e-8, gstdev = 1.5, n_tot = 1e9, sd_conc = 1000., \
-                out_bin = ["radii:1e-6/1/1/lin/wet/0"]
+                out_bin = '{"radii": {"rght": 1, "moms": [0], "drwt": "wet", "nbin": 1, "lnli": "lin", "left": 1e-06}}'
               )
 
         f_out  = netcdf.netcdf_file(outfile_nc, "r")

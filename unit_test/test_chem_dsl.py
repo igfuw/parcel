@@ -26,7 +26,7 @@ def test_chem_dsl(eps = 2e-5):
     parcel(dt = .5, z_max = z_max, outfreq = outfreq, SO2_g_0 = SO2_g_init, O3_g_0 = O3_g_init, H2O2_g_0 = H2O2_g_init,\
             chem_sys = 'open',   outfile = outfile,\
             chem_dsl = True, chem_dsc = False, chem_rct = False,\
-            out_bin = ["radii:0/1/1/lin/wet/3", "chem:0/1/1/lin/wet/O3_a,H2O2_a,SO2_a"],)
+            out_bin = '{"radii": {"rght": 1, "moms": [3], "drwt": "wet", "nbin": 1, "lnli": "lin", "left": 0}, "chem": {"rght": 1, "moms": ["O3_a", "H2O2_a", "SO2_a"], "drwt": "wet", "nbin": 1, "lnli": "lin", "left": 0}}')
 
     f = netcdf.netcdf_file(outfile,   "r")
 

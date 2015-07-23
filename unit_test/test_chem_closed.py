@@ -30,7 +30,7 @@ def test_chem_closed():
            SO2_g_0 = SO2_g_init, O3_g_0 = O3_g_init, H2O2_g_0 = H2O2_g_init,\
            chem_sys = 'closed',   outfile = outfile,\
            chem_dsl = True, chem_dsc = False, chem_rct = False,\
-           out_bin = ["chem:0/1/1/lin/wet/O3_a,H2O2_a,SO2_a"],)
+           out_bin = '{"chem": {"rght": 1, "moms": ["O3_a", "H2O2_a", "SO2_a"], "drwt": "wet", "nbin": 1, "lnli": "lin", "left": 0}}',)
 
     f = netcdf.netcdf_file(outfile,   "r")
 
