@@ -30,9 +30,8 @@ def data(request):
     chem_spn = 10
 
     # define output for moments and chemistry
-    out_bin_chem = ["radii:0/1/1/lin/wet/0,1,3", "radiidry:0/1/1/lin/dry/0,1,3",\
-                    "chem:0/1/1/lin/wet/O3_a,H2O2_a,SO2_a,H,OH,HSO3_a,SO3_a,HSO4_a,SO4_a,S_VI"]
-    out_bin      = ["radii:0/1/1/lin/wet/0,1,3", "radiidry:0/1/1/lin/dry/0,1,3"]
+    out_bin_chem = '{"radii": {"rght": 1, "moms": [0, 1, 3], "drwt": "wet", "nbin": 1, "lnli": "lin", "left": 0}, "chem": {"rght": 1, "moms": ["O3_a", "H2O2_a", "SO2_a", "H", "OH", "HSO3_a", "SO3_a", "HSO4_a", "SO4_a", "S_VI"], "drwt": "wet", "nbin": 1, "lnli": "lin", "left": 0}, "radiidry": {"rght": 1, "moms": [0, 1, 3], "drwt": "dry", "nbin": 1, "lnli": "lin", "left": 0}}'
+    out_bin      = '{"radii": {"rght": 1, "moms": [0, 1, 3], "drwt": "wet", "nbin": 1, "lnli": "lin", "left": 0}, "radiidry": {"rght": 1, "moms": [0, 1, 3], "drwt": "dry", "nbin": 1, "lnli": "lin", "left": 0}}'
 
     # running parcel model for open / closed chem system  ...
     parcel(dt = dt, z_max = z_max, w = w, outfreq = outfreq,\

@@ -12,9 +12,9 @@ import pytest
                                 {"SO2_g_0" : 0., "O3_g_0" : 0., "H2O2_g_0" : 0.},
                                 {"gstdev" : 1.1}, 
                                 {"outfreq" : 2}, 
-                                {"out_bin" : ["radii:0/1/1/lin/wet/3"]},
-                                {"out_bin" : ["r1:0/1/1/lin/wet/3","r2:1e-10/1e10/1/log/wet/3"]}, 
-                                {"chem_dsl" : 1, "out_bin" : ["chem1:0/1/2/lin/wet/O3_a,H2O2_a", "chem1:0/1/2/lin/wet/SO2_a"]} 
+                                {"out_bin" : '{"radii": {"rght": 1, "moms": [3], "drwt": "wet", "nbin": 1, "lnli": "lin", "left": 0}}'},
+                                {"out_bin" : '{"r1": {"rght": 1, "moms": [3], "drwt": "wet", "nbin": 1, "lnli": "lin", "left": 0}, "r2": {"rght": 10000000000.0, "moms": [3], "drwt": "wet", "nbin": 1, "lnli": "log", "left": 1e-10}}'}, 
+                                {"chem_dsl" : 1, "out_bin" : '{"chem1": {"rght": 1, "moms": ["O3_a", "H2O2_a"], "drwt": "wet", "nbin": 2, "lnli": "lin", "left": 0}, "chem2": {"rght": 1, "moms": ["SO2_a"], "drwt": "wet", "nbin": 2, "lnli": "lin", "left": 0}}'} 
                                 ])
 
 def test_cmdline(tmpdir, arg):
@@ -28,15 +28,7 @@ def test_cmdline(tmpdir, arg):
   # creating a list with all provided arguments
   list_arg = ["python", "parcel.py", "--outfile="+file]
   for key, value in arg.items():
-    # arg name
-    list_arg.append("--" + key)
-
-    # arg value
-    if type(value) == list:
-      for v in value:
-        list_arg.append(str(v))
-    else:
-      list_arg.append(str(value))
+    list_arg.append("--" + key + "=" + str(value))
 
   subprocess.check_call(list_arg)
 

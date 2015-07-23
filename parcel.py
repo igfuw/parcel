@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
+# TEMP TODO TEMP TODO !!!
 #import sys
 #sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
+# TEMP TODO TEMP TODO !!!
 
 from argparse import ArgumentParser, RawTextHelpFormatter
 
@@ -13,7 +15,7 @@ from scipy import __version__ as scipy_version
 assert StrictVersion(scipy_version) >= StrictVersion("0.13"), "see https://github.com/scipy/scipy/pull/491"
 
 from scipy.io import netcdf
-import re, inspect, numpy as np
+import json, inspect, numpy as np
 import pdb
 
 import subprocess
@@ -67,7 +69,11 @@ def _micro_init(opts, state, info):
   opts_init.dry_distros = {opts["kappa"]:lognormal}
   opts_init.kernel = lgrngn.kernel_t.geometric #TODO: will not be needed soon (libcloud PR #89)
   opts_init.chem_rho = opts["chem_rho"]
-
+  
+  # switch off sedimentation and collisions
+  opts_init.sedi_switch = False
+  opts_init.coal_switch = False
+  
   # switching on chemistry if either dissolving, dissociation or reactions are chosen
   opts_init.chem_switch = False
   if opts["chem_dsl"] or opts["chem_dsc"] or opts["chem_rct"]: opts_init.chem_switch = True
@@ -134,91 +140,74 @@ def _stats(state, info):
   state["RH"] = state["p"] * state["r_v"] / (state["r_v"] + common.eps) / common.p_vs(state["T"][0])
   info["RH_max"] = max(info["RH_max"], state["RH"])
 
-def _output_bins(fout, t, micro, opts):
-  for dim, nbin in fout.dimensions.iteritems():
-    if (dim == 't'): continue
-    for b in range(nbin):
-      drwt = 'wet' if dim+"_r_wet" in fout.variables else 'dry'
-      if drwt == 'wet':
+def _output_bins(fout, t, micro, opts, spectra):
+  for dim, dct in spectra.iteritems():
+    for b in range(dct["nbin"]):
+      if dct["drwt"] == 'wet':    
 	micro.diag_wet_rng(
 	  fout.variables[dim+"_r_wet"][b],
 	  fout.variables[dim+"_r_wet"][b] + fout.variables[dim+"_dr_wet"][b]
 	)
-      elif drwt == 'dry':
+      elif dct["drwt"] == 'dry':
 	micro.diag_dry_rng(
 	  fout.variables[dim+"_r_dry"][b],
 	  fout.variables[dim+"_r_dry"][b] + fout.variables[dim+"_dr_dry"][b]
 	)
       else: assert False
-       
-      for v in fout.variables.iterkeys():
-        if v.startswith(dim+"_"):
-          match = re.search('^'+dim+'_(\w+)$', v).groups()[0]
-          if match in ['dr_wet', 'r_wet', 'dr_dry', 'r_dry']:
-            pass
-          elif match.startswith('m'):
-            # calculating moments (they all have to start with m)
-            mom = int(match[1:])
-            if drwt == 'wet':
-	      micro.diag_wet_mom(mom)
-            elif drwt == 'dry':
-	      micro.diag_dry_mom(mom)
-            else: assert False
-            fout.variables[dim+'_'+match][t, b] = np.frombuffer(micro.outbuf())
-          else:
-            # calculate chemistry
-            micro.diag_chem(_Chem_a_id[match])
-            fout.variables[dim+'_'+match][t, b] = np.frombuffer(micro.outbuf())
-                      
 
-def _output_init(micro, opts):
+      for v in dct["moms"]:
+        if type(v) == int:
+          # calculating moments 
+          if dct["drwt"] == 'wet':
+            micro.diag_wet_mom(v)
+          elif dct["drwt"] == 'dry':
+            micro.diag_dry_mom(v)
+          else: assert False
+          fout.variables[dim+'_m'+str(v)][t, b] = np.frombuffer(micro.outbuf())
+        else:
+          # calculate chemistry
+          micro.diag_chem(_Chem_a_id[v])
+          fout.variables[dim+'_'+v][t, b] = np.frombuffer(micro.outbuf())
+          
+def _output_init(micro, opts, spectra):
   # file & dimensions
   fout = netcdf.netcdf_file(opts["outfile"], 'w')
   fout.createDimension('t', None)
-  for e in opts["out_bin"]:
-    (
-      name   ,left      ,rght      ,nbin   ,lnli ,drwt  ,moms 
-    ) = [t(s) for t,s in zip((
-      str    ,float     ,float     ,int    ,str  ,str   ,str
-    ),re.search(
-      '^(\w+):([\d.e-]+)/([\d.e-]+)/([\d]+)/(\w+)/(\w+)/([\d,\w]+)$', 
-      e
-    ).groups())]
-    assert '_' not in name
-    if drwt not in ['dry', 'wet']:
+  for name, dct in spectra.iteritems():
+    if dct["drwt"] not in ['dry', 'wet']:
       raise exception('radius type can be either dry or wet')
-    fout.createDimension(name, nbin) 
+    fout.createDimension(name, dct["nbin"]) 
 
-    tmp = name + '_r_' + drwt
+    tmp = name + '_r_' + dct["drwt"]
     fout.createVariable(tmp, 'd', (name,))
     fout.variables[tmp].unit = "m"
     fout.variables[tmp].description = "particle wet radius (left bin edge)"
 
-    tmp = name + '_dr_' + drwt
+    tmp = name + '_dr_' + dct["drwt"]
     fout.createVariable(tmp, 'd', (name,))
     fout.variables[tmp].unit = "m"
     fout.variables[tmp].description = "bin width"
     
-    if lnli == 'log':
+    if dct["lnli"] == 'log':
       from math import exp, log
-      dlnr = (log(rght) - log(left)) / nbin
-      allbins = np.exp(log(left) + np.arange(nbin+1) * dlnr)
-      fout.variables[name+'_r_'+drwt][:] = allbins[0:-1]
-      fout.variables[name+'_dr_'+drwt][:] = allbins[1:] - allbins[0:-1]
-    elif lnli == 'lin':
-      dr = (rght - left) / nbin
-      fout.variables[name+'_r_'+drwt][:] = left + np.arange(nbin) * dr
-      fout.variables[name+'_dr_'+drwt][:] = dr
+      dlnr = (log(dct["rght"]) - log(dct["left"])) / dct["nbin"]
+      allbins = np.exp(log(dct["left"]) + np.arange(dct["nbin"]+1) * dlnr)
+      fout.variables[name+'_r_'+dct["drwt"]][:] = allbins[0:-1]
+      fout.variables[name+'_dr_'+dct["drwt"]][:] = allbins[1:] - allbins[0:-1]
+    elif dct["lnli"] == 'lin':
+      dr = (dct["rght"] - dct["left"]) / dct["nbin"]
+      fout.variables[name+'_r_'+dct["drwt"]][:] = dct["left"] + np.arange(dct["nbin"]) * dr
+      fout.variables[name+'_dr_'+dct["drwt"]][:] = dr
     else:
       raise exception('scale type can be either log or lin')
-    for m in moms.split(','):
+    for m in dct["moms"]:
       if (m in _Chem_a_id):
       	fout.createVariable(name+'_'+m, 'd', ('t',name))
       	fout.variables[name+'_'+m].unit = 'kg of chem species dissolved in cloud droplets (kg of dry air)^-1'
       else:
-        assert(str(int(m))==m)
-	fout.createVariable(name+'_m'+m, 'd', ('t',name))
-	fout.variables[name+'_m'+m].unit = 'm^'+m+' (kg of dry air)^-1'
+        assert(type(m)==int)
+	fout.createVariable(name+'_m'+str(m), 'd', ('t',name))
+	fout.variables[name+'_m'+str(m)].unit = 'm^'+str(m)+' (kg of dry air)^-1'
   
   units = {"z" : "m",  "t" : "s", "r_v" : "kg/kg", "th_d" : "K", "rhod" : "kg/m3", 
            "p" : "Pa", "T" : "K", "RH"  : "1"
@@ -241,14 +230,10 @@ def _output_save(fout, state, rec):
 
 def _save_attrs(fout, dictnr):
   for var, val in dictnr.iteritems():
-    if var == 'out_bin' and len(val)>1:
-      for i,v in enumerate(val):
-        setattr(fout, var + "_" + str(i), v)
-    else:
-      setattr(fout, var, val)
+    setattr(fout, var, val)
 
-def _output(fout, opts, micro, state, rec):
-  _output_bins(fout, rec, micro, opts)
+def _output(fout, opts, micro, state, rec, spectra):
+  _output_bins(fout, rec, micro, opts, spectra)
   _output_save(fout, state, rec)
 
 def _p_hydro_const_rho(dz, p, rho):
@@ -264,7 +249,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   pprof="pprof_piecewise_const_rhod",
   outfreq=100, sd_conc=64., kappa=.5,
   mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
-  out_bin = ["radii:1e-9/1e-4/26/log/wet/0"], 
+  out_bin = '{"radii": {"rght": 0.0001, "moms": [0], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09}}',
   SO2_g_0 = 0., O3_g_0 = 0., H2O2_g_0 = 0.,
   chem_sys = 'open',
   chem_dsl = False, chem_dsc = False, chem_rct = False, 
@@ -287,8 +272,8 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
     gstdev  (Optional[float]):    lognormal distribution geometric standard deviation [1]
     n_tot   (Optional[float]):    lognormal distribution total concentration under standard 
                                   conditions (T=20C, p=1013.25 hPa, rv=0) [m-3]
-    out_bin (Optional[str list]): array of strings defining spectrum diagnostics, e.g.:
-                                  ["radii:0/1e-4/26/log/dry/0","cloud:.5e-6/25e-6/49/lin/wet/0,1,2,3"]
+    out_bin (Optional[json str]): dict of dicts defining spectrum diagnostics, e.g.:
+                                  {"radii": {"rght": 0.0001, "moms": [0], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09}, "cloud": {"rght": 2.5e-05, "moms": [0, 1, 2, 3], "drwt": "wet", "nbin": 49, "lnli": "lin", "left": 5e-07}}
                                   will generate five output spectra:
                                   - 0-th spectrum moment for 26 bins spaced logarithmically between 0 and 1e-4 m 
                                     for dry radius
@@ -315,6 +300,9 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   args, _, _, _ = inspect.getargvalues(inspect.currentframe())
   opts = dict(zip(args, [locals()[k] for k in args]))
 
+  # parsing json specification of output spectra
+  spectra = json.loads(opts["out_bin"])
+
   th_0 = T_0 * (common.p_1000 / p_0)**(common.R_d / common.c_pd)
   nt = int(z_max / (w * dt))
   state = {
@@ -328,14 +316,14 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
            "parcel_Git_revision" : parcel_version }
 
   micro = _micro_init(opts, state, info)
-  with _output_init(micro, opts) as fout:
+  with _output_init(micro, opts, spectra) as fout:
     # adding chem state vars
     if micro.opts_init.chem_switch:
       state.update({ "SO2_g" : SO2_g_0, "O3_g" : O3_g_0, "H2O2_g" : H2O2_g_0 })
       state.update({ "SO2_a" : 0.,      "O3_a" : 0.,     "H2O2_a" : 0.       })
 
     # t=0 : init & save
-    _output(fout, opts, micro, state, 0)
+    _output(fout, opts, micro, state, 0, spectra)
 
     # timestepping
     for it in range(1,nt+1):
@@ -387,7 +375,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
       # output
       if (it % outfreq == 0): 
         rec = it/outfreq
-        _output(fout, opts, micro, state, rec)
+        _output(fout, opts, micro, state, rec, spectra)
  
     _save_attrs(fout, info)
     _save_attrs(fout, opts)

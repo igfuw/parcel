@@ -20,8 +20,7 @@ def data(request):
 
     # running parcel model for open / closed chem system  ...
     parcel(dt = .5, sd_conc = 1024, outfreq = 40,  outfile=outfile,\
-           out_bin = ["wradii:1e-9/1e-4/26/log/wet/0,1,3", "dradii:1e-9/1e-6/26/log/dry/0,1,3",\
-                      "linwradii:1e-9/1e-4/26/lin/wet/0,1,3", "lindradii:1e-9/1e-6/26/lin/dry/0,1,3"])
+           out_bin = '{"linwradii": {"rght": 0.0001, "moms": [0, 1, 3], "drwt": "wet", "nbin": 26, "lnli": "lin", "left": 1e-09}, "lindradii": {"rght": 1e-06, "moms": [0, 1, 3], "drwt": "dry", "nbin": 26, "lnli": "lin", "left": 1e-09}, "wradii": {"rght": 0.0001, "moms": [0, 1, 3], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09}, "dradii": {"rght": 1e-06, "moms": [0, 1, 3], "drwt": "dry", "nbin": 26, "lnli": "log", "left": 1e-09}}')
 
     data = netcdf.netcdf_file(outfile, "r")
 
