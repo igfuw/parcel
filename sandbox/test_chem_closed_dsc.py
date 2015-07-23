@@ -54,7 +54,7 @@ def test_chem_closed():
 
     # check for SO2_g -> SO2_a + HSO3- + SO3--
     ini = f.variables["SO2_g"][0] 
-    final_SO2_a = aq_to_g(f.variables["SO2_a"][-1],\
+    final_SO2_a = aq_to_g(np.squeeze(f.variables["chem_SO2_a"][-1]),\
                           f.variables["rhod"][-1], \
                           f.variables["T"][-1], \
                           cm.M_SO2,\
@@ -73,7 +73,7 @@ def test_chem_closed():
                           f.variables["p"][-1])
 
     #final gas phase = current gas phase + mass dissolved into droplets
-    end = f.variables["SO2_g"][-1] + final_SO2_a + final_HSO3_a + final_SO3_a 
+    end = f.variables["SO2_g"][-1] + final_SO2_a #+ final_HSO3_a + final_SO3_a 
 
     print "  "
     print "M SO2 = " , cm.M_SO2
