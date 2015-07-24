@@ -21,6 +21,7 @@ def test_supersat(tmpdir):
                                 {"r_0":-0.1},
                                 {"w" : -1},
                                 {"kappa" : 0.},
+                                {"chem_sys" : "aqq"},
                                 {"out_bin" : '{"radii": {"moms": [0], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09}}'},
                                 {"out_bin" : '{"radii": {"aqq": 1, "rght": 0.0001, "moms": [0], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09}}'},
                                 {"out_bin" : '{"radii": {"rght": "aqq", "moms": [0], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09}}'},
