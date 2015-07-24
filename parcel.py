@@ -112,9 +112,6 @@ def _micro_step(micro, state, info, opts, it):
     for id_str, id_int in _Chem_g_id.iteritems():
       if opts['chem_sys'] == 'closed':
 
-        #TODO - some smarter way to add up decrease of gases due to dissolving into droplets
-        # right now it's big - small all the way
-
         old = state[id_str.replace('_g', '_a')]
 
         micro.diag_chem(id_int)
@@ -294,14 +291,15 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
                                   dry air density that is used by the super-droplet scheme
                                   valid options are: pprof_const_th_rv, pprof_const_rhod, pprof_piecewise_const_rhod
    """
-  _arguments_checking(locals())
-
   # packing function arguments into "opts" dictionary
   args, _, _, _ = inspect.getargvalues(inspect.currentframe())
   opts = dict(zip(args, [locals()[k] for k in args]))
 
   # parsing json specification of output spectra
   spectra = json.loads(opts["out_bin"])
+
+  # sanity checks for arguments
+  _arguments_checking(opts, spectra)
 
   th_0 = T_0 * (common.p_1000 / p_0)**(common.R_d / common.c_pd)
   nt = int(z_max / (w * dt))
@@ -381,12 +379,45 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
     _save_attrs(fout, opts)
 
     
-def _arguments_checking(args):
-  if (args["gstdev"] == 1): raise Exception("standar deviation should be != 1 to avoid monodisperse distribution")
-  if (args["T_0"] < 273.15): raise Exception("temperature should be larger than 0C - microphysics works only for warm clouds")
-  if (args["r_0"] < 0): raise Exception("water vapour should be larger than 0")
-  if (args["w"] < 0): raise Exception("vertical velocity should be larger than 0")
-  if (args["kappa"] <= 0): raise Exception("kappa hygroscopicity parameter should be larger than 0 ")
+def _arguments_checking(opts, spectra):
+  if opts["gstdev"] == 1: 
+    raise Exception("standar deviation should be != 1 to avoid monodisperse distribution")
+  if opts["T_0"] < 273.15: 
+    raise Exception("temperature should be larger than 0C - microphysics works only for warm clouds")
+  if opts["r_0"] < 0: 
+    raise Exception("water vapour should be larger than 0")
+  if opts["w"] < 0: 
+    raise Exception("vertical velocity should be larger than 0")
+  if opts["kappa"] <= 0: 
+    raise Exception("kappa hygroscopicity parameter should be larger than 0 ")
+  
+  for name, dct in spectra.iteritems():
+    # TODO: check if name is valid netCDF identifier (http://www.unidata.ucar.edu/software/thredds/current/netcdf-java/CDM/Identifiers.html)
+    keys = ["left", "rght", "nbin", "drwt", "lnli", "moms"]
+    for key in keys:
+      if key not in dct: 
+        raise Exception(">>" + key + "<< is missing in out_bin[" + name + "]")
+    for key in dct:
+      if key not in keys:
+        raise Exception("invalid key >>" + key + "<< in out_bin[" + name + "]")
+    if type(dct["left"]) not in [int, float]:
+        raise Exception(">>left<< in out_bin["+ name +"] must be int or float")
+    if type(dct["rght"]) not in [int, float]:
+        raise Exception(">>rght<< in out_bin["+ name +"] must be int or float")
+    if dct["left"] >= dct["rght"]:
+        raise Exception(">>left<< is greater than >>rght<< in out_bin["+ name +"]")
+    if dct["drwt"] not in ["dry", "wet"]:
+        raise Exception(">>drwt<< key in out_bin["+ name +"] must be either >>dry<< or >>wet<<")
+    if dct["lnli"] not in ["lin", "log"]:
+        raise Exception(">>lnli<< key in out_bin["+ name +"] must be either >>lin<< or >>log<<")
+    if type(dct["nbin"]) != int:
+        raise Exception(">>nbin<< key in out_bin["+ name +"] must be an integer number") 
+    if type(dct["moms"]) != list:
+        raise Exception(">>moms<< key in out_bin["+ name +"] must be a list") 
+    for mom in dct["moms"]:
+        if (type(mom) != int):
+          if (mom not in _Chem_a_id.keys()):
+            raise Exception(">>moms<< key in out_bin["+ name +"] must be a list of integer numbers or valid chemical compounds (" +str(_Chem_a_id.keys()) + ")")
 
 # ensuring that pure "import parcel" does not trigger any simulation
 if __name__ == '__main__':
