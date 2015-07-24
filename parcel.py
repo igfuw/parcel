@@ -126,11 +126,7 @@ def _micro_step(micro, state, info, opts, it):
       elif opts['chem_sys'] == 'open':
         micro.diag_chem(id_int)
         state[id_str.replace('_g', '_a')] = np.frombuffer(micro.outbuf())[0]
-      else:
-        raise exception(
-          "Expected chem_sys options are: 'open', 'closed'."
-          "Type: help(parcel) for more help."
-        )
+      else: assert False
  
 def _stats(state, info):
   state["T"] = np.array([common.T(state["th_d"][0], state["rhod"][0])])
@@ -171,8 +167,6 @@ def _output_init(micro, opts, spectra):
   fout = netcdf.netcdf_file(opts["outfile"], 'w')
   fout.createDimension('t', None)
   for name, dct in spectra.iteritems():
-    if dct["drwt"] not in ['dry', 'wet']:
-      raise exception('radius type can be either dry or wet')
     fout.createDimension(name, dct["nbin"]) 
 
     tmp = name + '_r_' + dct["drwt"]
@@ -195,8 +189,8 @@ def _output_init(micro, opts, spectra):
       dr = (dct["rght"] - dct["left"]) / dct["nbin"]
       fout.variables[name+'_r_'+dct["drwt"]][:] = dct["left"] + np.arange(dct["nbin"]) * dr
       fout.variables[name+'_dr_'+dct["drwt"]][:] = dr
-    else:
-      raise exception('scale type can be either log or lin')
+    else: assert False
+
     for m in dct["moms"]:
       if (m in _Chem_a_id):
       	fout.createVariable(name+'_'+m, 'd', ('t',name))
@@ -390,9 +384,12 @@ def _arguments_checking(opts, spectra):
     raise Exception("vertical velocity should be larger than 0")
   if opts["kappa"] <= 0: 
     raise Exception("kappa hygroscopicity parameter should be larger than 0 ")
+  if opts["chem_sys"] not in ["open", "closed"]:
+    raise Exception("Expected >>chem_sys<< options are: 'open', 'closed'.")
   
   for name, dct in spectra.iteritems():
-    # TODO: check if name is valid netCDF identifier (http://www.unidata.ucar.edu/software/thredds/current/netcdf-java/CDM/Identifiers.html)
+    # TODO: check if name is valid netCDF identifier 
+    # (http://www.unidata.ucar.edu/software/thredds/current/netcdf-java/CDM/Identifiers.html)
     keys = ["left", "rght", "nbin", "drwt", "lnli", "moms"]
     for key in keys:
       if key not in dct: 
