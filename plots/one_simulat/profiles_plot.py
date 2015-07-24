@@ -2,15 +2,17 @@ import sys, os, subprocess
 sys.path.insert(0, "../../")
 sys.path.insert(0, "./")
 from libcloudphxx import common
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-from matplotlib.font_manager import FontProperties
 from scipy.io import netcdf
-from parcel import parcel
 import numpy as np
 
+from parcel import parcel
+
 def plot_profiles(fnc, output_folder="../outputs"):
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    from matplotlib.font_manager import FontProperties
+
     # ... plotting the results ...
     plt.figure(1, figsize=(18,10))
     plots    = []

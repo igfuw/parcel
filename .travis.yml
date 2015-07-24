@@ -19,6 +19,11 @@ before_install:
 install:
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo apt-get install libpango-1.0-0 libpangocairo-1.0-0; fi
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo apt-get install --no-install-recommends g++ gnuplot-nox python-gnuplot python-tk python-matplotlib python-scipy python-pytest libblitz0-dev cmake libboost-python-dev libthrust-dev; fi 
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then git clone --depth=1 https://github.com/boostorg/odeint.git; fi # get boost odeint > 1.58
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo rm -f /usr/include/boost/numeric/odeint.hpp; fi
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo rm -rf /usr/include/boost/numeric/odeint; fi
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo ln -s `pwd`/odeint/include/boost/numeric/odeint.hpp /usr/include/boost/numeric/odeint.hpp; fi
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo ln -s `pwd`/odeint/include/boost/numeric/odeint  /usr/include/boost/numeric/; fi
 
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then sudo pip install http://prdownloads.sourceforge.net/gnuplot-py/gnuplot-py-1.8.tar.gz?download; fi
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then brew tap homebrew/python; fi
@@ -44,6 +49,7 @@ script:
 
   # run parcel tests using Release mode of libcloudphxx
   - cd parcel
+  - mkdir plots/outputs/
   - py.test -s -v unit_test/
   - py.test -s -v long_test/
 
