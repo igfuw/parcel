@@ -11,7 +11,7 @@ import pytest
                                 {"sd_conc" : 32., "kappa" : 1.}, 
                                 {"SO2_g_0" : 0., "O3_g_0" : 0., "H2O2_g_0" : 0.},
                                 {"gstdev" : 1.1}, 
-                                {"outfreq" : 2}, 
+                                {"outfreq" : 2},
                                 {"out_bin" : '{"radii": {"rght": 1, "moms": [3], "drwt": "wet", "nbin": 1, "lnli": "lin", "left": 0}}'},
                                 {"out_bin" : '{"r1": {"rght": 1, "moms": [3], "drwt": "wet", "nbin": 1, "lnli": "lin", "left": 0}, "r2": {"rght": 10000000000.0, "moms": [3], "drwt": "wet", "nbin": 1, "lnli": "log", "left": 1e-10}}'}, 
                                 {"chem_dsl" : 1, "out_bin" : '{"chem1": {"rght": 1, "moms": ["O3_a", "H2O2_a"], "drwt": "wet", "nbin": 2, "lnli": "lin", "left": 0}, "chem2": {"rght": 1, "moms": ["SO2_a"], "drwt": "wet", "nbin": 2, "lnli": "lin", "left": 0}}'} 

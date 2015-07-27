@@ -11,8 +11,6 @@ import subprocess
 from parcel import parcel
 from spectrum_plot import plot_spectrum
 
-import pdb
-
 @pytest.fixture(scope="module")
 def data(request):
     """
@@ -21,8 +19,12 @@ def data(request):
     outfile = "test_spectrum.nc"
 
     # running parcel model for open / closed chem system  ...
-    parcel(dt = .5, sd_conc = 1024, outfreq = 40,  outfile=outfile,\
-           out_bin = '{"linwradii": {"rght": 0.0001, "moms": [0, 1, 3], "drwt": "wet", "nbin": 26, "lnli": "lin", "left": 1e-09}, "lindradii": {"rght": 1e-06, "moms": [0, 1, 3], "drwt": "dry", "nbin": 26, "lnli": "lin", "left": 1e-09}, "wradii": {"rght": 0.0001, "moms": [0, 1, 3], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09}, "dradii": {"rght": 1e-06, "moms": [0, 1, 3], "drwt": "dry", "nbin": 26, "lnli": "log", "left": 1e-09}}')
+    parcel(dt = .5, sd_conc = 1024, outfreq = 40,  outfile=outfile, out_bin = \
+            '{"linwradii": {"rght": 0.0001, "left": 1e-09, "drwt": "wet", "lnli": "lin", "nbin": 26, "moms": [0, 1, 3]}, \
+              "lindradii": {"rght": 1e-06,  "left": 1e-09, "drwt": "dry", "lnli": "lin", "nbin": 26, "moms": [0, 1, 3]}, \
+              "wradii":    {"rght": 0.0001, "left": 1e-09, "drwt": "wet", "lnli": "log", "nbin": 26, "moms": [0, 1, 3]}, \
+              "dradii":    {"rght": 1e-06,  "left": 1e-09, "drwt": "dry", "lnli": "log", "nbin": 26, "moms": [0, 1, 3]}}'\
+          )
 
     data = netcdf.netcdf_file(outfile, "r")
 
@@ -46,19 +48,11 @@ def test_bin_checker(data, name_spect, eps_d=1.e-14):
     dr = np.empty(r_nc.shape[0] - 1)
     dr[:] = (r_nc[1:] - r_nc[0:-1]) 
     
-    # TODO
-    # why this works ...
-    #dj -  now it doesn't ;-) don't know why it did work, but there are some small diff.
-   # for it in range(dr.shape[0]):
-   #     assert  dr[it] == dr_nc[it]
-     # .... while this doesn't?
-     #assert (dr[:] == dr_nc[:-1]).all()
     assert np.isclose(dr, dr_nc[:-1], atol=0, rtol=eps_d).all()
 
 
-@pytest.mark.parametrize("var", ["wradii_r_wet", "wradii_dr_wet", "dradii_r_dry", 
-                                 "dradii_dr_dry","linwradii_r_wet", "linwradii_dr_wet", 
-                                 "lindradii_r_dry", "lindradii_dr_dry"])
+@pytest.mark.parametrize("var", ["wradii_r_wet", "wradii_dr_wet", "linwradii_r_wet", "linwradii_dr_wet",
+                                 "dradii_r_dry", "dradii_dr_dry", "lindradii_r_dry", "lindradii_dr_dry"])
 def test_spectrum_diff(data, var, eps_d = 1e-15):
     """
     Compare the results with the referential simulation
@@ -67,11 +61,10 @@ def test_spectrum_diff(data, var, eps_d = 1e-15):
     # the referential simulation against which we compare ...
     f_ref  = netcdf.netcdf_file("unit_test/refdata/test_spectrum.nc", "r")
 
+    # ... the bin edges and bin sizes ...
     assert np.isclose(f_ref.variables[var][:], data.variables[var][:],atol=0, rtol=eps_d).all()
 
-
-# ... and 0th, 1st, 3rd moment of wet and dry radius size distribution             
-# TODO - are those epsilons reasonable??   dj - NO!!                                 
+    # ... and 0th, 1st, 3rd moment of wet and dry radius size distribution             
 @pytest.mark.parametrize("mom, eps", [("wradii_m0", 1.e-15), ("dradii_m0", 1e-15), 
                                       ("lindradii_m0", 1e-15), ("linwradii_m0", 1e-15),
                                       ("wradii_m1", 4e-5), ("dradii_m1", 5e-15), 
