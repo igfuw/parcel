@@ -135,32 +135,32 @@ def _stats(state, info):
 
 def _output_bins(fout, t, micro, opts, spectra):
   for dim, dct in spectra.iteritems():
-    for b in range(dct["nbin"]):
+    for bin in range(dct["nbin"]):
       if dct["drwt"] == 'wet':    
 	micro.diag_wet_rng(
-	  fout.variables[dim+"_r_wet"][b],
-	  fout.variables[dim+"_r_wet"][b] + fout.variables[dim+"_dr_wet"][b]
+	  fout.variables[dim+"_r_wet"][bin],
+	  fout.variables[dim+"_r_wet"][bin] + fout.variables[dim+"_dr_wet"][bin]
 	)
       elif dct["drwt"] == 'dry':
 	micro.diag_dry_rng(
-	  fout.variables[dim+"_r_dry"][b],
-	  fout.variables[dim+"_r_dry"][b] + fout.variables[dim+"_dr_dry"][b]
+	  fout.variables[dim+"_r_dry"][bin],
+	  fout.variables[dim+"_r_dry"][bin] + fout.variables[dim+"_dr_dry"][bin]
 	)
       else: assert False
 
-      for v in dct["moms"]:
-        if type(v) == int:
+      for vm in dct["moms"]:
+        if type(vm) == int:
           # calculating moments 
           if dct["drwt"] == 'wet':
-            micro.diag_wet_mom(v)
+            micro.diag_wet_mom(vm)
           elif dct["drwt"] == 'dry':
-            micro.diag_dry_mom(v)
+            micro.diag_dry_mom(vm)
           else: assert False
-          fout.variables[dim+'_m'+str(v)][t, b] = np.frombuffer(micro.outbuf())
+          fout.variables[dim+'_m'+str(vm)][t, bin] = np.frombuffer(micro.outbuf())
         else:
           # calculate chemistry
-          micro.diag_chem(_Chem_a_id[v])
-          fout.variables[dim+'_'+v][t, b] = np.frombuffer(micro.outbuf())
+          micro.diag_chem(_Chem_a_id[vm])
+          fout.variables[dim+'_'+vm][t, bin] = np.frombuffer(micro.outbuf())
           
 def _output_init(micro, opts, spectra):
   # file & dimensions
@@ -191,14 +191,14 @@ def _output_init(micro, opts, spectra):
       fout.variables[name+'_dr_'+dct["drwt"]][:] = dr
     else: assert False
 
-    for m in dct["moms"]:
-      if (m in _Chem_a_id):
-      	fout.createVariable(name+'_'+m, 'd', ('t',name))
-      	fout.variables[name+'_'+m].unit = 'kg of chem species dissolved in cloud droplets (kg of dry air)^-1'
+    for vm in dct["moms"]:
+      if (vm in _Chem_a_id):
+      	fout.createVariable(name+'_'+vm, 'd', ('t',name))
+      	fout.variables[name+'_'+vm].unit = 'kg of chem species dissolved in cloud droplets (kg of dry air)^-1'
       else:
-        assert(type(m)==int)
-	fout.createVariable(name+'_m'+str(m), 'd', ('t',name))
-	fout.variables[name+'_m'+str(m)].unit = 'm^'+str(m)+' (kg of dry air)^-1'
+        assert(type(vm)==int)
+	fout.createVariable(name+'_m'+str(vm), 'd', ('t',name))
+	fout.variables[name+'_m'+str(vm)].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
   
   units = {"z" : "m",  "t" : "s", "r_v" : "kg/kg", "th_d" : "K", "rhod" : "kg/m3", 
            "p" : "Pa", "T" : "K", "RH"  : "1"
@@ -209,9 +209,9 @@ def _output_init(micro, opts, spectra):
       units[id_str] = "gas volume concentration (mole fraction) [1]"
       units[id_str.replace('_g', '_a')] = "kg of chem species dissolved in cloud droplets (kg of dry air)^-1"
 
-  for name, unit in units.iteritems():
-    fout.createVariable(name, 'd', ('t',))
-    fout.variables[name].unit = unit
+  for var_name, unit in units.iteritems():
+    fout.createVariable(var_name, 'd', ('t',))
+    fout.variables[var_name].unit = unit
   
   return fout
 
