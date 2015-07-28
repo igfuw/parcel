@@ -38,7 +38,8 @@ script:
 
   # install libcloudphxx in Release mode
   - cd ..
-  - git clone --depth=1 git://github.com/igfuw/libcloudphxx.git
+  - git clone --depth=1 git://github.com/trontrytel/libcloudphxx.git
+  - git pull git@github.com:trontrytel/libcloudphxx.git dissoc_bug
   - cd libcloudphxx
   - mkdir build
   - cd build
