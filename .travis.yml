@@ -38,9 +38,8 @@ script:
 
   # install libcloudphxx in Release mode
   - cd ..
-  - git clone --depth=1 git://github.com/trontrytel/libcloudphxx.git
+  - git clone --depth=1 -b dissoc_bug git://github.com/trontrytel/libcloudphxx.git
   - cd libcloudphxx
-  - git pull --depth=1 git@github.com:trontrytel/libcloudphxx.git dissoc_bug
   - mkdir build
   - cd build
   - cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release ..
