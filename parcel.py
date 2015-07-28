@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 # TEMP TODO TEMP TODO !!!
-import sys
-sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
+#import sys
+#sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
 # TEMP TODO TEMP TODO !!!
 
 from argparse import ArgumentParser, RawTextHelpFormatter
@@ -43,10 +43,12 @@ _Chem_a_id = {
 }
 
 # id_int   ...
-_molar_mass = { #... TODO molar mass of dissoved one -> + M_H2O
-  lgrngn.chem_species_t.SO2  : common.M_SO2,
-  lgrngn.chem_species_t.H2O2 : common.M_H2O2,
-  lgrngn.chem_species_t.O3   : common.M_O3
+_molar_mass = {
+  lgrngn.chem_species_t.SO2  : common.M_SO2_H2O,
+  lgrngn.chem_species_t.H2O2 : common.M_H2O2_H2O,
+  lgrngn.chem_species_t.O3   : common.M_O3_H2O,
+  lgrngn.chem_species_t.HSO3 : common.M_HSO3,
+  lgrngn.chem_species_t.SO3  : common.M_SO3
 }
 
 def _micro_init(opts, state, info):
@@ -112,16 +114,37 @@ def _micro_step(micro, state, info, opts, it):
     for id_str, id_int in _Chem_g_id.iteritems():
       if opts['chem_sys'] == 'closed':
 
+        if opts["chem_dsc"] and id_str == "SO2_g":
+
+          old_HSO3 = state["HSO3_a"]
+          old_SO3  = state["SO3_a"]
+
+          micro.diag_chem(_Chem_a_id["HSO3_a"])
+          state["HSO3_a"] = np.frombuffer(micro.outbuf())[0]
+
+          micro.diag_chem(_Chem_a_id["SO3_a"])
+          state["SO3_a"] = np.frombuffer(micro.outbuf())[0]
+
+          tmp = (
+              (state["HSO3_a"] - old_HSO3) / _molar_mass[_Chem_a_id["HSO3_a"]] 
+              + 
+              (state["SO3_a"] - old_SO3) / _molar_mass[_Chem_a_id["SO3_a"]]
+            ) * state["rhod"][0] * common.R * state["T"][0] / state["p"]
+
         old = state[id_str.replace('_g', '_a')]
 
         micro.diag_chem(id_int)
-        new = np.frombuffer(micro.outbuf()) 
-      
+        new = np.frombuffer(micro.outbuf())[0]
+     
         # since p & rhod are the "new" ones, for consistency we also use new T (_stats called above)
-        state[id_str] -= (new[0] - old) * state["rhod"][0] * common.R * state["T"][0] / _molar_mass[id_int] / state["p"]
+        state[id_str] -= (new - old) * state["rhod"][0] * common.R * state["T"][0] / _molar_mass[id_int] / state["p"]
+
+        if opts["chem_dsc"] and id_str == "SO2_g":
+            state[id_str] -= tmp
+
         assert state[id_str] >= 0
 
-        state[id_str.replace('_g', '_a')] = new[0]
+        state[id_str.replace('_g', '_a')] = new
 
       elif opts['chem_sys'] == 'open':
         micro.diag_chem(id_int)
@@ -208,6 +231,9 @@ def _output_init(micro, opts, spectra):
     for id_str in _Chem_g_id.iterkeys():
       units[id_str] = "gas volume concentration (mole fraction) [1]"
       units[id_str.replace('_g', '_a')] = "kg of chem species dissolved in cloud droplets (kg of dry air)^-1"
+
+    for id_str in ["HSO3_a", "SO3_a"]:
+      units[id_str] = "kg of ions in cloud droplets (kg of dry air)^-1"
 
   for var_name, unit in units.iteritems():
     fout.createVariable(var_name, 'd', ('t',))
@@ -312,7 +338,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
     # adding chem state vars
     if micro.opts_init.chem_switch:
       state.update({ "SO2_g" : SO2_g_0, "O3_g" : O3_g_0, "H2O2_g" : H2O2_g_0 })
-      state.update({ "SO2_a" : 0.,      "O3_a" : 0.,     "H2O2_a" : 0.       })
+      state.update({ "SO2_a" : 0.,      "O3_a" : 0.,     "H2O2_a" : 0.       , "HSO3_a" : 0, "SO3_a" : 0})
 
     # t=0 : init & save
     _output(fout, opts, micro, state, 0, spectra)

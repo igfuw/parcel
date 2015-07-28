@@ -3,8 +3,8 @@ sys.path.insert(0, "../")
 sys.path.insert(0, "./")
 sys.path.insert(0, "plots/comparison/")
 
-from libcloudphxx import common
 from parcel import parcel
+from libcloudphxx import common
 from timestep_plot import timestep_plot
 
 from scipy.io import netcdf

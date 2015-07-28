@@ -46,7 +46,7 @@ def test_henry_checker(data, chem, eps=2e-5):
     conc_aq = data.variables[chem+"_a"][:]
     conc_g  = data.variables[chem+"_g"][:]
     prs     = data.variables["p"][:]
-    henry, molar_mass = getattr(cm, "H_"+chem), getattr(cm, "M_"+chem)
+    henry, molar_mass = getattr(cm, "H_"+chem), getattr(cm, "M_"+chem+"_H2O")
 
     # average drop volume
     vol = np.squeeze(data.variables["radii_m3"][:]) * 4/3. * math.pi

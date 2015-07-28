@@ -8,8 +8,8 @@ import pytest
 import math
 import subprocess
 
-from libcloudphxx import common
 from parcel import parcel
+from libcloudphxx import common
 from chemical_plot import plot_chem
 
 @pytest.fixture(scope="module")
