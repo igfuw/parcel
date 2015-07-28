@@ -114,8 +114,19 @@ def _micro_step(micro, state, info, opts, it):
     for id_str, id_int in _Chem_g_id.iteritems():
       if opts['chem_sys'] == 'closed':
 
-        if opts["chem_dsc"] and id_str == "SO2_g":
+        old = state[id_str.replace('_g', '_a')]
 
+        micro.diag_chem(id_int)
+        new = np.frombuffer(micro.outbuf())[0]
+     
+        # since p & rhod are the "new" ones, for consistency we also use new T (_stats called above)
+        state[id_str] -= (new - old) * state["rhod"][0] * common.R * state["T"][0] / _molar_mass[id_int] / state["p"]
+        state[id_str.replace('_g', '_a')] = new
+
+        if opts["chem_dsc"] and id_str == "SO2_g":
+          # during dissociation the mass of SO2 * H2O is kept constatnt
+          # therefore, afterwards in closed chem. system
+          # the number of new HSO3 and SO3 ions needs to be also substracted from SO2 gas  
           old_HSO3 = state["HSO3_a"]
           old_SO3  = state["SO3_a"]
 
@@ -131,20 +142,9 @@ def _micro_step(micro, state, info, opts, it):
               (state["SO3_a"] - old_SO3) / _molar_mass[_Chem_a_id["SO3_a"]]
             ) * state["rhod"][0] * common.R * state["T"][0] / state["p"]
 
-        old = state[id_str.replace('_g', '_a')]
-
-        micro.diag_chem(id_int)
-        new = np.frombuffer(micro.outbuf())[0]
-     
-        # since p & rhod are the "new" ones, for consistency we also use new T (_stats called above)
-        state[id_str] -= (new - old) * state["rhod"][0] * common.R * state["T"][0] / _molar_mass[id_int] / state["p"]
-
-        if opts["chem_dsc"] and id_str == "SO2_g":
-            state[id_str] -= tmp
+          state[id_str] -= tmp
 
         assert state[id_str] >= 0
-
-        state[id_str.replace('_g', '_a')] = new
 
       elif opts['chem_sys'] == 'open':
         micro.diag_chem(id_int)

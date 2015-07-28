@@ -61,7 +61,7 @@ def test_is_electroneutral(data, eps = 1e-10):
 
     assert np.isclose(n_neg, n_pos, atol=0, rtol=eps)
 
-def test_is_m_S6_const(data, eps=1e-10):
+def test_is_mass_S6_const_with_dsl_dsc(data, eps=1e-10):
     """
     Check if the mas of H2SO4 remains constant.
     (The initial aerosol is assumed to be made of H2SO4. There are no chem. reactions, so the mass should stay the same)
@@ -79,7 +79,7 @@ def test_is_m_S6_const(data, eps=1e-10):
     assert np.isclose(n_S6_ini, n_S6_end, atol=0, rtol=eps)
     assert np.isclose(n_S6_ini, n_SO4_HSO4_end, atol=0, rtol=eps)
 
-def test_dissoc_const(data):
+def test_check_dissoc_constants(data):
     """
     Check if the mass of chemical compounds agrees with the dissociation constants
     """
@@ -120,10 +120,10 @@ def test_dissoc_const(data):
     assert np.isclose(cm.K_SO2, SO2_H2O_dissoc/num , atol=0, rtol=5e-4),  str((cm.K_SO2 - SO2_H2O_dissoc/num) /cm.K_SO2 )
     assert np.isclose(cm.K_HSO3, HSO3_dissoc/num, atol=0, rtol=9e-4),     str((cm.K_HSO3 - HSO3_dissoc/num) / cm.K_HSO3)
     assert np.isclose(left_HSO4/num, right_HSO4/num, atol=0, rtol=4e-10), str((left_HSO4/num - right_HSO4/num) / (left_HSO4/num))
-    assert np.isclose(left_SO4/num, right_SO4/num, atol=0, rtol=4e-10),   str((left_SO4/num - right_SO4/num) / (left_SO4/num))
+    assert np.isclose(left_SO4/num, right_SO4/num, atol=0, rtol=2e-8),   str((left_SO4/num - right_SO4/num) / (left_SO4/num))
 
 @pytest.mark.parametrize("chem", ["SO2", "O3", "H2O2"])
-def test_chem_closed_dsc(data, chem, eps = {"SO2": 3e-5, "O3":4e-11, "H2O2": 2e-4}):   # TODO why so different?
+def test_is_mass_const_dsl_dsc(data, chem, eps = {"SO2": 3e-5, "O3":4e-11, "H2O2": 2e-4}):   # TODO why so different?
     """
     Checking if the total mass of SO_2, O_3 and H2O2 in the closed chemical system 
     with only dissocoation present remains constant

@@ -40,7 +40,7 @@ def data(request):
     return data
 
 @pytest.mark.parametrize("chem", ["SO2", "O3", "H2O2"])                   #TODO why so big?
-def test_chem_closed_dsl(data, chem, eps = {"SO2": 4e-9, "O3": 4e-11, "H2O2": 2e-4}):
+def test_is_mass_const_dsl(data, chem, eps = {"SO2": 4e-9, "O3": 4e-11, "H2O2": 2e-4}):
     """
     Checking if the total mass of SO_2, O_3 and H2O2 in the closed chemical system 
     with only dissocoation present remains constant
