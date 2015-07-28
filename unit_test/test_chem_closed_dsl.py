@@ -46,7 +46,9 @@ def test_is_mass_const_dsl(data, chem, eps = {"SO2": 4e-9, "O3": 4e-11, "H2O2": 
     with only dissocoation present remains constant
 
     """
-    molar_mass = getattr(cm, "M_"+chem+"_H2O")
+    if chem == "SO2":
+        molar_mass = getattr(cm, "M_"+chem+"_H2O")
+    else: molar_mass = getattr(cm, "M_"+chem)
 
     # convert aqueous phase within droplets to gase phase (mole fraction)
     def aq_to_g(chem_aq, rhod, T, M, p):

@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 
 # TEMP TODO TEMP TODO !!!
-#import sys
-#sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
+import sys
+sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
 # TEMP TODO TEMP TODO !!!
 
 from argparse import ArgumentParser, RawTextHelpFormatter
-
-from libcloudphxx import common, lgrngn
-from libcloudphxx import git_revision as libcloud_version
 
 from distutils.version import StrictVersion
 from scipy import __version__ as scipy_version
@@ -17,15 +14,21 @@ assert StrictVersion(scipy_version) >= StrictVersion("0.13"), "see https://githu
 from scipy.io import netcdf
 import json, inspect, numpy as np
 import pdb
-
 import subprocess
+
+from libcloudphxx import common, lgrngn
+from libcloudphxx import git_revision as libcloud_version
+
 parcel_version = subprocess.check_output(["git", "rev-parse", "HEAD"]).rstrip()
 
 # id_str     id_int
 _Chem_g_id = {
   "SO2_g"  : lgrngn.chem_species_t.SO2, 
   "H2O2_g" : lgrngn.chem_species_t.H2O2, 
-  "O3_g"   : lgrngn.chem_species_t.O3
+  "O3_g"   : lgrngn.chem_species_t.O3,
+  "HNO3_g" : lgrngn.chem_species_t.HNO3,
+  "NH3_g"  : lgrngn.chem_species_t.NH3,
+  "CO2_g"  : lgrngn.chem_species_t.CO2
 }
 
 # id_str     id_int
@@ -33,6 +36,9 @@ _Chem_a_id = {
   "SO2_a"  : lgrngn.chem_species_t.SO2, 
   "H2O2_a" : lgrngn.chem_species_t.H2O2, 
   "O3_a"   : lgrngn.chem_species_t.O3,
+  "CO2_a"  : lgrngn.chem_species_t.CO2, 
+  "HNO3_a" : lgrngn.chem_species_t.HNO3, 
+  "NH3_a"  : lgrngn.chem_species_t.NH3,
   "HSO3_a" : lgrngn.chem_species_t.HSO3,
   "SO3_a"  : lgrngn.chem_species_t.SO3,
   "HSO4_a" : lgrngn.chem_species_t.HSO4,
@@ -45,8 +51,8 @@ _Chem_a_id = {
 # id_int   ...
 _molar_mass = {
   lgrngn.chem_species_t.SO2  : common.M_SO2_H2O,
-  lgrngn.chem_species_t.H2O2 : common.M_H2O2_H2O,
-  lgrngn.chem_species_t.O3   : common.M_O3_H2O,
+  lgrngn.chem_species_t.H2O2 : common.M_H2O2,
+  lgrngn.chem_species_t.O3   : common.M_O3,
   lgrngn.chem_species_t.HSO3 : common.M_HSO3,
   lgrngn.chem_species_t.SO3  : common.M_SO3
 }
@@ -267,7 +273,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   outfreq=100, sd_conc=64., kappa=.5,
   mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
   out_bin = '{"radii": {"rght": 0.0001, "moms": [0], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09}}',
-  SO2_g_0 = 0., O3_g_0 = 0., H2O2_g_0 = 0.,
+  SO2_g_0 = 0., O3_g_0 = 0., H2O2_g_0 = 0., CO2_g_0 = 0., HNO3_g_0 = 0, NH3_g_0 = 0,
   chem_sys = 'open',
   chem_dsl = False, chem_dsc = False, chem_rct = False, 
   chem_spn = 1,
@@ -338,7 +344,9 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
     # adding chem state vars
     if micro.opts_init.chem_switch:
       state.update({ "SO2_g" : SO2_g_0, "O3_g" : O3_g_0, "H2O2_g" : H2O2_g_0 })
-      state.update({ "SO2_a" : 0.,      "O3_a" : 0.,     "H2O2_a" : 0.       , "HSO3_a" : 0, "SO3_a" : 0})
+      state.update({ "CO2_g" : CO2_g_0, "NH3_g" : NH3_g_0, "HNO3_g" : HNO3_g_0 })
+      state.update({ "SO2_a" : 0.,"O3_a" : 0.,"H2O2_a" : 0., "HSO3_a" : 0, "SO3_a" : 0})
+      state.update({ "CO2_a" : 0.,"NH3_a" : 0.,"HNO3_a" : 0.})
 
     # t=0 : init & save
     _output(fout, opts, micro, state, 0, spectra)
