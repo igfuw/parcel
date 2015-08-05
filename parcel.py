@@ -139,60 +139,60 @@ def _micro_step(micro, state, info, opts, it, fout):
         state[id_str] -= (new - old) * state["rhod"][0] * common.R * state["T"][0] / _molar_mass[id_int] / state["p"]
         state[id_str.replace('_g', '_a')] = new
 
-        if opts["chem_dsc"] and id_str in ["SO2_g", "CO2_g", "NH3_g", "HNO3_g"]:
-          # during dissociation the mass of SO2 * H2O is kept constatnt
-          # therefore, afterwards in closed chem. system
-          # the number of new HSO3 and SO3 ions needs to be also substracted from SO2 gas  
-          if id_str == "SO2_g":
-            old_HSO3 = state["HSO3_a"]
-            old_SO3  = state["SO3_a"]
-
-            micro.diag_chem(_Chem_a_id["HSO3_a"])
-            state["HSO3_a"] = np.frombuffer(micro.outbuf())[0]
-
-            micro.diag_chem(_Chem_a_id["SO3_a"])
-            state["SO3_a"] = np.frombuffer(micro.outbuf())[0]
-
-            tmp = (
-                (state["HSO3_a"] - old_HSO3) / _molar_mass[_Chem_a_id["HSO3_a"]] 
-                + 
-                (state["SO3_a"] - old_SO3) / _molar_mass[_Chem_a_id["SO3_a"]]
-              ) * state["rhod"][0] * common.R * state["T"][0] / state["p"]
-          elif id_str =="CO2_g": 
-            old_HCO3 = state["HCO3_a"]
-            old_CO3  = state["CO3_a"]
-
-            micro.diag_chem(_Chem_a_id["HCO3_a"])
-            state["HCO3_a"] = np.frombuffer(micro.outbuf())[0]
-
-            micro.diag_chem(_Chem_a_id["CO3_a"])
-            state["CO3_a"] = np.frombuffer(micro.outbuf())[0]
-
-            tmp = (
-                (state["HCO3_a"] - old_HCO3) / _molar_mass[_Chem_a_id["HCO3_a"]] 
-                + 
-                (state["CO3_a"] - old_CO3) / _molar_mass[_Chem_a_id["CO3_a"]]
-              ) * state["rhod"][0] * common.R * state["T"][0] / state["p"]
-          elif id_str == "HNO3_g":
-            old_NO3 = state["NO3_a"]
-
-            micro.diag_chem(_Chem_a_id["NO3_a"])
-            state["NO3_a"] = np.frombuffer(micro.outbuf())[0]
-
-            tmp = (state["NO3_a"] - old_NO3) / _molar_mass[_Chem_a_id["NO3_a"]]\
-                   * state["rhod"][0] * common.R * state["T"][0] / state["p"]
-          elif id_str == "NH3_g":
-            old_NH4 = state["NH4_a"]
-
-            micro.diag_chem(_Chem_a_id["NH4_a"])
-            state["NH4_a"] = np.frombuffer(micro.outbuf())[0]
-
-            tmp = (state["NH4_a"] - old_NH4) / _molar_mass[_Chem_a_id["NH4_a"]]\
-                   * state["rhod"][0] * common.R * state["T"][0] / state["p"]
-          else: assert False 
-
-          state[id_str] -= tmp
-        
+#        if opts["chem_dsc"] and id_str in ["SO2_g", "CO2_g", "NH3_g", "HNO3_g"]:
+#          # during dissociation the mass of SO2 * H2O is kept constatnt
+#          # therefore, afterwards in closed chem. system
+#          # the number of new HSO3 and SO3 ions needs to be also substracted from SO2 gas  
+#          if id_str == "SO2_g":
+#            old_HSO3 = state["HSO3_a"]
+#            old_SO3  = state["SO3_a"]
+#
+#            micro.diag_chem(_Chem_a_id["HSO3_a"])
+#            state["HSO3_a"] = np.frombuffer(micro.outbuf())[0]
+#
+#            micro.diag_chem(_Chem_a_id["SO3_a"])
+#            state["SO3_a"] = np.frombuffer(micro.outbuf())[0]
+#
+#            tmp = (
+#                (state["HSO3_a"] - old_HSO3) / _molar_mass[_Chem_a_id["HSO3_a"]] 
+#                + 
+#                (state["SO3_a"] - old_SO3) / _molar_mass[_Chem_a_id["SO3_a"]]
+#              ) * state["rhod"][0] * common.R * state["T"][0] / state["p"]
+#          elif id_str =="CO2_g": 
+#            old_HCO3 = state["HCO3_a"]
+#            old_CO3  = state["CO3_a"]
+#
+#            micro.diag_chem(_Chem_a_id["HCO3_a"])
+#            state["HCO3_a"] = np.frombuffer(micro.outbuf())[0]
+#
+#            micro.diag_chem(_Chem_a_id["CO3_a"])
+#            state["CO3_a"] = np.frombuffer(micro.outbuf())[0]
+#
+#            tmp = (
+#                (state["HCO3_a"] - old_HCO3) / _molar_mass[_Chem_a_id["HCO3_a"]] 
+#                + 
+#                (state["CO3_a"] - old_CO3) / _molar_mass[_Chem_a_id["CO3_a"]]
+#              ) * state["rhod"][0] * common.R * state["T"][0] / state["p"]
+#          elif id_str == "HNO3_g":
+#            old_NO3 = state["NO3_a"]
+#
+#            micro.diag_chem(_Chem_a_id["NO3_a"])
+#            state["NO3_a"] = np.frombuffer(micro.outbuf())[0]
+#
+#            tmp = (state["NO3_a"] - old_NO3) / _molar_mass[_Chem_a_id["NO3_a"]]\
+#                   * state["rhod"][0] * common.R * state["T"][0] / state["p"]
+#          elif id_str == "NH3_g":
+#            old_NH4 = state["NH4_a"]
+#
+#            micro.diag_chem(_Chem_a_id["NH4_a"])
+#            state["NH4_a"] = np.frombuffer(micro.outbuf())[0]
+#
+#            tmp = (state["NH4_a"] - old_NH4) / _molar_mass[_Chem_a_id["NH4_a"]]\
+#                   * state["rhod"][0] * common.R * state["T"][0] / state["p"]
+#          else: assert False 
+#
+#          state[id_str] -= tmp
+#        
         assert state[id_str] >= 0, id_str
 
       elif opts['chem_sys'] == 'open':

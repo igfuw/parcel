@@ -29,27 +29,30 @@ def data(request):
     HNO3_g_init = 100e-12
     outfreq     = 50
     z_max       = 50.
-    outfile     = "test_chem_dsl.nc"
+    outfile     = "test_chem_dsl_"
     dt          = 0.1
     wait        = 1000
 
-    # running parcel model for open chem system  and only for dissolving chem species into droplets
-    parcel(dt = dt, z_max = z_max, outfreq = outfreq, wait=wait,\
-            T_0 = T_init, p_0 = p_init, r_0 = r_init,\
-            SO2_g_0 = SO2_g_init, O3_g_0 = O3_g_init, H2O2_g_0 = H2O2_g_init,\
-            CO2_g_0 = CO2_g_init, NH3_g_0 = NH3_g_init, HNO3_g_0 = HNO3_g_init,\
-            chem_sys = 'open',   outfile = outfile,\
-            chem_dsl = True, chem_dsc = False, chem_rct = False,\
-            out_bin = \
-            '{"radii": {"rght": 1, "left": 0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 3]},\
-              "chem" : {"rght": 1, "left": 0, "drwt": "wet", "lnli": "lin", "nbin": 1,\
-                  "moms": ["O3_a", "H2O2_a", "SO2_a", "CO2_a", "NH3_a", "HNO3_a"]}}')
+    for chem_sys in ["open", "closed"]:
+        # running parcel model for open chem system  and only for dissolving chem species into droplets
+        parcel(dt = dt, z_max = z_max, outfreq = outfreq, wait=wait,\
+                T_0 = T_init, p_0 = p_init, r_0 = r_init,\
+                SO2_g_0 = SO2_g_init, O3_g_0 = O3_g_init, H2O2_g_0 = H2O2_g_init,\
+                CO2_g_0 = CO2_g_init, NH3_g_0 = NH3_g_init, HNO3_g_0 = HNO3_g_init,\
+                chem_sys = chem_sys,   outfile = outfile + chem_sys +".nc",\
+                chem_dsl = True, chem_dsc = False, chem_rct = False,\
+                out_bin = \
+                '{"radii": {"rght": 1, "left": 0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 3]},\
+                  "chem" : {"rght": 1, "left": 0, "drwt": "wet", "lnli": "lin", "nbin": 1,\
+                      "moms": ["O3_a", "H2O2_a", "SO2_a", "CO2_a", "NH3_a", "HNO3_a"]}}')
 
-    data = netcdf.netcdf_file(outfile,   "r")
+    data = {"open":   netcdf.netcdf_file("test_chem_dsl_open.nc",   "r"),\
+            "closed": netcdf.netcdf_file("test_chem_dsl_closed.nc", "r")}
 
     # removing all netcdf files after all tests                                      
     def removing_files():
-        subprocess.call(["rm", outfile])
+        for files in data.keys():
+            subprocess.call(["rm", "test_chem_dsl_"+files+".nc"])
 
     request.addfinalizer(removing_files)
     return data
@@ -82,13 +85,15 @@ def test_henry_checker(data, chem, eps = 3e-4):
     with verical velocity set to zero. During this time the droplets may adjust to equilibrum
     and may be then compared with the teoretical values.
     """
-    vol    = np.squeeze(data.variables["radii_m3"][-1]) * 4/3. * math.pi
-    T      = data.variables["T"][-1]
-    p      = data.variables["p"][-1]
-    conc_g = data.variables[chem+"_g"][-1]
+    data_open = data["open"]
+
+    vol    = np.squeeze(data_open.variables["radii_m3"][-1]) * 4/3. * math.pi
+    T      = data_open.variables["T"][-1]
+    p      = data_open.variables["p"][-1]
+    conc_g = data_open.variables[chem+"_g"][-1]
 
     henry_aq     = henry_teor(chem, p, T, vol, conc_g)
-    conc_aq      = data.variables[chem+"_a"][-1]
+    conc_aq      = data_open.variables[chem+"_a"][-1]
 
     assert np.isclose(conc_aq, henry_aq, atol=0, rtol=eps), chem + " : " + str((conc_aq - henry_aq)/conc_aq) 
 
@@ -96,4 +101,5 @@ def test_henry_plot(data):
     """
     plot mass of dissolved chem species compared with theory
     """
-    plot_henry(data, output_folder = "plots/outputs/")
+    for chem_sys in ["open", "closed"]:
+        plot_henry(data[chem_sys], chem_sys, output_folder = "plots/outputs/")
