@@ -15,12 +15,15 @@ from chemical_plot import plot_chem
 @pytest.fixture(scope="module")
 def data(request):
     # initial condition
-    SO2_g_init  = 200e-12 
+    SO2_g_init  = 200e-12
     O3_g_init   = 50e-9
     H2O2_g_init = 500e-12
-    outfreq     = 1000    
-    z_max       = 250.
-    dt          = .01
+    CO2_g_init  = 360e-6
+    NH3_g_init  = 0.   #100e-12
+    HNO3_g_init = 0.   #100e-12
+    outfreq     = 100  #100    
+    z_max       = 200.
+    dt          = .05
     w           = 1.
 
     # turn on chemistry
@@ -30,8 +33,19 @@ def data(request):
     chem_spn = 10
 
     # define output for moments and chemistry
-    out_bin_chem = '{"radii": {"rght": 1, "moms": [0, 1, 3], "drwt": "wet", "nbin": 1, "lnli": "lin", "left": 0}, "chem": {"rght": 1, "moms": ["O3_a", "H2O2_a", "SO2_a", "H", "OH", "HSO3_a", "SO3_a", "HSO4_a", "SO4_a", "S_VI"], "drwt": "wet", "nbin": 1, "lnli": "lin", "left": 0}, "radiidry": {"rght": 1, "moms": [0, 1, 3], "drwt": "dry", "nbin": 1, "lnli": "lin", "left": 0}}'
-    out_bin      = '{"radii": {"rght": 1, "moms": [0, 1, 3], "drwt": "wet", "nbin": 1, "lnli": "lin", "left": 0}, "radiidry": {"rght": 1, "moms": [0, 1, 3], "drwt": "dry", "nbin": 1, "lnli": "lin", "left": 0}}'
+    out_bin_chem = '{"radii":   {"rght": 1, "left": 0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\
+                    "radiidry": {"rght": 1, "left": 0, "drwt": "dry", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\
+                    "chem":     {"rght": 1, "left": 0, "drwt": "dry", "lnli": "lin", "nbin": 1,\
+                                  "moms": ["O3_a", "H2O2_a",\
+                                           "H", "OH",\
+                                           "SO2_a", "HSO3_a", "SO3_a",\
+                                           "HSO4_a", "SO4_a", "S_VI",\
+                                           "CO2_a", "HCO3_a", "CO3_a",\
+                                           "NH3_a", "NH4_a",\
+                                           "HNO3_a", "NO3_a"]\
+                    }}'
+    out_bin      = '{"radii":   {"rght": 1, "left": 0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\
+                    "radiidry": {"rght": 1, "left": 0, "drwt": "dry", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]}}'
 
     # running parcel model for open / closed chem system  ...
     parcel(dt = dt, z_max = z_max, w = w, outfreq = outfreq,\
