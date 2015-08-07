@@ -18,8 +18,8 @@ def data(request):
     O3_g_init   = 50e-9
     H2O2_g_init = 500e-12
     CO2_g_init  = 360e-6
-    NH3_g_init  = 0.      # 100e-12
-    HNO3_g_init = 0.      # 100e-12 #TODO - add HNO3!!!
+    NH3_g_init  = 100e-12
+    HNO3_g_init = 100e-12
 
     outfreq     = 1000
     z_max       = 100.

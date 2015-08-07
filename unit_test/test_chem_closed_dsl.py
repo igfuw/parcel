@@ -20,10 +20,10 @@ def data(request):
     NH3_g_init  = 100e-12
     HNO3_g_init = 0 #100e-12 TODO - add HNO3!!!
 
-    outfreq     = 2000
+    outfreq     = 20000
     z_max       = 200.
     outfile     = "test_chem_closed.nc"
-    dt          = .1
+    dt          = .01
 
     # run parcel
     parcel(dt = dt, z_max = z_max, outfreq = outfreq,\
