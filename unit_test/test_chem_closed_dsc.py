@@ -1,6 +1,8 @@
 import sys
 sys.path.insert(0, "../")
 sys.path.insert(0, "./")
+sys.path.insert(0, "plots/one_simulat/")
+
 from scipy.io import netcdf
 import numpy as np
 import math
@@ -9,6 +11,7 @@ import pytest
 
 from parcel import parcel
 from libcloudphxx import common as cm
+from chemical_plot import plot_chem
 
 @pytest.fixture(scope="module")
 def data(request):
@@ -21,12 +24,12 @@ def data(request):
     NH3_g_init  = 100e-12
     HNO3_g_init = 100e-12
 
-    outfreq     = 1000
-    z_max       = 100.
+    outfreq     = 20
+    z_max       = 20.
     outfile     = "test_chem_closed_dsc.nc"
-    dt          = .01
+    dt          = .1
 
-    RH_init = .95
+    RH_init = .999999999
     T_init  = 285.2
     p_init  = 95000.
     r_init  = cm.eps * RH_init * cm.p_vs(T_init) / (p_init - RH_init * cm.p_vs(T_init))
@@ -34,6 +37,8 @@ def data(request):
     mean_r = .08e-6 / 2
     gstdev = 2./1
     n_tot  = 566.e6
+ 
+    sd_conc = 2048.
 
     # run parcel
     parcel(dt = dt, z_max = z_max, outfreq = outfreq,\
@@ -41,7 +46,7 @@ def data(request):
            SO2_g_0 = SO2_g_init,  O3_g_0 = O3_g_init,   H2O2_g_0 = H2O2_g_init,\
            CO2_g_0 = CO2_g_init, NH3_g_0 = NH3_g_init, HNO3_g_0 = HNO3_g_init,\
            chem_sys = 'closed',   outfile = outfile,\
-           mean_r = mean_r, gstdev = gstdev, n_tot = n_tot,\
+           mean_r = mean_r, gstdev = gstdev, n_tot = n_tot, sd_conc=sd_conc, \
            chem_dsl = True, chem_dsc = True, chem_rct = False,\
            out_bin = '{"chem": {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "nbin": 500, "lnli": "log",\
                                 "moms": ["O3_a", "H2O2_a", "SO2_a",\
@@ -79,16 +84,33 @@ def test_is_electroneutral(data, eps = 9e-10):
     m_HSO4 = data.variables["chem_HSO4_a"][-1, :]
     m_SO4  = data.variables["chem_SO4_a"][-1, :]
 
-    # positive ions
-    n_pos = m_H.sum() / cm.M_H + m_NH4.sum() / cm.M_NH4
-    # negative ions
-    n_neg = m_OH.sum() / cm.M_OH +\
-            m_HSO3.sum() / cm.M_HSO3 + 2 * m_SO3.sum() / cm.M_SO3 +\
-            m_HCO3.sum() / cm.M_HCO3 + 2 * m_CO3.sum() / cm.M_CO3 +\
-            m_NO3.sum() / cm.M_NO3 +\
-            m_HSO4.sum() / cm.M_HSO4 + 2 * m_SO4.sum() / cm.M_SO4
+    for idx, val in np.ndenumerate(m_H):
+      if m_H[idx] != 0 :
+          print "aqq"
+          # positive ions
+          p1 = m_H[idx] / cm.M_H
+          p2 = m_NH4[idx] / cm.M_NH4
+          n_pos = p1 +p2
+          # negative ions
+          n1 = m_OH[idx] / cm.M_OH
+          n2 = m_HSO3[idx] / cm.M_HSO3 + 2 * m_SO3[idx] / cm.M_SO3
+          n3 = m_HCO3[idx] / cm.M_HCO3 + 2 * m_CO3[idx] / cm.M_CO3
+          n4 = m_NO3[idx] / cm.M_NO3 
+          n5 = m_HSO4[idx] / cm.M_HSO4 + 2 * m_SO4[idx] / cm.M_SO4
+          n_neg = n1 + n2 + n3 + n4 + n5
 
-    assert np.isclose(n_neg, n_pos, atol=0, rtol=eps), str((n_pos-n_neg)/n_pos)
+          assert np.isclose(n_neg, n_pos, atol=0, rtol=eps),\
+              "electoneutral assert error " + str((n_pos-n_neg)/n_pos) +\
+              "\n n_pos = " + str(n_pos) + " and n_neg = " + str(n_neg) + \
+              "\n with positive ions: " + \
+              "\n     H   " + str(p1) + \
+              "\n     NH4 "+ str(p2) + \
+              "\n with negative ions: " + \
+              "\n     OH  " + str(n1) + \
+              "\n     S4  " + str(n2) + \
+              "\n     CO2 " + str(n3) + \
+              "\n     NO3 " + str(n4) + \
+              "\n     S6  " + str(n5)
 
 def test_is_mass_S6_const_with_dsl_dsc(data, eps=1e-10):
     """
@@ -107,6 +129,7 @@ def test_is_mass_S6_const_with_dsl_dsc(data, eps=1e-10):
 
     assert np.isclose(n_S6_ini, n_S6_end, atol=0, rtol=eps)
     assert np.isclose(n_S6_ini, n_SO4_HSO4_end, atol=0, rtol=eps)
+
 
 def test_check_dissoc_constants(data):
      """
@@ -128,51 +151,67 @@ def test_check_dissoc_constants(data):
      m_CO2  = data.variables["chem_CO2_a"][-1, :]
      m_HCO3 = data.variables["chem_HCO3_a"][-1, :]
      m_CO3  = data.variables["chem_CO3_a"][-1, :]
+
+     m_HNO3 = data.variables["chem_HNO3_a"][-1, :]
+     m_NO3  = data.variables["chem_NO3_a"][-1, :]
  
-     m_NH4  = data.variables["chem_NH4_a"][-1, :]
+     m_NH4 = data.variables["chem_NH4_a"][-1, :]
      m_NH3 = data.variables["chem_NH3_a"][-1, :]
- 
-     global num
- 
-     num = 0
- 
-     H2O_dissoc = 0
-     SO2_H2O_dissoc = 0
-     HSO3_dissoc = 0
-     CO2_H2O_dissoc = 0
-     HCO3_dissoc = 0
-     NH3_H2O_dissoc = 0
- 
-     left_HSO4  = 0
-     right_HSO4 = 0
-     left_SO4 = 0
-     right_SO4 = 0
  
      for idx, vol in np.ndenumerate(V):
          if vol > 0:
-             num += 1
-             H2O_dissoc += m_OH[idx] / cm.M_OH / vol * m_H[idx] / cm.M_H / vol
-             SO2_H2O_dissoc += (m_H[idx] / cm.M_H * m_HSO3[idx] / cm.M_HSO3) / (m_SO2[idx] / cm.M_SO2_H2O) / vol
-             HSO3_dissoc    += (m_H[idx] / cm.M_H * m_SO3[idx]  / cm.M_SO3)  / (m_HSO3[idx] / cm.M_HSO3) / vol
-             CO2_H2O_dissoc += (m_H[idx] / cm.M_H * m_HCO3[idx] / cm.M_HCO3) / (m_CO2[idx] / cm.M_CO2_H2O) / vol
-             HCO3_dissoc    += (m_H[idx] / cm.M_H * m_CO3[idx]  / cm.M_CO3)  / (m_HCO3[idx] / cm.M_HCO3) / vol
-#             NH3_H2O_dissoc += (m_NH4[idx] / cm.M_NH4 * m_OH[idx] / cm.M_OH) / (m_NH3[idx] / cm.M_NH3_H2O) / vol
+             
+             H2O_dissoc     = m_OH[idx] / cm.M_OH / vol * m_H[idx] / cm.M_H / vol
+             SO2_H2O_dissoc = (m_H[idx]   / cm.M_H   * m_HSO3[idx] / cm.M_HSO3) / (m_SO2[idx]  / cm.M_SO2_H2O) / vol
+             HSO3_dissoc    = (m_H[idx]   / cm.M_H   * m_SO3[idx]  / cm.M_SO3)  / (m_HSO3[idx] / cm.M_HSO3)    / vol
+             CO2_H2O_dissoc = (m_H[idx]   / cm.M_H   * m_HCO3[idx] / cm.M_HCO3) / (m_CO2[idx]  / cm.M_CO2_H2O) / vol
+             HCO3_dissoc    = (m_H[idx]   / cm.M_H   * m_CO3[idx]  / cm.M_CO3)  / (m_HCO3[idx] / cm.M_HCO3)    / vol
+             NH3_H2O_dissoc = (m_NH4[idx] / cm.M_NH4 * m_OH[idx]   / cm.M_OH)   / (m_NH3[idx]  / cm.M_NH3_H2O) / vol
+             HNO3_dissoc    = (m_H[idx]   / cm.M_H   * m_NO3[idx]  / cm.M_NO3)  / (m_HNO3[idx] / cm.M_HNO3)    / vol
  
-             left_HSO4  += m_HSO4[idx] / cm.M_HSO4 / vol
-             right_HSO4 += (m_H[idx] / cm.M_H  / vol * m_S6[idx] / cm.M_H2SO4 / vol) / (m_H[idx] / cm.M_H / vol + cm.K_HSO4)
-             left_SO4  += m_SO4[idx] / cm.M_SO4 / vol
-             right_SO4 += (cm.K_HSO4 * m_S6[idx] / cm.M_H2SO4 / vol)  / (m_H[idx] / cm.M_H / vol + cm.K_HSO4)
- 
-     assert np.isclose(cm.K_H2O, H2O_dissoc/num, atol=0, rtol=5e-4),       str((cm.K_H2O - H2O_dissoc/num) / (H2O_dissoc/num))
-     assert np.isclose(cm.K_SO2, SO2_H2O_dissoc/num , atol=0, rtol=5e-4),  str((cm.K_SO2 - SO2_H2O_dissoc/num) /cm.K_SO2 )
-     assert np.isclose(cm.K_HSO3, HSO3_dissoc/num, atol=0, rtol=9e-4),     str((cm.K_HSO3 - HSO3_dissoc/num) / cm.K_HSO3)
- 
-     assert np.isclose(cm.K_CO2, CO2_H2O_dissoc/num , atol=0, rtol=3e-4),     str((cm.K_CO2 - CO2_H2O_dissoc/num) /cm.K_CO2 )
-     assert np.isclose(cm.K_HCO3, HCO3_dissoc/num, atol=0, rtol=6e-4),        str((cm.K_HCO3 - HCO3_dissoc/num) / cm.K_HCO3)
-#     assert np.isclose(cm.K_NH3, NH3_H2O_dissoc/num, atol=0, rtol=3e-4),      str((cm.K_NH3 - NH3_H2O_dissoc/num) / cm.K_NH3)
- 
-     assert np.isclose(left_HSO4/num, right_HSO4/num, atol=0, rtol=4e-10), str((left_HSO4/num - right_HSO4/num) / (left_HSO4/num))
-     assert np.isclose(left_SO4/num, right_SO4/num, atol=0, rtol=3e-8),    str((left_SO4/num - right_SO4/num) / (left_SO4/num))
+             left_HSO4  = m_HSO4[idx] / cm.M_HSO4 / vol
+             right_HSO4 = (m_H[idx] / cm.M_H  / vol * m_S6[idx] / cm.M_H2SO4 / vol) / (m_H[idx] / cm.M_H / vol + cm.K_HSO4)
+             left_SO4   = m_SO4[idx] / cm.M_SO4 / vol
+             right_SO4  = (cm.K_HSO4 * m_S6[idx] / cm.M_H2SO4 / vol)  / (m_H[idx] / cm.M_H / vol + cm.K_HSO4)
+
+#             print " "
+#             print "K_H2O = " + str(cm.K_H2O) + " in drop = " + str(H2O_dissoc) + \
+#                   "K_H2O error " + str((cm.K_H2O - H2O_dissoc) / H2O_dissoc) 
+#
+#             print "K_SO2 = " + str(cm.K_SO2) + " in drop = " + str(SO2_H2O_dissoc) + \
+#                   "K_SO2 error " + str((cm.K_SO2 - SO2_H2O_dissoc) /cm.K_SO2 )
+#
+#             print "K_HSO3 = " + str(cm.K_HSO3) + " in drop = " + str(HSO3_dissoc) + \
+#                   "K_HSO3 error " + str((cm.K_HSO3 - HSO3_dissoc) / cm.K_HSO3)
+#
+#             print "K_CO2 = " + str(cm.K_CO2) + " in drop = " + str(CO2_H2O_dissoc) + \
+#                   "K_CO2 error " + str((cm.K_CO2 - CO2_H2O_dissoc) /cm.K_CO2 )
+#
+#             print  "K_HCO3 = " + str(cm.K_HCO3) + " in drop = " + str(HCO3_dissoc) + \
+#                    "K_HCO3 error " + str((cm.K_HCO3 - HCO3_dissoc) / cm.K_HCO3)
+#
+#             print  "K_NH3 = " + str(cm.K_NH3) + " in drop = " + str(NH3_H2O_dissoc) + \
+#                    "K_NH3 error " + str((cm.K_NH3 - NH3_H2O_dissoc) / cm.K_NH3)
+# 
+#             print  "K_HNO3 = " + str(cm.K_HNO3) + " in drop = " + str(HNO3_dissoc) + \
+#                    "K_HNO3 error " + str((cm.K_HNO3 - HNO3_dissoc) / cm.K_HNO3)
+# 
+             assert np.isclose(cm.K_H2O, H2O_dissoc/num, atol=0, rtol=1e-3),\
+                 "K_H2O error " + str((cm.K_H2O - H2O_dissoc/num) / (H2O_dissoc/num))
+             assert np.isclose(cm.K_SO2, SO2_H2O_dissoc/num , atol=0, rtol=1e-3),\
+                 "K_SO2 error " + str((cm.K_SO2 - SO2_H2O_dissoc/num) /cm.K_SO2 )
+	     assert np.isclose(cm.K_HSO3, HSO3_dissoc/num, atol=0, rtol=1e-3),\
+                 "K_HSO3 error " + str((cm.K_HSO3 - HSO3_dissoc/num) / cm.K_HSO3)
+             assert np.isclose(cm.K_CO2, CO2_H2O_dissoc/num , atol=0, rtol=1e-3),\
+                 "K_CO2 error " + str((cm.K_CO2 - CO2_H2O_dissoc/num) /cm.K_CO2 )
+             assert np.isclose(cm.K_HCO3, HCO3_dissoc/num, atol=0, rtol=1e-3),\
+                 "K_HCO3 error " + str((cm.K_HCO3 - HCO3_dissoc/num) / cm.K_HCO3)
+             assert np.isclose(cm.K_NH3, NH3_H2O_dissoc/num, atol=0, rtol=1e-3),\
+                 "K_NH3 error " + str((cm.K_NH3 - NH3_H2O_dissoc/num) / cm.K_NH3)
+             assert np.isclose(left_HSO4/num, right_HSO4/num, atol=0, rtol=1e-3),\
+                 "K_HSO4 error " + str((left_HSO4/num - right_HSO4/num) / (left_HSO4/num))
+             assert np.isclose(left_SO4/num, right_SO4/num, atol=0, rtol=1e-3),\
+                 "K_SO4 error " + str((left_SO4/num - right_SO4/num) / (left_SO4/num))
  
 @pytest.mark.parametrize("chem", ["SO2", "O3", "H2O2", "CO2"]) #, "NH3"])
 def test_is_mass_const_dsl_dsc(data, chem, eps = {"SO2": 4e-5, "O3":4e-11, "H2O2": 2e-4, "CO2": 2e-10, "NH3": 2e-4}):   
@@ -253,3 +292,12 @@ def test_is_mass_const_dsl_dsc(data, chem, eps = {"SO2": 4e-5, "O3":4e-11, "H2O2
 
  
      assert np.isclose(end, ini, atol=0, rtol=eps[chem]), chem + " : " + str((ini-end)/ini)
+
+def test_chem_plot(data):
+    """
+    checking if plot function works correctly
+    returns quicklook for chemistry
+    """
+    data_to_plot = {'closed' : data}
+    plot_chem(data_to_plot, output_folder="plots/outputs")
+

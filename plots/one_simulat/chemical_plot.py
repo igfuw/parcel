@@ -18,12 +18,12 @@ def plot_chem(data, output_folder = "/outputs"):
     matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
     import matplotlib.pyplot as plt
 
-    # TODO - copy keys and values from data dictionary
-    f_out_chem = {
-      "open"   : netcdf.netcdf_file("test_chem_open.nc",   "r"),
-      "closed" : netcdf.netcdf_file("test_chem_closed.nc", "r")
-    }
-    # TODO - copy keys from data dictionary
+    f_out_chem = {}
+    if "open" in data.iterkeys():
+        f_out_chem["open"] = data["open"]
+    if "closed" in data.iterkeys():
+        f_out_chem["closed"] = data["closed"]
+
     style = {
       "open"   : "b.-",
       "closed" : "g.-",
@@ -65,13 +65,13 @@ def plot_chem(data, output_folder = "/outputs"):
 	f.variables["RH"][spn_idx:]                     , z, style[i], 
 	[f.variables["RH"][spn_idx:].max()] * z.shape[0], z, style[i]
       )
-      plots[3].plot(np.squeeze(f.variables["radii_m0"][spn_idx:]), z, style[i])
-      plots[4].plot(np.squeeze(f.variables["radii_m1"][spn_idx:]), z, style[i])
+#      plots[3].plot(np.squeeze(f.variables["radii_m0"][spn_idx:]), z, style[i])
+#      plots[4].plot(np.squeeze(f.variables["radii_m1"][spn_idx:]), z, style[i])
       plots[5].plot(np.squeeze(f.variables["radii_m3"][spn_idx:]), z, style[i])
  
-      plots[6].plot(np.squeeze(f.variables["radiidry_m0"][spn_idx:]), z, style[i])
-      plots[7].plot(np.squeeze(f.variables["radiidry_m1"][spn_idx:]), z, style[i])
-      plots[8].plot(np.squeeze(f.variables["radiidry_m3"][spn_idx:]), z, style[i])
+#      plots[6].plot(np.squeeze(f.variables["radiidry_m0"][spn_idx:]), z, style[i])
+#      plots[7].plot(np.squeeze(f.variables["radiidry_m1"][spn_idx:]), z, style[i])
+#      plots[8].plot(np.squeeze(f.variables["radiidry_m3"][spn_idx:]), z, style[i])
 
     plt.savefig(output_folder + "/plot_chem_stat.svg")
 

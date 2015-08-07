@@ -393,7 +393,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
  
       # output
       if (it % outfreq == 0):
-        print str(round(it / (nt+1.) * 100, 2)) + " %"
+        print str(round(it / (nt * 1.) * 100, 2)) + " %"
         rec = it/outfreq
         _output(fout, opts, micro, state, rec, spectra)
 
