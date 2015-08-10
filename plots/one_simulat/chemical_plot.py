@@ -12,7 +12,7 @@ import subprocess
 from parcel import parcel
 from libcloudphxx import common
 
-def plot_chem(data, output_folder = "/outputs"):
+def plot_chem(data, output_folder = '', output_title = ''):
 
     import matplotlib
     matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
@@ -31,7 +31,6 @@ def plot_chem(data, output_folder = "/outputs"):
     }
     spn_idx = 0
     #spn_idx = int(math.ceil(float(f_out_chem['open'].chem_spn)/float(f_out_chem['open'].outfreq)))
-
 
     #-----------------------------------------------------------------------
     # plot p, T, RH and dry/wet moments
@@ -65,15 +64,15 @@ def plot_chem(data, output_folder = "/outputs"):
 	f.variables["RH"][spn_idx:]                     , z, style[i], 
 	[f.variables["RH"][spn_idx:].max()] * z.shape[0], z, style[i]
       )
-#      plots[3].plot(np.squeeze(f.variables["radii_m0"][spn_idx:]), z, style[i])
-#      plots[4].plot(np.squeeze(f.variables["radii_m1"][spn_idx:]), z, style[i])
-      plots[5].plot(np.squeeze(f.variables["radii_m3"][spn_idx:]), z, style[i])
+      plots[3].plot(np.squeeze(f.variables["plt_rw_m0"][spn_idx:]), z, style[i])
+      plots[4].plot(np.squeeze(f.variables["plt_rw_m1"][spn_idx:]), z, style[i])
+      plots[5].plot(np.squeeze(f.variables["plt_rw_m3"][spn_idx:]), z, style[i])
  
-#      plots[6].plot(np.squeeze(f.variables["radiidry_m0"][spn_idx:]), z, style[i])
-#      plots[7].plot(np.squeeze(f.variables["radiidry_m1"][spn_idx:]), z, style[i])
-#      plots[8].plot(np.squeeze(f.variables["radiidry_m3"][spn_idx:]), z, style[i])
+      plots[6].plot(np.squeeze(f.variables["plt_rd_m0"][spn_idx:]), z, style[i])
+      plots[7].plot(np.squeeze(f.variables["plt_rd_m1"][spn_idx:]), z, style[i])
+      plots[8].plot(np.squeeze(f.variables["plt_rd_m3"][spn_idx:]), z, style[i])
 
-    plt.savefig(output_folder + "/plot_chem_stat.svg")
+    plt.savefig(output_folder + output_title + "stat.svg")
 
     #-----------------------------------------------------------------------
     # plot non-dissociating chem species
@@ -100,7 +99,7 @@ def plot_chem(data, output_folder = "/outputs"):
       plots[2].plot(f.variables["O3_a"][spn_idx:]   , z, style[i])
       plots[3].plot(f.variables["H2O2_a"][spn_idx:] , z, style[i])
 
-    plt.savefig(output_folder + "/plot_chem_O3_H2O2.svg")
+    plt.savefig(output_folder + output_title + "O3_H2O2.svg")
 
     #-----------------------------------------------------------------------
     # plot pH , H+, OH-
@@ -119,15 +118,15 @@ def plot_chem(data, output_folder = "/outputs"):
       ax.set_ylabel('z [m]')
 
     for i, f in f_out_chem.iteritems():
-      n_H = np.squeeze(f.variables["chem_H"][spn_idx:]) / common.M_H
-      vol = np.squeeze(f.variables["radii_m3"][spn_idx:]) * 4/3. * math.pi * 1e3  #litres
+      n_H = np.squeeze(f.variables["plt_ch_H"][spn_idx:]) / common.M_H
+      vol = np.squeeze(f.variables["plt_rw_m3"][spn_idx:]) * 4/3. * math.pi * 1e3  #litres
       pH  = -1 * np.log10(n_H / vol)
 
       plots[0].plot(pH,  z, style[i])
-      plots[1].plot(np.squeeze(f.variables["chem_H"][spn_idx:])  , z, style[i])
-      plots[2].plot(np.squeeze(f.variables["chem_OH"][spn_idx:]) , z, style[i])
+      plots[1].plot(np.squeeze(f.variables["plt_ch_H"][spn_idx:])  , z, style[i])
+      plots[2].plot(np.squeeze(f.variables["plt_ch_OH"][spn_idx:]) , z, style[i])
 
-    plt.savefig(output_folder + "/plot_chem_pH.svg")
+    plt.savefig(output_folder + output_title + "pH.svg")
 
     #-----------------------------------------------------------------------
     # plot NH3_g, NH3_a, NH4+ 
@@ -148,9 +147,9 @@ def plot_chem(data, output_folder = "/outputs"):
     for i, f in f_out_chem.iteritems():
       plots[0].plot(f.variables["NH3_g"][spn_idx:]  * 1e12 , z, style[i])
       plots[1].plot(f.variables["NH3_a"][spn_idx:]  , z, style[i])
-      plots[2].plot(np.squeeze(f.variables["chem_NH4_a"][spn_idx:]) , z, style[i])
+      plots[2].plot(np.squeeze(f.variables["plt_ch_NH4_a"][spn_idx:]) , z, style[i])
 
-    plt.savefig(output_folder + "/plot_chem_NH3.svg")
+    plt.savefig(output_folder + output_title  + "NH3.svg")
     #-----------------------------------------------------------------------
     # plot HNO3_g, NHO3_a, NO3+ 
     plt.figure(5, figsize=(12,7))
@@ -170,9 +169,9 @@ def plot_chem(data, output_folder = "/outputs"):
     for i, f in f_out_chem.iteritems():
       plots[0].plot(f.variables["HNO3_g"][spn_idx:]  * 1e12 , z, style[i])
       plots[1].plot(f.variables["HNO3_a"][spn_idx:]  , z, style[i])
-      plots[2].plot(np.squeeze(f.variables["chem_NO3_a"][spn_idx:]) , z, style[i])
+      plots[2].plot(np.squeeze(f.variables["plt_ch_NO3_a"][spn_idx:]) , z, style[i])
 
-    plt.savefig(output_folder + "/plot_chem_HNO3.svg")
+    plt.savefig(output_folder + output_title  + "HNO3.svg")
  
     #-----------------------------------------------------------------------
     # plot CO2_g, CO2_a, HCO3+, CO3--
@@ -194,10 +193,10 @@ def plot_chem(data, output_folder = "/outputs"):
     for i, f in f_out_chem.iteritems():
       plots[0].plot(f.variables["CO2_g"][spn_idx:]  * 1e6 , z, style[i])
       plots[1].plot(f.variables["CO2_a"][spn_idx:]  , z, style[i])
-      plots[2].plot(np.squeeze(f.variables["chem_HCO3_a"][spn_idx:]) , z, style[i])
-      plots[3].plot(np.squeeze(f.variables["chem_CO3_a"][spn_idx:]) , z, style[i])
+      plots[2].plot(np.squeeze(f.variables["plt_ch_HCO3_a"][spn_idx:]) , z, style[i])
+      plots[3].plot(np.squeeze(f.variables["plt_ch_CO3_a"][spn_idx:]) , z, style[i])
 
-    plt.savefig(output_folder + "/plot_chem_CO2.svg")
+    plt.savefig(output_folder + output_title + "CO2.svg")
  
     #-----------------------------------------------------------------------
     # plot SO2_g, SO2_a, HSO3+, SO3--, HSO4-, SO4--, S_VI
@@ -224,26 +223,28 @@ def plot_chem(data, output_folder = "/outputs"):
     for i, f in f_out_chem.iteritems():
       plots[0].plot(f.variables["SO2_g"][spn_idx:]  * 1e12 , z, style[i])
       plots[1].plot(f.variables["SO2_a"][spn_idx:]  , z, style[i])
-      plots[3].plot(np.squeeze(f.variables["chem_HSO3_a"][spn_idx:]) , z, style[i])
-      plots[4].plot(np.squeeze(f.variables["chem_SO3_a"][spn_idx:])  , z, style[i])
-      plots[6].plot(np.squeeze(f.variables["chem_HSO4_a"][spn_idx:]) , z, style[i])
-      plots[7].plot(np.squeeze(f.variables["chem_SO4_a"][spn_idx:])  , z, style[i])
-      plots[8].plot(np.squeeze(f.variables["chem_S_VI"][spn_idx:])   , z, style[i])
+      plots[3].plot(np.squeeze(f.variables["plt_ch_HSO3_a"][spn_idx:]) , z, style[i])
+      plots[4].plot(np.squeeze(f.variables["plt_ch_SO3_a"][spn_idx:])  , z, style[i])
+      plots[6].plot(np.squeeze(f.variables["plt_ch_HSO4_a"][spn_idx:]) , z, style[i])
+      plots[7].plot(np.squeeze(f.variables["plt_ch_SO4_a"][spn_idx:])  , z, style[i])
+      plots[8].plot(np.squeeze(f.variables["plt_ch_S_VI"][spn_idx:])   , z, style[i])
 
-    plt.savefig(output_folder + "/plot_chem_SO2.svg")
-
+    plt.savefig(output_folder + output_title + "SO2.svg")
+    #-----------------------------------------------------------------------
+ 
 def main():
     # initial condition
     SO2_g_init  = 200e-12 
     O3_g_init   = 50e-9
     H2O2_g_init = 500e-12
     CO2_g_init  = 360e-6 
-    NH3_g_init  = 0.   #100e-12
-    HNO3_g_init = 0.   #100e-12
-    outfreq     = 100  #100    
+    NH3_g_init  = 100e-12
+    HNO3_g_init = 100e-12
     z_max       = 200.
     dt          = .05
+    outfreq     = int(z_max / dt / 100)
     w           = 1.
+    sd_conc     = 2048.
 
     # turn on chemistry
     chem_dsl = True
@@ -252,49 +253,49 @@ def main():
     chem_spn = 10
 
     # define output for moments and chemistry
-    out_bin_chem = '{"radii":   {"rght": 1, "left": 0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\
-                    "radiidry": {"rght": 1, "left": 0, "drwt": "dry", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\
-                    "chem":     {"rght": 1, "left": 0, "drwt": "dry", "lnli": "lin", "nbin": 1,\
-                                  "moms": ["O3_a", "H2O2_a",\
-                                           "H", "OH",\
-                                           "SO2_a", "HSO3_a", "SO3_a",\
-                                           "HSO4_a", "SO4_a", "S_VI",\
-                                           "CO2_a", "HCO3_a", "CO3_a",\
-                                           "NH3_a", "NH4_a",\
-                                           "HNO3_a", "NO3_a"]\
+    out_bin_chem = '{"plt_rw":   {"rght": 1, "left": 0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\
+                     "plt_rd":   {"rght": 1, "left": 0, "drwt": "dry", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\
+                     "plt_ch":   {"rght": 1, "left": 0, "drwt": "dry", "lnli": "lin", "nbin": 1,\
+                                  "moms": ["O3_a",   "H2O2_a", "H", "OH",\
+                                           "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI",\
+                                           "CO2_a",  "HCO3_a", "CO3_a",\
+                                           "NH3_a",  "NH4_a",  "HNO3_a", "NO3_a"]\
                     }}'
-    out_bin      = '{"radii":   {"rght": 1, "left": 0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\
-                    "radiidry": {"rght": 1, "left": 0, "drwt": "dry", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]}}'
 
-    # running parcel model for open / closed chem system  ...
+    out_bin      = '{"plt_rw": {"rght": 1, "left": 0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\
+                     "plt_rd": {"rght": 1, "left": 0, "drwt": "dry", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]}}'
+
+    # running parcel model for open / closed / off chem system
     parcel(dt = dt, z_max = z_max, w = w, outfreq = outfreq,\
             SO2_g_0 = SO2_g_init, O3_g_0 = O3_g_init, H2O2_g_0 = H2O2_g_init,\
             CO2_g_0 = CO2_g_init, NH3_g_0 = NH3_g_init, HNO3_g_0 = HNO3_g_init,\
-            chem_sys = 'open',   outfile="test_chem_open.nc",\
+            chem_sys = 'open',   outfile="test_plot_chem_open.nc",\
+            sd_conc = sd_conc,\
             chem_dsl = chem_dsl, chem_dsc = chem_dsc, chem_rct = chem_rct, chem_spn = chem_spn, \
             out_bin = out_bin_chem)
 
     parcel(dt = dt, z_max = z_max, w = w, outfreq = outfreq,\
-             SO2_g_0 = SO2_g_init, O3_g_0 = O3_g_init, H2O2_g_0 = H2O2_g_init,\
-             CO2_g_0 = CO2_g_init, NH3_g_0 = NH3_g_init, HNO3_g_0 = HNO3_g_init,\
-             chem_sys = 'closed', outfile="test_chem_closed.nc",\
-             chem_dsl = chem_dsl, chem_dsc = chem_dsc, chem_rct = chem_rct, chem_spn = chem_spn, \
-             out_bin = out_bin_chem)
+           SO2_g_0 = SO2_g_init, O3_g_0 = O3_g_init, H2O2_g_0 = H2O2_g_init,\
+           CO2_g_0 = CO2_g_init, NH3_g_0 = NH3_g_init, HNO3_g_0 = HNO3_g_init,\
+           chem_sys = 'closed', outfile="test_plot_chem_closed.nc",\
+           sd_conc = sd_conc,\
+           chem_dsl = chem_dsl, chem_dsc = chem_dsc, chem_rct = chem_rct, chem_spn = chem_spn, \
+           out_bin = out_bin_chem)
 
-    parcel(dt = dt, z_max = z_max, w = w, outfreq = outfreq, outfile="test_chem_off.nc",\
-           SO2_g_0=0, O3_g_0=0, H2O2_g_0=0, out_bin = out_bin)
+    parcel(dt = dt, z_max = z_max, w = w, outfreq = outfreq, outfile="test_plot_chem_off.nc",\
+           SO2_g_0=0, O3_g_0=0, H2O2_g_0=0, out_bin = out_bin, sd_conc = sd_conc)
 
     # TODO - why do I have to repeat this import here?
     from scipy.io import netcdf
-    data = {'open'   : netcdf.netcdf_file("test_chem_open.nc", "r"),\
-            'closed' : netcdf.netcdf_file("test_chem_closed.nc", "r"),\
-            'off'    : netcdf.netcdf_file("test_chem_off.nc", "r")}
+    data = {'open'   : netcdf.netcdf_file("test_plot_chem_open.nc",   "r"),\
+            'closed' : netcdf.netcdf_file("test_plot_chem_closed.nc", "r"),\
+            'off'    : netcdf.netcdf_file("test_plot_chem_off.nc",    "r")}
 
-    plot_chem(data, output_folder = "../outputs")
+    plot_chem(data, output_folder = "../outputs", output_title = "/test_plot_chem_")
 
     for name, netcdf in data.iteritems():
         netcdf.close()
-        subprocess.call(["rm", "test_chem_" + name + ".nc"])
+        subprocess.call(["rm", "test_plot_chem_" + name + ".nc"])
 
 if __name__ == '__main__':
     main()
