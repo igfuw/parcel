@@ -24,7 +24,7 @@ def data(request):
     NH3_g_init  = 100e-12
     HNO3_g_init = 100e-12
 
-    z_max       = 200.
+    z_max       = 2500.
     dt          = .1
     w           = 1.
     outfreq     = int(z_max / dt / 100)
@@ -32,33 +32,49 @@ def data(request):
 
     outfile     = "test_chem_closed_dsl.nc"
 
-    # run parcel
-    parcel(dt = dt, z_max = z_max, outfreq = outfreq, w = w, \
-           SO2_g_0 = SO2_g_init, O3_g_0 = O3_g_init, H2O2_g_0 = H2O2_g_init,\
-           CO2_g_0 = CO2_g_init, NH3_g_0 = NH3_g_init, HNO3_g_0 = HNO3_g_init,\
-           chem_sys = 'closed',   outfile = outfile,\
-           chem_dsl = True, chem_dsc = False, chem_rct = False,\
-           sd_conc = sd_conc,\
-           out_bin = '{"plt_rw":   {"rght": 1, "left": 0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\
-                       "plt_rd":   {"rght": 1, "left": 0, "drwt": "dry", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\
-                       "plt_ch":   {"rght": 1, "left": 0, "drwt": "dry", "lnli": "lin", "nbin": 1,\
-                                    "moms": ["O3_a",   "H2O2_a", "H", "OH",\
-                                            "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI",\
-                                            "CO2_a",  "HCO3_a", "CO3_a",\
-                                            "NH3_a",  "NH4_a",  "HNO3_a", "NO3_a"]\
-                      }}')
+    mean_r = .08e-6 / 2.
+    gstdev = 2.   #TODO /2
+    n_tot  = 566.e6
 
+    chem_dsl = True
+    chem_dsc = False
+    chem_rct = False
+
+    RH_init = .95
+    T_init  = 285.2
+    p_init  = 95000.
+    r_init  = cm.eps * RH_init * cm.p_vs(T_init) / (p_init - RH_init * cm.p_vs(T_init))
+
+    # run parcel
+#    parcel(dt = dt, z_max = z_max, outfreq = outfreq, w = w, \
+#           T_0 = T_init, p_0 = p_init, r_0 = r_init,\
+#           SO2_g_0 = SO2_g_init, O3_g_0 = O3_g_init, H2O2_g_0 = H2O2_g_init,\
+#           CO2_g_0 = CO2_g_init, NH3_g_0 = NH3_g_init, HNO3_g_0 = HNO3_g_init,\
+#           chem_sys = 'closed',   outfile = outfile,\
+#           chem_dsl = chem_dsl, chem_dsc = chem_dsc, chem_rct = chem_rct,\
+#           n_tot = n_tot, mean_r = mean_r, gstdev = gstdev,\
+#           sd_conc = sd_conc,\
+#           out_bin = '{"plt_rw":   {"rght": 1,    "left":    0, "drwt": "wet", "lnli": "lin", "nbin": 1,   "moms": [0, 1, 3]},\
+#                       "plt_rd":   {"rght": 1,    "left":    0, "drwt": "dry", "lnli": "lin", "nbin": 1,   "moms": [0, 1, 3]},\
+#                       "radii" :   {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 500, "moms": [0, 3]},\
+#                       "plt_ch":   {"rght": 1,    "left":    0, "drwt": "dry", "lnli": "lin", "nbin": 1,\
+#                                    "moms": ["O3_a",   "H2O2_a", "H", "OH",\
+#                                            "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI",\
+#                                            "CO2_a",  "HCO3_a", "CO3_a",\
+#                                            "NH3_a",  "NH4_a",  "HNO3_a", "NO3_a"]\
+#                      }}')
+#
     data = netcdf.netcdf_file(outfile,   "r")
 
     # removing all netcdf files after all tests                                      
     def removing_files():
         subprocess.call(["rm", outfile])
 
-    request.addfinalizer(removing_files)
+    #request.addfinalizer(removing_files)
     return data
 
 @pytest.mark.parametrize("chem", ["SO2", "O3", "H2O2", "CO2", "NH3"])
-def test_is_mass_const_dsl(data, chem, eps = {"SO2": 4e-9, "O3": 4e-11, "H2O2": 2e-4, "CO2": 1e-10, "NH3": 2e-7}):
+def test_is_mass_const_dsl(data, chem, eps = {"SO2": 2e-7, "O3": 3e-9, "H2O2": 3e-3, "CO2": 7e-9, "NH3": 8e-6}):
                                                                                 #TODO why so big? - check with bigger sd_conc
     """
     Checking if the total mass of SO_2, O_3 and H2O2 in the closed chemical system 
@@ -79,7 +95,7 @@ def test_is_mass_const_dsl(data, chem, eps = {"SO2": 4e-9, "O3": 4e-11, "H2O2": 
           aq_to_g(data.variables[chem+"_a"][-1], data.variables["rhod"][-1], data.variables["T"][-1],\
                 molar_mass, data.variables["p"][-1])
 
-    assert np.isclose(end, ini, atol=0, rtol=eps[chem]), str((ini-end)/ini)
+    assert np.isclose(end, ini, atol=0, rtol=eps[chem]), chem + " " + str((ini-end)/ini)
 
 def test_chem_plot(data):
     """

@@ -24,21 +24,22 @@ def data(request):
     NH3_g_init  = 100e-12
     HNO3_g_init = 100e-12
 
-    z_max       = 2000.
-    dt          = .02
-    outfreq     = int(z_max / dt / 100)
-    outfile     = "test_chem_closed_dsc.nc"
-
-    RH_init = .9999
+    RH_init = .95
     T_init  = 285.2
     p_init  = 95000.
     r_init  = cm.eps * RH_init * cm.p_vs(T_init) / (p_init - RH_init * cm.p_vs(T_init))
 
+    z_max       = 400 #2400.
+    dt          = .05
+    w           = 1.
+    outfreq     = int(z_max / dt / 100)
+    sd_conc     = 2048.
+
+    outfile     = "test_chem_closed_dsc.nc"
+
     mean_r = .08e-6 / 2
     gstdev = 2./1
     n_tot  = 566.e6
- 
-    sd_conc = 2048.
 
     chem_dsl = True
     chem_dsc = True
@@ -46,7 +47,7 @@ def data(request):
 
     # run parcel
     parcel(dt = dt, z_max = z_max, outfreq = outfreq,\
-           T_0 = T_init, p_0 = p_init, r_0 = r_init,\
+           #T_0 = T_init, p_0 = p_init, r_0 = r_init,\
            SO2_g_0 = SO2_g_init,  O3_g_0 = O3_g_init,   H2O2_g_0 = H2O2_g_init,\
            CO2_g_0 = CO2_g_init, NH3_g_0 = NH3_g_init, HNO3_g_0 = HNO3_g_init,\
            chem_sys = 'closed',   outfile = outfile,\
