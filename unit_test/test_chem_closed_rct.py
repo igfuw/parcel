@@ -12,6 +12,7 @@ import pytest
 from parcel import parcel
 from libcloudphxx import common as cm
 from chemical_plot import plot_chem
+from kreidenweis_fig1 import plot_fig1
 
 @pytest.fixture(scope="module")
 def data(request):
@@ -87,5 +88,12 @@ def test_chem_plot(data):
     quicklook for chemistry
     """
     data_to_plot = {'closed' : data}
+    print "aqq"
     plot_chem(data_to_plot, output_folder="plots/outputs", output_title='/test_chem_closed_rct_')
+
+def test_chem_fig1(data):
+    """
+    Fig 1 from Kreidenweis et al 2003
+    """
+    plot_fig1(data, output_folder="plots/outputs", output_title='/Kreidenweis_fig1')
 

@@ -88,7 +88,7 @@ def plot_chem(data, output_folder = '', output_title = ''):
       plots.append(plt.subplot(2,2,i+1))
                              #(rows, columns, number)
 
-    plots[0].set_xlabel('O3   gas mole fraction [ppb]')  
+    plots[0].set_xlabel('O3   gas mole fraction [ppb]') 
     plots[1].set_xlabel('H2O2 gas mole fraction [ppt]')
     plots[2].set_xlabel('O3_a     kg / kg dry air')  
     plots[3].set_xlabel('H2O2_a   kg / kg dry air')
@@ -192,6 +192,8 @@ def plot_chem(data, output_folder = '', output_title = ''):
                              #(rows, columns, number)
 
     plots[0].set_xlabel('CO2  gas mole fraction [ppm]')
+    plots[0].set_xticks([359.9996, 359.9997, 359.9998, 359.9999, 360])
+    plots[0].set_xticklabels(['359.9996', '359.9997', '359.9998','359.9999', '360']) 
     plots[1].set_xlabel('CO2_a   kg / kg dry air')
     plots[2].set_xlabel('HCO3_a  kg / kg dry air')  
     plots[3].set_xlabel('CO3_a   kg / kg dry air')  
