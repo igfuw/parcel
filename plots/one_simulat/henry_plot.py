@@ -59,7 +59,10 @@ def plot_henry(data, chem_sys, output_folder):
     plots.append(plt.subplot(4,3,9))
     plots[8].set_xlabel('rv [g/kg]')
     plots.append(plt.subplot(4,3,10))
-    plots[9].set_xlabel('gas vol.conc SO2 [-]')
+    plots[9].set_xlabel('gas vol.conc SO2 [ppb]')
+    plots[9].set_xticks([0., 0.05, 0.1, 0.15, 0.2, 0.25, 0.3])
+    plots[9].set_xticklabels(['0', '0.05', '0.1', '0.15', '0.2', '0.25', '0.3'])
+    plots[9].set_xlim([0., 0.3])
     plots.append(plt.subplot(4,3,11))
     plots[10].set_xlabel('lwc [g/kg]')
     plots.append(plt.subplot(4,3,12))
@@ -77,11 +80,11 @@ def plot_henry(data, chem_sys, output_folder):
     plots[6].plot(z, t)
     plots[7].plot(p * 1000, t)
     plots[8].plot(data.variables["r_v"][:] * 1000, t)
-    plots[9].plot(data.variables["SO2_g"][:], t)
+    plots[9].plot(data.variables["SO2_g"][:] * 1e9, t)
     plots[10].plot(lwc, t)
     plots[11].plot(T, t)
 
-    plt.savefig(os.path.join(output_folder, "plot_Henry_"+chem_sys+".svg"))
+    plt.savefig(os.path.join(output_folder, "plot_Henry_"+chem_sys+".pdf"))
     plt.clf()
 
 def main():

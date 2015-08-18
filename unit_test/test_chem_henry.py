@@ -34,7 +34,6 @@ def data(request):
     wait        = 1000
 
     for chem_sys in ["open", "closed"]:
-        # running parcel model for open chem system  and only for dissolving chem species into droplets
         parcel(dt = dt, z_max = z_max, outfreq = outfreq, wait=wait,\
                 T_0 = T_init, p_0 = p_init, r_0 = r_init,\
                 SO2_g_0 = SO2_g_init, O3_g_0 = O3_g_init, H2O2_g_0 = H2O2_g_init,\

@@ -18,7 +18,7 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
     import matplotlib.pyplot as plt
 
-    spn_idx = 7
+    spn_idx = 0
     #spn_idx = int(math.ceil(float(f_out_chem['open'].chem_spn)/float(f_out_chem['open'].outfreq)))
 
     # plot settings
@@ -31,24 +31,38 @@ def plot_fig1(data, output_folder = '', output_title = ''):
 
     plots[0].set_xlabel('lwc g/kg dry air')
     plots[0].grid()
-    #plots[1].set_xlabel('SO2 conc (total-ppb)')
+    plots[1].set_xlabel('SO2 conc (ppb) - TODO aq')
     plots[1].grid()
-    #plots[2].set_xlabel('average pH')
+    plots[2].set_xlabel('average pH')
     plots[2].grid()
  
     for ax in plots:
       ax.set_ylabel('t [s]')
 
-    # read in variables
+    # read in y-axis (time)
     t   = data.variables["t"][spn_idx:]
-    n_H = np.sum(data.variables["chem_H"][spn_idx:], axis=1) / cm.M_H
-    vol = np.sum(data.variables["radii_m3"][spn_idx:], axis=1) * 4/3. * math.pi * 1e3  #litres
-    pH  = -1 * np.log10(n_H / vol)
 
     # calculate lwc
     plots[0].set_xticks([0., 0.5, 1, 1.5, 2, 2.5])
     plots[0].plot(np.sum(data.variables["radii_m3"][spn_idx:], axis=1) * 4. / 3 * math.pi * 998.2 * 1e3, t, "b.-")
 
+    # calculate average pH
+    r3     = data.variables["radii_m3"][spn_idx:]
+    n_H    = data.variables["chem_H"][spn_idx:] / cm.M_H
+    nom    = np.zeros(t.shape[0])
+    den    = np.zeros(t.shape[0])
+    for time in range(t.shape[0]): 
+        for it, val in enumerate(r3[time,:]):
+            if val > 0:
+                 nom[time] += (n_H[time, it] / (4./3 * math.pi * val * 1e3)) * val
+        den[time] = np.sum(r3[time,:])                                 # to liters
+
+    pH  = -1 * np.log10(nom / den)
+#    plots[2].set_xlim([3.6, 4.8])
+#    plots[2].set_xticks([3.6, 3.8, 4, 4.2, 4.4, 4.6, 4.8])
+    plots[2].plot(pH, t, "b.-")
+
+    # SO2 conc stuff
     def aq_to_g(chem_aq, rhod, T, M, p):
          return chem_aq * rhod * cm.R * T / M  / p
 
@@ -84,27 +98,17 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     print (data.variables["SO2_g"][1]*1e9)
     print (data.variables["SO2_g"][-1]*1e9)
     plots[1].set_xlabel('SO2 g ppb')
-    plots[2].set_xticks([0., 0.002, 0.004, 0.006, 0.002])
-    plots[2].plot(cnv_so2_a * 1e12, t, "b.-")
-    plots[2].set_xlabel('SO2 a ppt')
-
+    plots[5].set_xticks([0., 0.002, 0.004, 0.006, 0.002])
+    plots[5].plot(cnv_so2_a * 1e12, t, "b.-")
+    plots[5].set_xlabel('SO2 a ppt')
     plots[3].set_xlabel('n so2 g')
     plots[3].grid()
     plots[3].plot(nso2_g, t)
-
     plots[4].set_xlabel('n so2 a')
     plots[4].grid()
     plots[4].plot(nso2_a, t)
 
-    plots[5].set_xlabel('n so2 g+a')
-    plots[5].grid()
-    plots[5].plot(nso2_g + nso2_a, t)
- 
-    # TODO - calculate average pH
-    #plots[2].set_xticks([3.6, 3.8, 4, 4.2, 4.4, 4.6, 4.8])
-    #plots[2].plot(pH, t, "b.-")
-
-    plt.savefig(output_folder + output_title + ".svg")
+    plt.savefig(output_folder + output_title + ".pdf")
  
 def main():
     # gas phase
@@ -146,15 +150,15 @@ def main():
                                "moms": ["H", "OH", "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI"]}}'
 
     # run parcel, run!
-#    parcel(dt = dt, z_max = z_max, w = w, outfreq = outfreq,\
-#           T_0 = T_init, p_0 = p_init, r_0 = r_init,\
-#           SO2_g_0 = SO2_g_init, O3_g_0 = O3_g_init, H2O2_g_0 = H2O2_g_init,\
-#           CO2_g_0 = CO2_g_init, NH3_g_0 = NH3_g_init, HNO3_g_0 = HNO3_g_init,\
-#           chem_sys = 'closed', outfile = outfile,\
-#           sd_conc = sd_conc,\
-#           chem_dsl = chem_dsl, chem_dsc = chem_dsc, chem_rct = chem_rct, chem_spn = chem_spn, \
-#           out_bin = out_bin)
-#
+    parcel(dt = dt, z_max = z_max, w = w, outfreq = outfreq,\
+           T_0 = T_init, p_0 = p_init, r_0 = r_init,\
+           SO2_g_0 = SO2_g_init, O3_g_0 = O3_g_init, H2O2_g_0 = H2O2_g_init,\
+           CO2_g_0 = CO2_g_init, NH3_g_0 = NH3_g_init, HNO3_g_0 = HNO3_g_init,\
+           chem_sys = 'closed', outfile = outfile,\
+           sd_conc = sd_conc,\
+           chem_dsl = chem_dsl, chem_dsc = chem_dsc, chem_rct = chem_rct, chem_spn = chem_spn, \
+           out_bin = out_bin)
+
     # TODO - why do I have to repeat this import here?
     from scipy.io import netcdf
     data = netcdf.netcdf_file(outfile,   "r")

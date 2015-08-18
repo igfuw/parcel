@@ -102,7 +102,7 @@ def _micro_init(opts, state, info):
   micro.init(state["th_d"], state["r_v"], state["rhod"])
   return micro
 
-def _micro_step(micro, state, info, opts, it, fout):
+def _micro_step(micro, state, info, opts, it, fout, tmp_prhoT):
   libopts = lgrngn.opts_t()
   libopts.cond = True
   libopts.coal = False
@@ -134,11 +134,16 @@ def _micro_step(micro, state, info, opts, it, fout):
 
         micro.diag_chem(id_int)
         new = np.frombuffer(micro.outbuf())[0]
-    
-        # since p & rhod are the "new" ones, for consistency we also use new T (_stats called above)
-        state[id_str] -= (new - old) * state["rhod"][0] * common.R * state["T"][0] / _molar_mass[id_int] / state["p"]
-        state[id_str.replace('_g', '_a')] = new
 
+        if id_str == 'SO2_g':
+            print "SO2_g", state['SO2_g'] * 1e9, ' [ppb]'
+
+        # since p & rhod are the "new" ones, for consistency we also use new T (_stats called above)
+        state[id_str] = state[id_str] * tmp_prhoT * (state["rhod"][0] * state["T"][0] / state["p"]) \
+          - ((new - old) * state["rhod"][0] * common.R * state["T"][0] / _molar_mass[id_int] / state["p"])
+
+        state[id_str.replace('_g', '_a')] = new
+ 
         assert state[id_str] >= 0, id_str + "  " + str(state[id_str]) + " at z = " + str(state["z"])
 
       elif opts['chem_sys'] == 'open':
@@ -353,6 +358,9 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
       state["z"] += w * dt
       state["t"] = it * dt
 
+      #TODO (for microphysycs?..)
+      tmp_prhoT = state["p"] / state["rhod"][0] / state["T"][0]
+
       # pressure
       if pprof == "pprof_const_th_rv":
         # as in icicle model
@@ -386,7 +394,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
         )
 
       # microphysics
-      _micro_step(micro, state, info, opts, it, fout)
+      _micro_step(micro, state, info, opts, it, fout, tmp_prhoT)
  
       # TODO: only if user wants to stop @ RH_max
       #if (state["RH"] < info["RH_max"]): break
