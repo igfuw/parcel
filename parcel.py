@@ -102,7 +102,7 @@ def _micro_init(opts, state, info):
   micro.init(state["th_d"], state["r_v"], state["rhod"])
   return micro
 
-def _micro_step(micro, state, info, opts, it, fout, tmp_prhoT):
+def _micro_step(micro, state, info, opts, it, fout):
   libopts = lgrngn.opts_t()
   libopts.cond = True
   libopts.coal = False
@@ -134,13 +134,14 @@ def _micro_step(micro, state, info, opts, it, fout, tmp_prhoT):
 
         micro.diag_chem(id_int)
         new = np.frombuffer(micro.outbuf())[0]
-
-        if id_str == 'SO2_g':
-            print "SO2_g", state['SO2_g'] * 1e9, ' [ppb]'
-
-        # since p & rhod are the "new" ones, for consistency we also use new T (_stats called above)
-        state[id_str] = state[id_str] * tmp_prhoT * (state["rhod"][0] * state["T"][0] / state["p"]) \
-          - ((new - old) * state["rhod"][0] * common.R * state["T"][0] / _molar_mass[id_int] / state["p"])
+        
+        if id_str == "SO2_g":
+          state[id_str] -= (new - old) / common.M_SO2_H2O * common.M_SO2
+        elif id_str == "CO2_g":
+          state[id_str] -= (new - old) / common.M_CO2_H2O * common.M_CO2
+        elif id_str == "NH3_g":
+          state[id_str] -= (new - old) / common.M_NH3_H2O * common.M_NH3
+        else: state[id_str] -= (new - old)
 
         state[id_str.replace('_g', '_a')] = new
  
@@ -229,7 +230,7 @@ def _output_init(micro, opts, spectra):
 
   if micro.opts_init.chem_switch:
     for id_str in _Chem_g_id.iterkeys():
-      units[id_str] = "gas volume concentration (mole fraction) [1]"
+      units[id_str] = "gas mixing ratio [kg / kg dry air]"
       units[id_str.replace('_g', '_a')] = "kg of chem species dissolved in cloud droplets (kg of dry air)^-1"
 
     for id_str in ["HSO3_a", "SO3_a", "HCO3_a", "CO3_a", "NH4_a", "NO3_a"]:
@@ -298,9 +299,9 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
                                   - 0,1,2 & 3-rd moments for 49 bins spaced linearly between .5e-6 and 25e-6
                                     for wet radius
                                     (TODO - add chemistry output description)
-    SO2_g_0  (Optional[float]):   initial SO2  gas volume concentration (mole fraction) [1]
-    O3_g_0   (Optional[float]):   initial O3   gas volume concentration (mole fraction) [1]
-    H2O2_g_0 (Optional[float]):   initial H2O2 gas volume concentration (mole fraction) [1]
+    SO2_g_0  (Optional[float]):   initial SO2  gas mixing ratio [kg / kg dry air]
+    O3_g_0   (Optional[float]):   initial O3   gas mixing ratio [kg / kg dry air]
+    H2O2_g_0 (Optional[float]):   initial H2O2 gas mixing ratio [kg / kg dry air]
     chem_sys (Optional[string]):  accepted values: 'open', 'closed'
                                   (in open/closed system gas volume concentration in the air doesn't/does change 
                                    due to chemical reactions)
@@ -358,9 +359,6 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
       state["z"] += w * dt
       state["t"] = it * dt
 
-      #TODO (for microphysycs?..)
-      tmp_prhoT = state["p"] / state["rhod"][0] / state["T"][0]
-
       # pressure
       if pprof == "pprof_const_th_rv":
         # as in icicle model
@@ -394,7 +392,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
         )
 
       # microphysics
-      _micro_step(micro, state, info, opts, it, fout, tmp_prhoT)
+      _micro_step(micro, state, info, opts, it, fout)
  
       # TODO: only if user wants to stop @ RH_max
       #if (state["RH"] < info["RH_max"]): break

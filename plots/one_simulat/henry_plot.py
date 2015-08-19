@@ -12,22 +12,7 @@ import subprocess
 
 from parcel import parcel
 from libcloudphxx import common as cm
-
-# TODO - don't repeat with the same function in unit_test/test_chem_henry
-def henry_teor(chem, p, T, vol, conc_g):
-    H   = getattr(cm, "H_"  +chem)
-    dHR = getattr(cm, "dHR_"+chem)
-    if chem in ["SO2", "CO2", "NH3"]:
-        molar_mass = getattr(cm, "M_"+chem+"_H2O")
-    else:
-        molar_mass = getattr(cm, "M_"+chem)
-
-    # correction to Henry const. due to temperature
-    henry_T = H * np.exp(-1 * dHR * (1./T - 1./298))
-
-    # dissolved  = partial prsessure * Henry_const * molar mass * drop volume
-    henry_exp    = conc_g * p * henry_T * molar_mass * vol
-    return henry_exp
+from functions import *
 
 def plot_henry(data, chem_sys, output_folder):
     import matplotlib
@@ -42,6 +27,7 @@ def plot_henry(data, chem_sys, output_folder):
     lwc  = vol * 998.2 * 1000.
     T    = data.variables["T"][:]
     p    = data.variables["p"][:]
+    rhod = data.variables["rhod"][:]
 
     plt.figure(1, figsize=(18,14))
     plots    = []
@@ -72,15 +58,15 @@ def plot_henry(data, chem_sys, output_folder):
         ax.set_ylabel('t [s]')
 
     for i in range(6):
-        conc_g = data.variables[chem[i]+"_g"][-1]
-        plots[i].plot(henry_teor(chem[i], p, T, vol, conc_g), t, "r.-", label="Henry")
+        mixr_g = data.variables[chem[i]+"_g"][-1]
+        plots[i].plot(henry_teor(chem[i], p, T, vol, mixr_g, rhod), t, "r.-", label="Henry")
         plots[i].plot(data.variables[chem[i]+"_a"][:], t, "b.-", label="in drop")
         plots[i].legend(loc='upper left')
 
     plots[6].plot(z, t)
     plots[7].plot(p * 1000, t)
     plots[8].plot(data.variables["r_v"][:] * 1000, t)
-    plots[9].plot(data.variables["SO2_g"][:] * 1e9, t)
+    plots[9].plot(mix_ratio_to_mole_frac(data.variables["SO2_g"][:], p, cm.M_SO2, T, rhod) * 1e9, t)
     plots[10].plot(lwc, t)
     plots[11].plot(T, t)
 
@@ -93,12 +79,13 @@ def main():
     p_init  = 100000.
     r_init  = cm.eps * RH_init * cm.p_vs(T_init) / (p_init - RH_init * cm.p_vs(T_init))
 
-    SO2_g_init  = 200e-12
-    O3_g_init   = 50e-9
-    H2O2_g_init = 500e-12
-    CO2_g_init  = 360e-6
-    NH3_g_init  = 100e-12
-    HNO3_g_init = 100e-12
+    SO2_g_init  = mole_frac_to_mix_ratio(200e-12, cm.M_SO2)
+    O3_g_init   = mole_frac_to_mix_ratio(50e-9,   cm.M_O3)
+    H2O2_g_init = mole_frac_to_mix_ratio(500e-12, cm.M_H2O2)
+    CO2_g_init  = mole_frac_to_mix_ratio(360e-6,  cm.M_CO2)
+    NH3_g_init  = mole_frac_to_mix_ratio(100e-12, cm.M_NH3)
+    HNO3_g_init = mole_frac_to_mix_ratio(100e-12, cm.M_HNO3)
+
     outfreq     = 50
     z_max       = 50.
     outfile     = "test_chem_dsl.nc"

@@ -13,6 +13,7 @@ import pytest
 from parcel import parcel
 from libcloudphxx import common as cm
 from henry_plot import plot_henry
+from functions import *
 
 @pytest.fixture(scope="module")  
 def data(request):
@@ -21,12 +22,19 @@ def data(request):
     p_init  = 100000.
     r_init  = cm.eps * RH_init * cm.p_vs(T_init) / (p_init - RH_init * cm.p_vs(T_init))
 
-    SO2_g_init  = 200e-12 
-    O3_g_init   = 50e-9
-    H2O2_g_init = 500e-12
-    CO2_g_init  = 360e-6 
-    NH3_g_init  = 100e-12
-    HNO3_g_init = 100e-12
+    th_0      = T_init * (cm.p_1000 / p_init)**(cm.R_d / cm.c_pd)
+    rhod_init = cm.rhod(p_init, th_0, r_init)
+
+    def mole_frac_to_mix_ratio(X, M):
+        return X * p_init * M / cm.R / T_init / rhod_init
+
+    SO2_g_init  = mole_frac_to_mix_ratio(200e-12, cm.M_SO2)
+    O3_g_init   = mole_frac_to_mix_ratio(50e-9,   cm.M_O3)
+    H2O2_g_init = mole_frac_to_mix_ratio(500e-12, cm.M_H2O2)
+    CO2_g_init  = mole_frac_to_mix_ratio(360e-6,  cm.M_CO2)
+    NH3_g_init  = mole_frac_to_mix_ratio(100e-12, cm.M_NH3)
+    HNO3_g_init = mole_frac_to_mix_ratio(100e-12, cm.M_HNO3)
+
     outfreq     = 50
     z_max       = 50.
     outfile     = "test_chem_dsl_"
@@ -53,24 +61,34 @@ def data(request):
         for files in data.keys():
             subprocess.call(["rm", "test_chem_dsl_"+files+".nc"])
 
-    request.addfinalizer(removing_files)
+    #request.addfinalizer(removing_files)
     return data
 
-def henry_teor(chem, p, T, vol, conc_g):
-    H   = getattr(cm, "H_"  +chem) 
-    dHR = getattr(cm, "dHR_"+chem)
-    if chem in ["SO2", "CO2", "NH3"]:
-        molar_mass = getattr(cm, "M_"+chem+"_H2O")
-    else: 
-        molar_mass = getattr(cm, "M_"+chem)
+def test_delta_henry(data):
+    for label, el in data.iteritems():
+      if label == "closed":
+        print label
+        test_data = el
 
-    # correction to Henry const. due to temperature
-    henry_T = H * np.exp(-1 * dHR * (1./T - 1./298))
+        t       = test_data.variables["t"][:]
 
-    # dissolved  = partial prsessure * Henry_const * molar mass * drop volume
-    henry_exp    = conc_g * p * henry_T * molar_mass * vol
-    return henry_exp
+        vol     = np.squeeze(test_data.variables["radii_m3"][:]) * 4/3. * math.pi
+        conc    = np.squeeze(test_data.variables["radii_m0"][:])
+        mixr_g  = test_data.variables["SO2_g"][:]
+        conc_aq = test_data.variables["SO2_a"][:]
+        p       = test_data.variables["p"][:]
+        T       = test_data.variables["T"][:]
+        rhod    = test_data.variables["rhod"][:]
 
+        henry_aq_t = np.zeros(t.shape)
+        henry_aq_t = henry_teor("SO2", p, T, vol, mixr_g, rhod)
+
+        for it in range(t.shape[0]):
+            print "t=", t[it],\
+                  "mix_r_SO2=", mixr_g[it], \
+                  "dm_aq=", henry_teor("SO2", p[it], T[it], vol[it], mixr_g[it], rhod[it]) - conc_aq[it] 
+
+   
 @pytest.mark.parametrize("chem", ["SO2", "O3", "H2O2", "CO2", "HNO3", "NH3"])
 def test_henry_checker(data, chem, eps = 3e-4):
     """                              
@@ -90,8 +108,9 @@ def test_henry_checker(data, chem, eps = 3e-4):
     T      = data_open.variables["T"][-1]
     p      = data_open.variables["p"][-1]
     conc_g = data_open.variables[chem+"_g"][-1]
+    rhod   = data_open.variables["rhod"][-1]
 
-    henry_aq     = henry_teor(chem, p, T, vol, conc_g)
+    henry_aq     = henry_teor(chem, p, T, vol, conc_g, rhod)
     conc_aq      = data_open.variables[chem+"_a"][-1]
 
     assert np.isclose(conc_aq, henry_aq, atol=0, rtol=eps), chem + " : " + str((conc_aq - henry_aq)/conc_aq) 
