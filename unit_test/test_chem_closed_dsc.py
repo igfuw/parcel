@@ -12,23 +12,26 @@ import pytest
 from parcel import parcel
 from libcloudphxx import common as cm
 from chemical_plot import plot_chem
+from functions import *
 
 @pytest.fixture(scope="module")
 def data(request):
 
-    # gas phase 
-    SO2_g_init  = 200e-12
-    O3_g_init   = 50e-9
-    H2O2_g_init = 500e-12
-    CO2_g_init  = 360e-6
-    NH3_g_init  = 100e-12
-    HNO3_g_init = 100e-12
-
-    # water vapour
+    # initial condition
     RH_init = .95
     T_init  = 285.2
     p_init  = 95000.
-    r_init  = cm.eps * RH_init * cm.p_vs(T_init) / (p_init - RH_init * cm.p_vs(T_init))
+    r_init  = rh_to_rv(RH_init, T_init, p_init)
+
+    # calculate rhod for initial gas mixing ratio
+    rhod_init   = rhod_calc(T_init, p_init, r_init)
+    # initial condition for trace geses
+    SO2_g_init  = mole_frac_to_mix_ratio(200e-12, p_init, cm.M_SO2,  T_init, rhod_init)
+    O3_g_init   = mole_frac_to_mix_ratio(50e-9,   p_init, cm.M_O3,   T_init, rhod_init)
+    H2O2_g_init = mole_frac_to_mix_ratio(500e-12, p_init, cm.M_H2O2, T_init, rhod_init)
+    CO2_g_init  = mole_frac_to_mix_ratio(360e-6,  p_init, cm.M_CO2,  T_init, rhod_init)
+    NH3_g_init  = mole_frac_to_mix_ratio(100e-12, p_init, cm.M_NH3,  T_init, rhod_init)
+    HNO3_g_init = mole_frac_to_mix_ratio(100e-12, p_init, cm.M_HNO3, T_init, rhod_init)
 
     # aerosol size distr.
     mean_r = .08e-6 / 2
@@ -41,11 +44,11 @@ def data(request):
     chem_rct = False
 
     # output
-    z_max       = 300
+    z_max       = 200
     dt          = .1
     w           = 1.
     outfreq     = int(z_max / dt / 25)
-    sd_conc     = 128.
+    sd_conc     = 4.
     outfile     = "test_chem_closed_dsc.nc"
 
     # run parcel

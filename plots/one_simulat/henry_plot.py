@@ -39,16 +39,22 @@ def plot_henry(data, chem_sys, output_folder):
         plots[i].set_xlabel(lab)
 
     plots.append(plt.subplot(4,3,7))
-    plots[6].set_xlabel('z [m]')
+    plots[6].set_xlabel('SO2 mixing ratio [kg/kg dry air]')
+    plots[6].set_xticks([4.5796e-10, 4.5798e-10])
+    plots[6].set_xticklabels(['4.5796e-10', '4.5798e-10'])
+    plots[6].set_xlim([4.5796e-10, 4.5798e-10])
+
     plots.append(plt.subplot(4,3,8))
     plots[7].set_xlabel('p [hPa]')
     plots.append(plt.subplot(4,3,9))
     plots[8].set_xlabel('rv [g/kg]')
+
     plots.append(plt.subplot(4,3,10))
     plots[9].set_xlabel('gas vol.conc SO2 [ppb]')
     plots[9].set_xticks([0., 0.05, 0.1, 0.15, 0.2, 0.25, 0.3])
     plots[9].set_xticklabels(['0', '0.05', '0.1', '0.15', '0.2', '0.25', '0.3'])
     plots[9].set_xlim([0., 0.3])
+
     plots.append(plt.subplot(4,3,11))
     plots[10].set_xlabel('lwc [g/kg]')
     plots.append(plt.subplot(4,3,12))
@@ -58,13 +64,14 @@ def plot_henry(data, chem_sys, output_folder):
         ax.set_ylabel('t [s]')
 
     for i in range(6):
-        mixr_g = data.variables[chem[i]+"_g"][-1]
-        plots[i].plot(henry_teor(chem[i], p, T, vol, mixr_g, rhod), t, "r.-", label="Henry")
+        mixr_g = data.variables[chem[i]+"_g"][:]
+        plots[i].plot(henry_teor(chem[i], p, T, vol, mixr_g, rhod), t, "r.-", label="Henry(T)")
+        plots[i].plot(henry_teor_2(chem[i], p, T, vol, mixr_g, rhod), t, "g.-", label="Henry")
         plots[i].plot(data.variables[chem[i]+"_a"][:], t, "b.-", label="in drop")
         plots[i].legend(loc='upper left')
 
-    plots[6].plot(z, t)
-    plots[7].plot(p * 1000, t)
+    plots[6].plot(data.variables["SO2_g"][:], t)
+    plots[7].plot(p / 100, t)
     plots[8].plot(data.variables["r_v"][:] * 1000, t)
     plots[9].plot(mix_ratio_to_mole_frac(data.variables["SO2_g"][:], p, cm.M_SO2, T, rhod) * 1e9, t)
     plots[10].plot(lwc, t)
@@ -79,12 +86,16 @@ def main():
     p_init  = 100000.
     r_init  = cm.eps * RH_init * cm.p_vs(T_init) / (p_init - RH_init * cm.p_vs(T_init))
 
-    SO2_g_init  = mole_frac_to_mix_ratio(200e-12, cm.M_SO2)
-    O3_g_init   = mole_frac_to_mix_ratio(50e-9,   cm.M_O3)
-    H2O2_g_init = mole_frac_to_mix_ratio(500e-12, cm.M_H2O2)
-    CO2_g_init  = mole_frac_to_mix_ratio(360e-6,  cm.M_CO2)
-    NH3_g_init  = mole_frac_to_mix_ratio(100e-12, cm.M_NH3)
-    HNO3_g_init = mole_frac_to_mix_ratio(100e-12, cm.M_HNO3)
+    # calculate rhod for initial gas mixing ratio
+    th_0      = T_init * (cm.p_1000 / p_init)**(cm.R_d / cm.c_pd)
+    rhod_init = cm.rhod(p_init, th_0, r_init)
+
+    SO2_g_init  = mole_frac_to_mix_ratio(200e-12, p_init, cm.M_SO2,  T_init, rhod_init)
+    O3_g_init   = mole_frac_to_mix_ratio(50e-9,   p_init, cm.M_O3,   T_init, rhod_init)
+    H2O2_g_init = mole_frac_to_mix_ratio(500e-12, p_init, cm.M_H2O2, T_init, rhod_init)
+    CO2_g_init  = mole_frac_to_mix_ratio(360e-6,  p_init, cm.M_CO2,  T_init, rhod_init)
+    NH3_g_init  = mole_frac_to_mix_ratio(100e-12, p_init, cm.M_NH3,  T_init, rhod_init)
+    HNO3_g_init = mole_frac_to_mix_ratio(100e-12, p_init, cm.M_HNO3, T_init, rhod_init)
 
     outfreq     = 50
     z_max       = 50.

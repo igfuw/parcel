@@ -17,24 +17,31 @@ from functions import *
 
 @pytest.fixture(scope="module")  
 def data(request):
+    # initial condition
     RH_init = .99999
     T_init  = 300.
     p_init  = 100000.
     r_init  = cm.eps * RH_init * cm.p_vs(T_init) / (p_init - RH_init * cm.p_vs(T_init))
 
+    # calculate rhod for gas init cond
     th_0      = T_init * (cm.p_1000 / p_init)**(cm.R_d / cm.c_pd)
     rhod_init = cm.rhod(p_init, th_0, r_init)
 
-    def mole_frac_to_mix_ratio(X, M):
-        return X * p_init * M / cm.R / T_init / rhod_init
+    # init cond for trace gases
+    SO2_g_init  = mole_frac_to_mix_ratio(200e-12, p_init, cm.M_SO2,  T_init, rhod_init)
+    O3_g_init   = mole_frac_to_mix_ratio(50e-9,   p_init, cm.M_O3,   T_init, rhod_init)
+    H2O2_g_init = mole_frac_to_mix_ratio(500e-12, p_init, cm.M_H2O2, T_init, rhod_init)
+    CO2_g_init  = mole_frac_to_mix_ratio(360e-6,  p_init, cm.M_CO2,  T_init, rhod_init)
+    NH3_g_init  = mole_frac_to_mix_ratio(100e-12, p_init, cm.M_NH3,  T_init, rhod_init)
+    HNO3_g_init = mole_frac_to_mix_ratio(100e-12, p_init, cm.M_HNO3, T_init, rhod_init)
 
-    SO2_g_init  = mole_frac_to_mix_ratio(200e-12, cm.M_SO2)
-    O3_g_init   = mole_frac_to_mix_ratio(50e-9,   cm.M_O3)
-    H2O2_g_init = mole_frac_to_mix_ratio(500e-12, cm.M_H2O2)
-    CO2_g_init  = mole_frac_to_mix_ratio(360e-6,  cm.M_CO2)
-    NH3_g_init  = mole_frac_to_mix_ratio(100e-12, cm.M_NH3)
-    HNO3_g_init = mole_frac_to_mix_ratio(100e-12, cm.M_HNO3)
+    # aerosol size distribution
+    mean_r = .08e-6 / 2
+    gstdev = 2.
+    n_tot  = 566.e6
 
+    # output
+    sd_conc     = 8.
     outfreq     = 50
     z_max       = 50.
     outfile     = "test_chem_dsl_"
@@ -48,6 +55,7 @@ def data(request):
                 CO2_g_0 = CO2_g_init, NH3_g_0 = NH3_g_init, HNO3_g_0 = HNO3_g_init,\
                 chem_sys = chem_sys,   outfile = outfile + chem_sys +".nc",\
                 chem_dsl = True, chem_dsc = False, chem_rct = False,\
+                mean_r = mean_r, gstdev = gstdev, n_tot = n_tot, sd_conc = sd_conc,\
                 out_bin = \
                 '{"radii": {"rght": 1, "left": 0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 3]},\
                   "chem" : {"rght": 1, "left": 0, "drwt": "wet", "lnli": "lin", "nbin": 1,\
@@ -107,11 +115,11 @@ def test_henry_checker(data, chem, eps = 3e-4):
     vol    = np.squeeze(data_open.variables["radii_m3"][-1]) * 4/3. * math.pi
     T      = data_open.variables["T"][-1]
     p      = data_open.variables["p"][-1]
-    conc_g = data_open.variables[chem+"_g"][-1]
+    mixr_g = data_open.variables[chem+"_g"][-1]
     rhod   = data_open.variables["rhod"][-1]
 
-    henry_aq     = henry_teor(chem, p, T, vol, conc_g, rhod)
-    conc_aq      = data_open.variables[chem+"_a"][-1]
+    henry_aq  = henry_teor(chem, p, T, vol, mixr_g, rhod)
+    conc_aq   = data_open.variables[chem+"_a"][-1]
 
     assert np.isclose(conc_aq, henry_aq, atol=0, rtol=eps), chem + " : " + str((conc_aq - henry_aq)/conc_aq) 
 

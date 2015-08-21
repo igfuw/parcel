@@ -130,6 +130,9 @@ def _micro_step(micro, state, info, opts, it, fout):
     micro.diag_all() # selecting all particles
     for id_str, id_int in _Chem_g_id.iteritems():
       if opts['chem_sys'] == 'closed':
+        #if id_str == 'SO2_g':
+        #  old = state[id_str.replace('_g', '_a')] * 0
+        #else: 
         old = state[id_str.replace('_g', '_a')]
 
         micro.diag_chem(id_int)
