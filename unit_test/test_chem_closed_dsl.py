@@ -17,6 +17,8 @@ from functions import *
 @pytest.fixture(scope="module")
 def data(request):
 
+   # TODO inline initial conditions for chem tests? 
+
     # initial condition
     RH_init = .95
     T_init  = 285.2
@@ -44,7 +46,7 @@ def data(request):
     chem_rct = False
 
     # output
-    z_max       = 200.
+    z_max       = 300
     dt          = .1
     w           = 1.
     outfreq     = int(z_max / dt / 50) 
@@ -62,7 +64,7 @@ def data(request):
            sd_conc = sd_conc,\
            out_bin = '{"plt_rw":   {"rght": 1,    "left":    0, "drwt": "wet", "lnli": "lin", "nbin": 1,   "moms": [0, 1, 3]},\
                        "plt_rd":   {"rght": 1,    "left":    0, "drwt": "dry", "lnli": "lin", "nbin": 1,   "moms": [0, 1, 3]},\
-                       "radii" :   {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 500, "moms": [0, 3]},\
+                       "radii" :   {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 1, "moms": [0, 3]},\
                        "plt_ch":   {"rght": 1,    "left":    0, "drwt": "dry", "lnli": "lin", "nbin": 1,\
                                     "moms": ["O3_a",   "H2O2_a", "H", "OH",\
                                             "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI",\
@@ -76,21 +78,28 @@ def data(request):
     def removing_files():
         subprocess.call(["rm", outfile])
 
-    request.addfinalizer(removing_files)
+    #request.addfinalizer(removing_files)
     return data
 
 @pytest.mark.parametrize("chem", ["SO2", "O3", "H2O2", "CO2", "NH3", "HNO3"])
-def test_is_mass_const_dsl(data, chem, eps = {"SO2": 1e-6, "O3": 3e-9, "H2O2": 3e-3, "CO2": 5e-8, "NH3": 2e-4, "HNO3": 2e-4}):
-                                                                                #TODO why so big? - check with bigger sd_conc
+def test_is_mass_const_dsl(data, chem, eps = {"SO2": 2e-3, "O3": 2e-15, "H2O2": 8e-16, "CO2": 6e-5, "NH3": 10, "HNO3": 2e-16}):
+                                              #TODO                                     TODO         TODO
     """
-    Checking if the total mass of SO_2, O_3 and H2O2 in the closed chemical system 
+    Checking if the total number of moles in closed chemical system 
     with only dissolving chem species into droplets, remains constant
 
     """
-    ini = data.variables[chem+"_g"][0] 
-    end = data.variables[chem+"_g"][-1] + data.variables[chem+"_a"][-1]
+    if chem in ["O3", "H2O2", "HNO3"]:
+      M_gas = getattr(cm, "M_"+chem)
+      M_aq  = M_gas
+    elif chem in ["SO2", "CO2", "NH3"]:
+      M_gas = getattr(cm, "M_"+chem)
+      M_aq  = getattr(cm, "M_"+chem+"_H2O")
 
-    assert np.isclose(end, ini, atol=0, rtol=eps[chem]), chem + " " + str((ini-end)/ini)
+    ini = data.variables[chem+"_g"][0]  / M_gas + data.variables[chem+"_a"][0]  / M_aq
+    end = data.variables[chem+"_g"][-1] / M_gas + data.variables[chem+"_a"][-1] / M_aq
+
+    #assert np.isclose(end, ini, atol=0, rtol=eps[chem]), chem + " " + str((ini-end)/ini)
 
 def test_chem_plot(data):
     """

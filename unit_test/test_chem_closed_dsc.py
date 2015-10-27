@@ -179,7 +179,6 @@ def test_check_dissoc_constants(data, ion):
      m_NH4 = data.variables["chem_NH4_a"][-1, :]
      m_NH3 = data.variables["chem_NH3_a"][-1, :]
 
-
      def check_water(m_OH, m_H, vol, eps):
      # check for dissociation of water
      # dissociation constant of water K_H20 = [H][OH]
@@ -248,84 +247,69 @@ def test_check_dissoc_constants(data, ion):
                                          V, cm.K_HSO4, 3e-2, 1e-3)
      else: assert False
 
-@pytest.mark.parametrize("chem", ["SO2", "O3", "H2O2", "CO2"]) #, "NH3"])
-def test_is_mass_const_dsl_dsc(data, chem, eps = {"SO2": 5e-4, "O3":9e-11, "H2O2": 4e-4, "CO2": 8e-10, "NH3": 2e-4}):   
-                                                   # TODO why so different?
+@pytest.mark.parametrize("chem", ["SO2", "O3", "H2O2", "CO2", "NH3", "HNO3"])
+def test_is_mass_const_dsl_dsc(data, chem, eps =\
+                                           {"SO2": 5e-4, "O3":9e-11, "H2O2": 4e-4, "CO2": 8e-10, "NH3": 2e-4, "HNO3":1e-4}):
+                                            # TODO why so different?
      """
-     Checking if the total mass of SO_2, O_3 and H2O2 in the closed chemical system 
+     Checking if the total number of moles in closed chemical system 
      with only dissocoation present remains constant
  
      """
-     if chem in ["SO2", "CO2", "NH3"]:
-         molar_mass = getattr(cm, "M_"+chem+"_H2O")
-     else: molar_mass = getattr(cm, "M_"+chem)
- 
-    # convert aqueous phase within droplets to gase phase (mole fraction)
-     def aq_to_g(chem_aq, rhod, T, M, p):
-         return chem_aq * rhod * cm.R * T / M  / p
- 
      # check for O3 and H2O2 (they don't dissociate)
      if  chem in ["O3", "H2O2"] : 
-         ini = data.variables[chem+"_g"][0] 
+         molar_mass = getattr(cm, "M_"+chem)
+         ini = (data.variables[chem+"_g"][0] + data.variables[chem+"_a"][-1]) / molar_mass
+
          #final gas phase = current gas phase + mass dissolved into droplets
-         end = data.variables[chem+"_g"][-1] + \
-               aq_to_g(data.variables[chem+"_a"][-1], data.variables["rhod"][-1], data.variables["T"][-1],\
-                     molar_mass, data.variables["p"][-1])
+         end = (data.variables[chem+"_g"][-1] + data.variables[chem+"_a"][-1]) / molar_mass
  
      # check for NH3 -> NH4+ + OH-
      if chem == "NH3":
-         ini = data.variables[chem+"_g"][0]
+         ini = data.variables[chem+"_g"][0] / cm.M_NH3 +\
+               data.variables["chem_"+chem+"_a"][0, :].sum()  / cm.M_NH3_H2O +\
+               data.variables["chem_NH4_a"][0, :].sum() / cm.M_NH4
+
          #final gas phase = current gas phase + mass dissolved into droplets
-         end = data.variables[chem+"_g"][-1] +\
-               aq_to_g(
-                   data.variables["chem_"+chem+"_a"][-1, :].sum(),
-                   data.variables["rhod"][-1],
-                   data.variables["T"][-1],
-                   cm.M_NH3_H2O,
-                   data.variables["p"][-1]
-               )+\
-               aq_to_g(
-                   data.variables["chem_NH4_a"][-1, :].sum(),
-                   data.variables["rhod"][-1],
-                   data.variables["T"][-1],
-                   cm.M_NH4,
-                   data.variables["p"][-1]
-               )
+         end = data.variables[chem+"_g"][-1] / cm.M_NH3 +\
+               data.variables["chem_"+chem+"_a"][-1, :].sum() / cm.M_NH3_H2O +\
+               data.variables["chem_NH4_a"][-1, :].sum() / cm.M_NH4
+ 
+    # check for HNO3 -> H+ + NO3-
+     if chem == "HNO3":
+         ini = data.variables[chem+"_g"][0] / cm.M_HNO3 +\
+               data.variables["chem_"+chem+"_a"][0, :].sum()  / cm.M_HNO3 +\
+               data.variables["chem_NO3_a"][0, :].sum() / cm.M_NO3
+
+         #final gas phase = current gas phase + mass dissolved into droplets
+         end = data.variables[chem+"_g"][-1] / cm.M_HNO3 +\
+               data.variables["chem_"+chem+"_a"][-1, :].sum() / cm.M_HNO3 +\
+               data.variables["chem_NO3_a"][-1, :].sum() / cm.M_NO3
  
      # check for SO2_g -> SO2_a + HSO3- + SO3-- and the same for CO2
      if chem in ["SO2", "CO2"]:
          if chem == "SO2":
+             M_gas  = cm.M_SO2
+             M_aq   = cm.M_SO2_H2O
              M_ion1 = cm.M_HSO3
              M_ion2 = cm.M_SO3
          elif chem == "CO2":
+             M_gas  = cm.M_CO2
+             M_aq   = cm.M_CO2_H2O
              M_ion1 = cm.M_HCO3
              M_ion2 = cm.M_CO3
           
-         ini = data.variables[chem+"_g"][0]
-         #final gas phase = current gas phase + mass dissolved into droplets
-         end = data.variables[chem+"_g"][-1] + \
-               aq_to_g(
-                   data.variables["chem_"+chem+"_a"][-1, :].sum(),
-                   data.variables["rhod"][-1], 
-                   data.variables["T"][-1], 
-                   molar_mass,
-                   data.variables["p"][-1]
-               ) + \
-               aq_to_g(
-                   data.variables["chem_H"+chem.replace('2', '3')+"_a"][-1, :].sum(),
-                   data.variables["rhod"][-1],
-                   data.variables["T"][-1],
-                   M_ion1,
-                   data.variables["p"][-1]
-               ) + \
-               aq_to_g(
-                   data.variables["chem_"+chem.replace('2','3')+"_a"][-1, :].sum(),
-                   data.variables["rhod"][-1],
-                   data.variables["T"][-1],
-                   M_ion2,
-                   data.variables["p"][-1])
+         ini = data.variables[chem+"_g"][0] / M_gas + \
+               data.variables["chem_"+chem+"_a"][0, :].sum() / M_aq + \
+               data.variables["chem_H"+chem.replace('2', '3')+"_a"][0, :].sum() / M_ion1 + \
+               data.variables["chem_"+chem.replace('2','3')+"_a"][0, :].sum() / M_ion2
 
- 
+         #final gas phase = current gas phase + mass dissolved into droplets
+         end = data.variables[chem+"_g"][-1] / M_gas + \
+               data.variables["chem_"+chem+"_a"][-1, :].sum() / M_aq + \
+               data.variables["chem_H"+chem.replace('2', '3')+"_a"][-1, :].sum() / M_ion1 + \
+               data.variables["chem_"+chem.replace('2','3')+"_a"][-1, :].sum() / M_ion2
+
      assert np.isclose(end, ini, atol=0, rtol=eps[chem]), chem + " : " + str((ini-end)/ini)
 
 def test_chem_plot(data):
