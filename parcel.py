@@ -99,7 +99,10 @@ def _micro_init(opts, state, info):
 
   # initialisation
   micro = lgrngn.factory(lgrngn.backend_t.serial, opts_init)
-  micro.init(state["th_d"], state["r_v"], state["rhod"])
+  ambient_chem = {}
+  if micro.opts_init.chem_switch:
+    ambient_chem = dict((v, state[k]) for k,v in _Chem_g_id.iteritems())
+  micro.init(state["th_d"], state["r_v"], state["rhod"], ambient_chem=ambient_chem)
   return micro
 
 def _micro_step(micro, state, info, opts, it, fout):
@@ -110,10 +113,10 @@ def _micro_step(micro, state, info, opts, it, fout):
   libopts.sedi = False
 
   if micro.opts_init.chem_switch:
-    tmp = {}
-    for id_str, id_int in _Chem_g_id.iteritems():
-      tmp[id_int] = state[id_str]
-    libopts.chem_gas = tmp
+    if opts['chem_sys'] == 'closed':
+      libopts.chem_sys_cls = True
+    else:
+      libopts.chem_sys_cls = False
     libopts.chem_dsl = opts["chem_dsl"]
     libopts.chem_dsc = opts["chem_dsc"]
     if it < opts["chem_spn"]:
@@ -121,117 +124,20 @@ def _micro_step(micro, state, info, opts, it, fout):
     else:
         libopts.chem_rct = opts["chem_rct"]
 
-  micro.step_sync(libopts, state["th_d"], state["r_v"], state["rhod"]) 
-
+  ambient_chem = {}
+  if micro.opts_init.chem_switch:
+    ambient_chem = dict((v, state[k]) for k,v in _Chem_g_id.iteritems())
+  micro.step_sync(libopts, state["th_d"], state["r_v"], state["rhod"], ambient_chem=ambient_chem)
+ 
   micro.step_async(libopts)
   _stats(state, info) # give updated T needed for chemistry below
 
   if micro.opts_init.chem_switch:
     micro.diag_all() # selecting all particles
     for id_str, id_int in _Chem_g_id.iteritems():
-      if opts['chem_sys'] == 'closed':
-        #if id_str == 'SO2_g':
-        #  old = state[id_str.replace('_g', '_a')] * 0
-        #else: 
-        if id_str == "SO2_g":
-          #TODO - what to do with the ions missed due to reactions?
-          # - move trace gases mixing ratio to libcloudph? (same as rv)
-          # old S4
-          n_SO2_a_old  = state["SO2_a"]  / common.M_SO2_H2O
-          n_HSO3_a_old = state["HSO3_a"] / common.M_HSO3
-          n_SO3_a_old  = state["SO3_a"]  / common.M_SO3
-
-          # new S4
-          micro.diag_chem(_Chem_a_id["SO2_a"])
-          n_SO2_a_new = np.frombuffer(micro.outbuf())[0] / common.M_SO2_H2O
-          micro.diag_chem(_Chem_a_id["HSO3_a"])
-          n_HSO3_a_new = np.frombuffer(micro.outbuf())[0] / common.M_HSO3
-          micro.diag_chem(_Chem_a_id["SO3_a"])
-          n_SO3_a_new = np.frombuffer(micro.outbuf())[0] / common.M_SO3
-
-          dn_S = (n_SO2_a_new - n_SO2_a_old) + (n_HSO3_a_new - n_HSO3_a_old) + (n_SO3_a_new - n_SO3_a_old)
-
-          state["SO2_g"]  -= dn_S * common.M_SO2
-
-          state["SO2_a"]   = n_SO2_a_new  * common.M_SO2_H2O
-          state["HSO3_a"]  = n_HSO3_a_new * common.M_HSO3
-          state["SO3_a"]   = n_SO3_a_new  * common.M_SO3
-
-        elif id_str == "CO2_g":
-          # old C
-          n_CO2_a_old  = state["CO2_a"]  / common.M_CO2_H2O
-          n_HCO3_a_old = state["HCO3_a"] / common.M_HCO3
-          n_CO3_a_old  = state["CO3_a"]  / common.M_CO3
-
-          # new C
-          micro.diag_all() # selecting all particles
-          micro.diag_chem(_Chem_a_id["CO2_a"])
-          n_CO2_a_new = np.frombuffer(micro.outbuf())[0] / common.M_CO2_H2O
-          micro.diag_chem(_Chem_a_id["HCO3_a"])
-          n_HCO3_a_new = np.frombuffer(micro.outbuf())[0] / common.M_HCO3
-          micro.diag_chem(_Chem_a_id["CO3_a"])
-          n_CO3_a_new = np.frombuffer(micro.outbuf())[0] / common.M_CO3
-
-          dn_C = (n_CO2_a_new - n_CO2_a_old) + (n_HCO3_a_new - n_HCO3_a_old) + (n_CO3_a_new - n_CO3_a_old)
- 
-          state["CO2_g"] -= dn_C * common.M_CO2
-          state["CO2_a"]  = n_CO2_a_new  * common.M_CO2_H2O
-          state["HCO3_a"] = n_HCO3_a_new * common.M_HCO3
-          state["CO3_a"]  = n_CO3_a_new  * common.M_CO3
-
-        elif id_str == "NH3_g":
-          # old NH3
-          n_NH3_a_old = state["NH3_a"] / common.M_NH3_H2O
-          n_NH4_a_old = state["NH4_a"] / common.M_NH4
-
-          # new NH3
-          micro.diag_all() # selecting all particles
-          micro.diag_chem(_Chem_a_id["NH3_a"])
-          n_NH3_a_new = np.frombuffer(micro.outbuf())[0] / common.M_NH3_H2O
-          micro.diag_chem(_Chem_a_id["NH4_a"])
-          n_NH4_a_new = np.frombuffer(micro.outbuf())[0] / common.M_NH4
-
-          dn_NH3 = (n_NH3_a_new - n_NH3_a_old) + (n_NH4_a_new - n_NH4_a_old)
- 
-          state["NH3_g"] -= dn_NH3 * common.M_NH3
-          state["NH3_a"]  = n_NH3_a_new * common.M_NH3_H2O
-          state["NH4_a"]  = n_NH4_a_new * common.M_NH4
-
-
-#TODO - no aq phase? (only ions?)
-        elif id_str == "HNO3_g":
-          # old HNO3
-          n_HNO3_a_old = state["HNO3_a"] / common.M_HNO3
-          n_NO3_a_old  = state["NO3_a"] / common.M_NO3
-
-          # new HNO3
-          micro.diag_all() # selecting all particles
-          micro.diag_chem(_Chem_a_id["HNO3_a"])
-          n_HNO3_a_new = np.frombuffer(micro.outbuf())[0] / common.M_HNO3
-          micro.diag_chem(_Chem_a_id["NO3_a"])
-          n_NO3_a_new = np.frombuffer(micro.outbuf())[0] / common.M_NO3
-
-          dn_HNO3 = (n_HNO3_a_new - n_HNO3_a_old) + (n_NO3_a_new - n_NO3_a_old)
-        
-          state["HNO3_g"] -= dn_HNO3 * common.M_HNO3
-          state["HNO3_a"]  = n_HNO3_a_new * common.M_HNO3
-          state["NO3_a"]   = n_NO3_a_new  * common.M_NO3
-
-        else: 
-
-          old = state[id_str.replace('_g', '_a')]
-          micro.diag_chem(_Chem_a_id[id_str.replace('g', 'a')])
-          new = np.frombuffer(micro.outbuf())[0]
-          
-          state[id_str] -= (new - old)
-          state[id_str.replace('_g', '_a')] = new
- 
-        assert state[id_str] >= 0, id_str + "  " + str(state[id_str]) + " at z = " + str(state["z"])
-
-      elif opts['chem_sys'] == 'open':
-        micro.diag_chem(id_int)
-        state[id_str.replace('_g', '_a')] = np.frombuffer(micro.outbuf())[0]
-      else: assert False
+      # save changes due to chemistry
+      micro.diag_chem(id_int)
+      state[id_str.replace('_g', '_a')] = np.frombuffer(micro.outbuf())[0]
  
 def _stats(state, info):
   state["T"] = np.array([common.T(state["th_d"][0], state["rhod"][0])])
@@ -349,7 +255,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   outfreq=100, sd_conc=64., kappa=.5,
   mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
   out_bin = '{"radii": {"rght": 0.0001, "moms": [0], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09}}',
-  SO2_g_0 = 0., O3_g_0 = 0., H2O2_g_0 = 0., CO2_g_0 = 0., HNO3_g_0 = 0, NH3_g_0 = 0,
+  SO2_g = 0., O3_g = 0., H2O2_g = 0., CO2_g = 0., HNO3_g = 0., NH3_g = 0.,
   chem_sys = 'open',
   chem_dsl = False, chem_dsc = False, chem_rct = False, 
   chem_spn = 1,
@@ -380,9 +286,10 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
                                   - 0,1,2 & 3-rd moments for 49 bins spaced linearly between .5e-6 and 25e-6
                                     for wet radius
                                     (TODO - add chemistry output description)
-    SO2_g_0  (Optional[float]):   initial SO2  gas mixing ratio [kg / kg dry air]
-    O3_g_0   (Optional[float]):   initial O3   gas mixing ratio [kg / kg dry air]
-    H2O2_g_0 (Optional[float]):   initial H2O2 gas mixing ratio [kg / kg dry air]
+    SO2_g    (Optional[float]):   initial SO2  gas mixing ratio [kg / kg dry air]
+    O3_g     (Optional[float]):   initial O3   gas mixing ratio [kg / kg dry air]
+    H2O2_g   (Optional[float]):   initial H2O2 gas mixing ratio [kg / kg dry air]
+    TODO...
     chem_sys (Optional[string]):  accepted values: 'open', 'closed'
                                   (in open/closed system gas volume concentration in the air doesn't/does change 
                                    due to chemical reactions)
@@ -415,6 +322,11 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
     "rhod" : np.array([common.rhod(p_0, th_0, r_0)]),
     "T" : None, "RH" : None
   }
+
+  if opts["chem_dsl"] or opts["chem_dsc"] or opts["chem_rct"]:
+    for key in _Chem_g_id.iterkeys():
+      state.update({ key : np.array([opts[key]])}) 
+
   info = { "RH_max" : 0, "libcloud_Git_revision" : libcloud_version, 
            "parcel_Git_revision" : parcel_version }
 
@@ -422,8 +334,6 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   with _output_init(micro, opts, spectra) as fout:
     # adding chem state vars
     if micro.opts_init.chem_switch:
-      state.update({ "SO2_g" : SO2_g_0, "O3_g" : O3_g_0, "H2O2_g" : H2O2_g_0 })
-      state.update({ "CO2_g" : CO2_g_0, "NH3_g" : NH3_g_0, "HNO3_g" : HNO3_g_0 })
       state.update({ "SO2_a" : 0.,"O3_a" : 0.,"H2O2_a" : 0., "HSO3_a" : 0, "SO3_a" : 0})
       state.update({ "CO2_a" : 0.,"NH3_a" : 0.,"HNO3_a" : 0.})
       state.update({ "HCO3_a" : 0.,"CO3_a": 0.,"NO3_a" : 0.})

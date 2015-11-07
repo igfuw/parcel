@@ -56,14 +56,14 @@ def data(request):
     # run parcel
     parcel(dt = dt, z_max = z_max, outfreq = outfreq, w = w, \
            T_0 = T_init, p_0 = p_init, r_0 = r_init,\
-           SO2_g_0 = SO2_g_init, O3_g_0 = O3_g_init, H2O2_g_0 = H2O2_g_init,\
-           CO2_g_0 = CO2_g_init, NH3_g_0 = NH3_g_init, HNO3_g_0 = HNO3_g_init,\
+           SO2_g = SO2_g_init, O3_g = O3_g_init, H2O2_g = H2O2_g_init,\
+           CO2_g = CO2_g_init, NH3_g = NH3_g_init, HNO3_g = HNO3_g_init,\
            chem_sys = 'closed',   outfile = outfile,\
            chem_dsl = chem_dsl, chem_dsc = chem_dsc, chem_rct = chem_rct,\
            n_tot = n_tot, mean_r = mean_r, gstdev = gstdev,\
            sd_conc = sd_conc,\
-           out_bin = '{"plt_rw":   {"rght": 1,    "left":    0, "drwt": "wet", "lnli": "lin", "nbin": 1,   "moms": [0, 1, 3]},\
-                       "plt_rd":   {"rght": 1,    "left":    0, "drwt": "dry", "lnli": "lin", "nbin": 1,   "moms": [0, 1, 3]},\
+           out_bin = '{"plt_rw":   {"rght": 1,    "left":    0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\
+                       "plt_rd":   {"rght": 1,    "left":    0, "drwt": "dry", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\
                        "radii" :   {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 1, "moms": [0, 3]},\
                        "plt_ch":   {"rght": 1,    "left":    0, "drwt": "dry", "lnli": "lin", "nbin": 1,\
                                     "moms": ["O3_a",   "H2O2_a", "H", "OH",\
@@ -78,12 +78,12 @@ def data(request):
     def removing_files():
         subprocess.call(["rm", outfile])
 
-    #request.addfinalizer(removing_files)
+    request.addfinalizer(removing_files)
     return data
 
 @pytest.mark.parametrize("chem", ["SO2", "O3", "H2O2", "CO2", "NH3", "HNO3"])
-def test_is_mass_const_dsl(data, chem, eps = {"SO2": 2e-3, "O3": 2e-15, "H2O2": 8e-16, "CO2": 6e-5, "NH3": 10, "HNO3": 2e-16}):
-                                              #TODO                                     TODO         TODO
+def test_is_mass_const_dsl(data, chem, eps = {"SO2": 3e-15, "O3": 5e-15, "H2O2": 5e-15,\
+                                              "CO2": 3e-15, "NH3": 9e-15, "HNO3": 6e-15}):
     """
     Checking if the total number of moles in closed chemical system 
     with only dissolving chem species into droplets, remains constant
@@ -99,7 +99,7 @@ def test_is_mass_const_dsl(data, chem, eps = {"SO2": 2e-3, "O3": 2e-15, "H2O2": 
     ini = data.variables[chem+"_g"][0]  / M_gas + data.variables[chem+"_a"][0]  / M_aq
     end = data.variables[chem+"_g"][-1] / M_gas + data.variables[chem+"_a"][-1] / M_aq
 
-    #assert np.isclose(end, ini, atol=0, rtol=eps[chem]), chem + " " + str((ini-end)/ini)
+    assert np.isclose(end, ini, atol=0, rtol=eps[chem]), chem + " " + str((ini-end)/ini)
 
 def test_chem_plot(data):
     """

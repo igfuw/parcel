@@ -23,10 +23,10 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     #spn_idx = int(math.ceil(float(f_out_chem['open'].chem_spn)/float(f_out_chem['open'].outfreq)))
 
     # plot settings
-    plt.figure(1, figsize=(16,12))
+    plt.figure(1, figsize=(10,12))
     plots = []
-    for i in range(6):
-      plots.append(plt.subplot(2,3,i+1))
+    for i in range(3):
+      plots.append(plt.subplot(1,3,i+1))
                              #(rows, columns, number)
     for ax in plots:
       ax.set_ylabel('t [s]')
@@ -37,10 +37,25 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     # calculate lwc
     plots[0].set_xlabel('lwc g/kg dry air')
     plots[0].grid()
+    plots[0].set_xlim([0., 2.5])
     plots[0].set_xticks([0., 0.5, 1, 1.5, 2, 2.5])
     plots[0].plot(np.sum(data.variables["radii_m3"][spn_idx:], axis=1) * 4. / 3 * math.pi * 998.2 * 1e3, t, "b.-")
 
+    # calculate SO2 gas volume concentration
+    p    = data.variables["p"][spn_idx:]
+    T    = data.variables["T"][spn_idx:]
+    rhod = data.variables["rhod"][spn_idx:]
+
+    plots[1].set_xlabel('SO2 conc (ppb) - TODO aq')
+    plots[1].grid()
+    plots[1].set_xlabel('gas vol.conc SO2 [ppb]')
+    plots[1].set_xticks([0., 0.05, 0.1, 0.15, 0.2])
+    plots[1].set_xticklabels(['0', '0.05', '0.1', '0.15', '0.2'])
+    plots[1].set_xlim([0., 0.2])
+    plots[1].plot(mix_ratio_to_mole_frac(data.variables["SO2_g"][spn_idx:], p, cm.M_SO2, T, rhod) * 1e9, t, "b.-")
+
     # calculate average pH
+    # (weighted with volume of cloud droplets)
     plots[2].set_xlabel('average pH')
     plots[2].grid()
 
@@ -59,46 +74,34 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     # plots[2].set_xticks([3.6, 3.8, 4, 4.2, 4.4, 4.6, 4.8])
     plots[2].plot(pH, t, "b.-")
 
-    # SO2 stuff
-    nso2_g = data.variables["SO2_g"][spn_idx:]                       / cm.M_SO2
-    nso2_a = np.sum(data.variables["chem_SO2_a"][spn_idx:],  axis=1) / cm.M_SO2_H2O
-    nhso3  = np.sum(data.variables["chem_HSO3_a"][spn_idx:], axis=1) / cm.M_HSO3
-    nso3   = np.sum(data.variables["chem_SO3_a"][spn_idx:],  axis=1) / cm.M_SO3
-    nhso4  = np.sum(data.variables["chem_HSO4_a"][spn_idx:], axis=1) / cm.M_HSO4
-    nso4   = np.sum(data.variables["chem_SO4_a"][spn_idx:],  axis=1) / cm.M_SO4
+     # SO2 stuff
+#    nso2_g = data.variables["SO2_g"][spn_idx:]                       / cm.M_SO2
+#    nso2_a = np.sum(data.variables["chem_SO2_a"][spn_idx:],  axis=1) / cm.M_SO2_H2O
+#    nhso3  = np.sum(data.variables["chem_HSO3_a"][spn_idx:], axis=1) / cm.M_HSO3
+#    nso3   = np.sum(data.variables["chem_SO3_a"][spn_idx:],  axis=1) / cm.M_SO3
+#    nhso4  = np.sum(data.variables["chem_HSO4_a"][spn_idx:], axis=1) / cm.M_HSO4
+#    nso4   = np.sum(data.variables["chem_SO4_a"][spn_idx:],  axis=1) / cm.M_SO4
 
-    p    = data.variables["p"][spn_idx:]
-    T    = data.variables["T"][spn_idx:]
-    rhod = data.variables["rhod"][spn_idx:]
-
-    plots[1].set_xlabel('SO2 conc (ppb) - TODO aq')
-    plots[1].grid()
-    plots[1].set_xlabel('gas vol.conc SO2 [ppb]')
-    plots[1].set_xticks([0., 0.05, 0.1, 0.15, 0.2, 0.25, 0.3])
-    plots[1].set_xticklabels(['0', '0.05', '0.1', '0.15', '0.2', '0.25', '0.3'])
-    plots[1].set_xlim([0., 0.3])
-    plots[1].plot(mix_ratio_to_mole_frac(data.variables["SO2_g"][spn_idx:], p, cm.M_SO2, T, rhod) * 1e9, t, "b.-")
-
-    plots[3].set_xlabel('n so2 g')
-    plots[3].grid()
-    plots[3].set_xticks([7.0018e-09, 7.0021e-09])
-    plots[3].set_xticklabels(['7.0018e-09', '7.0021e-09'])
-    plots[3].set_xlim([7.0018e-09, 7.0021e-09])
-    plots[3].plot(nso2_g, t)
-
-    plots[4].set_xlabel('n so2 a')
-    plots[4].grid()
-    plots[4].plot(nso2_a, t)
-
-    plots[5].set_xlabel('n h2so4 a')
-    plots[5].set_xticks([1.7777e-08, 1.7783e-08])
-    plots[5].set_xticklabels(['1.7777e-08', '1.7783e-08'])
-    plots[5].set_xlim([1.7777e-08, 1.7783e-08])
-    plots[5].grid()
-    plots[5].plot(nhso4 + nso4, t)
-
-    print nhso4[0]  + nso4[0]
-    print nhso4[-1] + nso4[-1]
+#    plots[3].set_xlabel('n so2 g')
+#    plots[3].grid()
+#    plots[3].set_xticks([7.0018e-09, 7.0021e-09])
+#    plots[3].set_xticklabels(['7.0018e-09', '7.0021e-09'])
+#    plots[3].set_xlim([7.0018e-09, 7.0021e-09])
+#    plots[3].plot(nso2_g, t)
+#
+#    plots[4].set_xlabel('n so2 a')
+#    plots[4].grid()
+#    plots[4].plot(nso2_a, t)
+#
+#    plots[5].set_xlabel('n h2so4 a')
+#    plots[5].set_xticks([1.7777e-08, 1.7783e-08])
+#    plots[5].set_xticklabels(['1.7777e-08', '1.7783e-08'])
+#    plots[5].set_xlim([1.7777e-08, 1.7783e-08])
+#    plots[5].grid()
+#    plots[5].plot(nhso4 + nso4, t)
+#
+#    print nhso4[0]  + nso4[0]
+#    print nhso4[-1] + nso4[-1]
 
     plt.savefig(output_folder + output_title + ".pdf")
  

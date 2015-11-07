@@ -9,7 +9,7 @@ import pytest
                                 {"w" : 2., "p_0" : 1e5}, 
                                 {"dt" : 0.5, "outfreq" : 20},
                                 {"sd_conc" : 32., "kappa" : 1.}, 
-                                {"SO2_g_0" : 0., "O3_g_0" : 0., "H2O2_g_0" : 0.},
+                                {"SO2_g" : 0., "O3_g" : 0., "H2O2_g" : 0.},
                                 {"gstdev" : 1.1}, 
                                 {"outfreq" : 2},
                                 {"out_bin" : '{"radii": {"rght": 1, "moms": [3], "drwt": "wet", "nbin": 1, "lnli": "lin", "left": 0}}'},
