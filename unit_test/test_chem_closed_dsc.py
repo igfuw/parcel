@@ -44,15 +44,15 @@ def data(request):
     chem_rct = False
 
     # output
-    z_max       = 200
+    z_max       = 400
     dt          = .1
-    w           = 1.
+    w           = .5
     outfreq     = int(z_max / dt / 25)
-    sd_conc     = 4.
+    sd_conc     = 8.
     outfile     = "test_chem_closed_dsc.nc"
 
     # run parcel
-    parcel(dt = dt, z_max = z_max, outfreq = outfreq,\
+    parcel(dt = dt, z_max = z_max, outfreq = outfreq, w=w,\
            T_0 = T_init, p_0 = p_init, r_0 = r_init,\
            SO2_g = SO2_g_init,  O3_g = O3_g_init,   H2O2_g = H2O2_g_init,\
            CO2_g = CO2_g_init, NH3_g = NH3_g_init, HNO3_g = HNO3_g_init,\
@@ -150,7 +150,7 @@ def test_is_mass_S6_const_with_dsl_dsc(data, eps=1e-15):
     assert np.isclose(n_S6_ini, n_S6_end, atol=0, rtol=eps), "1: " + str((n_S6_end - n_S6_ini) / n_S6_ini)
     assert np.isclose(n_S6_ini, n_SO4_HSO4_end, atol=0, rtol=eps), "2: " + str((n_SO4_HSO4_end - n_S6_ini) / n_S6_ini)
 
-@pytest.mark.parametrize("ion", ["H2O", "SO2", "HSO3", "CO2", "HCO3", "NH3", "HNO3", "S6"])
+@pytest.mark.parametrize("ion", ["H2O", "SO2", "HSO3", "CO2", "HCO3", "NH3", "HNO3"])#, "S6"]) TODO
 def test_check_dissoc_constants(data, ion):
      """
      Check if the mass of chemical compounds agrees with the dissociation constants
@@ -209,48 +209,48 @@ def test_check_dissoc_constants(data, ion):
 
          assert max_error <= eps, ion + " error = " + str(max_error)
 
-
-     def check_S6_ions(m_HSO4, M_HSO4, m_SO4, M_SO4, m_S6, M_H2SO4, m_H, M_H, vol, K_HSO4, eps1, eps2):
+# TODO
+#     def check_S6_ions(m_HSO4, M_HSO4, m_SO4, M_SO4, m_S6, M_H2SO4, m_H, M_H, vol, K_HSO4, eps1, eps2):
      # check for dissociation of H2SO4 (assumes no non-dissociated H2SO4) 
-         max_error_1 = 0
-         max_error_2 = 0
+#         max_error_1 = 0
+#         max_error_2 = 0
 
-         for idx, vol in np.ndenumerate(V):
-             if vol > 0:
+#         for idx, vol in np.ndenumerate(V):
+#             if vol > 0:
 
-                 left_HSO4  = m_HSO4[idx] / M_HSO4 / vol
-                 right_HSO4 = (m_H[idx] / M_H  / vol * m_S6[idx] / M_H2SO4 / vol) / (m_H[idx] / M_H / vol + K_HSO4)
-                 left_SO4   = m_SO4[idx] / M_SO4 / vol
-                 right_SO4  = (K_HSO4 * m_S6[idx] / M_H2SO4 / vol)  / (m_H[idx] / M_H / vol + K_HSO4)
+#                 left_HSO4  = m_HSO4[idx] / M_HSO4 / vol
+#                 right_HSO4 = (m_H[idx] / M_H  / vol * m_S6[idx] / M_H2SO4 / vol) / (m_H[idx] / M_H / vol + K_HSO4)
+#                 left_SO4   = m_SO4[idx] / M_SO4 / vol
+#                 right_SO4  = (K_HSO4 * m_S6[idx] / M_H2SO4 / vol)  / (m_H[idx] / M_H / vol + K_HSO4)
 
-                 current_error_1 = abs(left_HSO4 - right_HSO4) / left_HSO4
-                 current_error_2 = abs(left_SO4 - right_SO4)   / left_SO4
+#                 current_error_1 = abs(left_HSO4 - right_HSO4) / left_HSO4
+#                 current_error_2 = abs(left_SO4 - right_SO4)   / left_SO4
 
-                 if max_error_1 < current_error_1: max_error_1 = current_error_1
-                 if max_error_2 < current_error_2: max_error_2 = current_error_2
+#                 print "( ", left_HSO4, " - ", right_HSO4, " ) / ", left_HSO4
+#                 print "( ", left_SO4, " - ", right_SO4, " ) / ", left_SO4
 
-         assert max_error_1 <= eps1, "K_HSO4 error = " + str(max_error_1)
-         assert max_error_1 <= eps1, "K_SO4 error = " + str(max_error_2)
+#                 if max_error_1 < current_error_1: max_error_1 = current_error_1
+#                 if max_error_2 < current_error_2: max_error_2 = current_error_2
+
+#         assert max_error_1 <= eps1, "K_HSO4 error = " + str(max_error_1)
+#         assert max_error_1 <= eps1, "K_SO4 error = " + str(max_error_2)
  
 
      if   ion == "H2O":  check_water(m_OH, m_H, V, 2e-2)
 
-     elif ion == "SO2":  check_ions(m_H,   cm.M_H,   m_HSO3, cm.M_HSO3, m_SO2,  cm.M_SO2_H2O, V, cm.K_SO2,  2e-2)
-     elif ion == "HSO3": check_ions(m_H,   cm.M_H,   m_SO3,  cm.M_SO3,  m_HSO3, cm.M_HSO3,    V, cm.K_HSO3, 3e-2) 
-     elif ion == "CO2":  check_ions(m_H,   cm.M_H,   m_HCO3, cm.M_HCO3, m_CO2,  cm.M_CO2_H2O, V, cm.K_CO2,  2e-2)
-     elif ion == "HCO3": check_ions(m_H,   cm.M_H,   m_CO3,  cm.M_CO3,  m_HCO3, cm.M_HCO3,    V, cm.K_HCO3, 3e-2)
-     elif ion == "NH3":  check_ions(m_NH4, cm.M_NH4, m_OH,   cm.M_OH,   m_NH3,  cm.M_NH3_H2O, V, cm.K_NH3,  3e-2)
-     elif ion == "HNO3": check_ions(m_H,   cm.M_H,   m_NO3,  cm.M_NO3,  m_HNO3, cm.M_HNO3,    V, cm.K_HNO3, 5e-4)
-                                                                                                         # TODO - why so big?
-                                                                                                         # check with > sd_conc
-     elif ion == "S6":   check_S6_ions(m_HSO4, cm.M_HSO4, m_SO4, cm.M_SO4, m_S6, cm.M_H2SO4, m_H, cm.M_H,\
-                                         V, cm.K_HSO4, 3e-2, 1e-3)
+     elif ion == "SO2":  check_ions(m_H,   cm.M_H,   m_HSO3, cm.M_HSO3, m_SO2,  cm.M_SO2_H2O, V, cm.K_SO2,  6e-16)
+     elif ion == "HSO3": check_ions(m_H,   cm.M_H,   m_SO3,  cm.M_SO3,  m_HSO3, cm.M_HSO3,    V, cm.K_HSO3, 5e-16) 
+     elif ion == "CO2":  check_ions(m_H,   cm.M_H,   m_HCO3, cm.M_HCO3, m_CO2,  cm.M_CO2_H2O, V, cm.K_CO2,  7e-16)
+     elif ion == "HCO3": check_ions(m_H,   cm.M_H,   m_CO3,  cm.M_CO3,  m_HCO3, cm.M_HCO3,    V, cm.K_HCO3, 6e-16)
+     elif ion == "NH3":  check_ions(m_NH4, cm.M_NH4, m_OH,   cm.M_OH,   m_NH3,  cm.M_NH3_H2O, V, cm.K_NH3,  5e-16)
+     elif ion == "HNO3": check_ions(m_H,   cm.M_H,   m_NO3,  cm.M_NO3,  m_HNO3, cm.M_HNO3,    V, cm.K_HNO3, 8e-16)
+#     elif ion == "S6":   check_S6_ions(m_HSO4, cm.M_HSO4, m_SO4, cm.M_SO4, m_S6, cm.M_H2SO4, m_H, cm.M_H,\
+#                                         V, cm.K_HSO4, 1e-20, 1e-20)
      else: assert False
 
 @pytest.mark.parametrize("chem", ["SO2", "O3", "H2O2", "CO2", "NH3", "HNO3"])
 def test_is_mass_const_dsl_dsc(data, chem, eps =\
-                                           {"SO2": 5e-4, "O3":9e-11, "H2O2": 4e-4, "CO2": 8e-10, "NH3": 2e-4, "HNO3":1e-4}):
-                                            # TODO why so different?
+                                           {"SO2": 2e-16, "O3":2e-15, "H2O2": 2e-15, "CO2": 5e-15, "NH3": 7e-14, "HNO3":3e-14}):
      """
      Checking if the total number of moles in closed chemical system 
      with only dissocoation present remains constant
@@ -259,7 +259,7 @@ def test_is_mass_const_dsl_dsc(data, chem, eps =\
      # check for O3 and H2O2 (they don't dissociate)
      if  chem in ["O3", "H2O2"] : 
          molar_mass = getattr(cm, "M_"+chem)
-         ini = (data.variables[chem+"_g"][0] + data.variables[chem+"_a"][-1]) / molar_mass
+         ini = (data.variables[chem+"_g"][0] + data.variables[chem+"_a"][0]) / molar_mass
 
          #final gas phase = current gas phase + mass dissolved into droplets
          end = (data.variables[chem+"_g"][-1] + data.variables[chem+"_a"][-1]) / molar_mass

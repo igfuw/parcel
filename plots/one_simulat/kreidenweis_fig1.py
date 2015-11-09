@@ -52,7 +52,13 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     plots[1].set_xticks([0., 0.05, 0.1, 0.15, 0.2])
     plots[1].set_xticklabels(['0', '0.05', '0.1', '0.15', '0.2'])
     plots[1].set_xlim([0., 0.2])
-    plots[1].plot(mix_ratio_to_mole_frac(data.variables["SO2_g"][spn_idx:], p, cm.M_SO2, T, rhod) * 1e9, t, "b.-")
+    tmp1 = mix_ratio_to_mole_frac(data.variables["SO2_g"][spn_idx:], p, cm.M_SO2,     T, rhod)
+    tmp2 = mix_ratio_to_mole_frac(data.variables["SO2_a"][spn_idx:], p, cm.M_SO2_H2O, T, rhod)
+    plots[1].plot(tmp1 * 1e9, t, "r.-")
+    plots[1].plot(tmp2 * 1e9, t, "b.-")
+    plots[1].plot((tmp1 + tmp2) * 1e9, t, "g.-")
+
+    print data.variables["SO2_a"][spn_idx:]
 
     # calculate average pH
     # (weighted with volume of cloud droplets)

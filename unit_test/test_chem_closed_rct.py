@@ -49,7 +49,7 @@ def data(request):
     z_max       = 1400.
     dt          = .1
     w           = 0.5
-    outfreq     = int(z_max / dt / 100) * 2
+    outfreq     = int(z_max / dt / 100) * 4
     sd_conc     = 1024.
     outfile     = "test_chem_closed_rct.nc"
 
