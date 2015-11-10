@@ -81,7 +81,7 @@ def test_henry_checker(data, chem, eps = {"SO2": 3e-10, "O3":1e-10, "H2O2": 7e-6
     libcloudph++ takes into account the affect of temperature on Henry constant and 
     the effects of mass transfer into droplets
 
-    Due o the latter effect to compare with the teoretical values there is first the "wait" period
+    Due o the latter effect, to compare with the teoretical values there is first the "wait" period
     with verical velocity set to zero. During this time the droplets may adjust to equilibrum
     and may be then compared with the teoretical values.
 

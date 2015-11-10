@@ -1,3 +1,4 @@
+# This Python file uses the following encoding: utf-8
 import sys
 sys.path.insert(0, "../")
 sys.path.insert(0, "./")
@@ -80,36 +81,53 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     # plots[2].set_xticks([3.6, 3.8, 4, 4.2, 4.4, 4.6, 4.8])
     plots[2].plot(pH, t, "b.-")
 
-     # SO2 stuff
-#    nso2_g = data.variables["SO2_g"][spn_idx:]                       / cm.M_SO2
-#    nso2_a = np.sum(data.variables["chem_SO2_a"][spn_idx:],  axis=1) / cm.M_SO2_H2O
-#    nhso3  = np.sum(data.variables["chem_HSO3_a"][spn_idx:], axis=1) / cm.M_HSO3
-#    nso3   = np.sum(data.variables["chem_SO3_a"][spn_idx:],  axis=1) / cm.M_SO3
-#    nhso4  = np.sum(data.variables["chem_HSO4_a"][spn_idx:], axis=1) / cm.M_HSO4
-#    nso4   = np.sum(data.variables["chem_SO4_a"][spn_idx:],  axis=1) / cm.M_SO4
-
-#    plots[3].set_xlabel('n so2 g')
-#    plots[3].grid()
-#    plots[3].set_xticks([7.0018e-09, 7.0021e-09])
-#    plots[3].set_xticklabels(['7.0018e-09', '7.0021e-09'])
-#    plots[3].set_xlim([7.0018e-09, 7.0021e-09])
-#    plots[3].plot(nso2_g, t)
-#
-#    plots[4].set_xlabel('n so2 a')
-#    plots[4].grid()
-#    plots[4].plot(nso2_a, t)
-#
-#    plots[5].set_xlabel('n h2so4 a')
-#    plots[5].set_xticks([1.7777e-08, 1.7783e-08])
-#    plots[5].set_xticklabels(['1.7777e-08', '1.7783e-08'])
-#    plots[5].set_xlim([1.7777e-08, 1.7783e-08])
-#    plots[5].grid()
-#    plots[5].plot(nhso4 + nso4, t)
-#
-#    print nhso4[0]  + nso4[0]
-#    print nhso4[-1] + nso4[-1]
-
     plt.savefig(output_folder + output_title + ".pdf")
+
+def plot_fig2(data, output_folder = '', output_title = ''):
+    import Gnuplot
+
+    g = Gnuplot.Gnuplot()# persist=1)
+    g('set term svg dynamic enhanced')
+
+    ymax = 1e4
+    ymin = 1e-1
+
+    # diameter
+    rw = data.variables["radii_r_wet"][:] * 1e6 * 2  
+    rd = data.variables["radiidry_r_dry"][:] * 1e6 * 2
+
+    #TODO - add test if it is == to dr in netcdf
+    drw = np.empty(rw.shape)
+    drw[0] = rw[0] - 0
+    drw[1:] = (rw[1:] - rw[0:-1]) * 1e6
+
+    drd = np.empty(rd.shape)
+    drd[0] = rd[0] - 0
+    drd[1:] = (rd[1:] - rd[0:-1]) * 1e6
+
+    for t in range(data.variables['t'].shape[0]):
+
+        g('reset')
+        g('set output "' + output_folder + 'Kreidenweis_plot_spec_' + str("%03d" % t) + '.svg"')
+        g('set logscale xy')
+        g('set ylabel "[mg^{-1} μm^{-1}]"')
+        g('set yrange [' +  str(ymin) + ':' + str(ymax) + ']')
+        g('set grid')
+        g('set nokey')
+
+        # FSSP range
+        g('set arrow from .5,' + str(ymin) + 'to .5,' + str(ymax) + 'nohead')
+        g('set arrow from 25,' + str(ymin) + 'to 25,' + str(ymax) + 'nohead')
+
+        g('set xlabel "particle diameter [μm]" ')
+
+        nw = data.variables['radii_m0'][t,:] / drw
+        nd = data.variables['radiidry_m0'][t,:] / drd
+
+        plot_rw = Gnuplot.PlotItems.Data(rw, nw, with_="fsteps", title="wet radius")
+        plot_rd = Gnuplot.PlotItems.Data(rd, nd, with_="fsteps", title="dry radius")
+
+        g.plot(plot_rw, plot_rd)
  
 def main():
     # initial condition
@@ -145,12 +163,13 @@ def main():
     w           = 1.
     outfreq     = int(z_max / dt / 100)
     sd_conc     = 1024.
-    outfile     = "Kreidenweis_fig1.nc"
+    outfile     = "Kreidenweis.nc"
 
     # define output for moments and chemistry
-    out_bin = '{"radii":   {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 500, "moms": [0, 3]},\
-                "chem" :   {"rght": 1e-4, "left": 1e-9, "drwt": "dry", "lnli": "log", "nbin": 500,\
-                               "moms": ["H", "OH", "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI"]}}'
+    out_bin = '{"radii":    {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 500, "moms": [0, 3]},\
+                "radiidry": {"rght": 1e-4, "left": 1e-9, "drwt": "dry", "lnli": "log", "nbin": 500, "moms": [0, 3]},\
+                "chem" :    {"rght": 1e-4, "left": 1e-9, "drwt": "dry", "lnli": "log", "nbin": 500,\
+                                   "moms": ["H", "OH", "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI"]}}'
 
     # run parcel, run!
     parcel(dt = dt, z_max = z_max, w = w, outfreq = outfreq,\
@@ -167,6 +186,7 @@ def main():
     data = netcdf.netcdf_file(outfile,   "r")
 
     plot_fig1(data, output_folder = "../outputs", output_title = "/Kreidenweis_fig1")
+    plot_fig2(data, output_folder = "../outputs", output_title = "/Kreidenweis_fig2")
 
     #cleanup
     #subprocess.call(["rm", outfile])

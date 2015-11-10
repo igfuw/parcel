@@ -8,84 +8,114 @@ import numpy as np
 import math
 import subprocess
 import pytest
+import copy
 
 from parcel import parcel
 from libcloudphxx import common as cm
 from chemical_plot import plot_chem
-from kreidenweis_fig1 import plot_fig1
-from functions import *
+#from kreidenweis_fig1 import plot_fig1
+#from functions import *
+from chem_conditions import *
 
 @pytest.fixture(scope="module")
 def data(request):
 
-    # initial condition
-    RH_init = .95
-    T_init  = 285.2
-    p_init  = 95000.
-    r_init  = rh_to_rv(RH_init, T_init, p_init)
+    # copy options from chem_conditions ...
+    opts_dict = copy.deepcopy(parcel_dict)
 
-    # calculate rhod for initial gas mixing ratio
-    rhod_init   = rhod_calc(T_init, p_init, r_init)
-    # initial condition for trace geses
-    SO2_g_init  = mole_frac_to_mix_ratio(200e-12, p_init, cm.M_SO2,  T_init, rhod_init)
-    O3_g_init   = mole_frac_to_mix_ratio(50e-9,   p_init, cm.M_O3,   T_init, rhod_init)
-    H2O2_g_init = mole_frac_to_mix_ratio(500e-12, p_init, cm.M_H2O2, T_init, rhod_init)
-    CO2_g_init  = mole_frac_to_mix_ratio(360e-6,  p_init, cm.M_CO2,  T_init, rhod_init)
-    NH3_g_init  = mole_frac_to_mix_ratio(100e-12, p_init, cm.M_NH3,  T_init, rhod_init) 
-    HNO3_g_init = mole_frac_to_mix_ratio(100e-12, p_init, cm.M_HNO3, T_init, rhod_init)
+    # ... and modify them for the current test
+    opts_dict['outfile']  = "test_chem_closed_rct.nc"
 
-    # aerosol size distribution
-    mean_r = .08e-6 / 2
-    gstdev = 2./1
-    n_tot  = 566.e6
-
-    # process toggling
-    chem_dsl = True
-    chem_dsc = True
-    chem_rct = True
-    chem_spn = 10
-
-    # output
-    z_max       = 1400.
-    dt          = .1
-    w           = 0.5
-    outfreq     = int(z_max / dt / 100) * 4
-    sd_conc     = 1024.
-    outfile     = "test_chem_closed_rct.nc"
-
+    opts_dict['chem_dsl'] = True
+    opts_dict['chem_dsc'] = True
+    opts_dict['chem_rct'] = True
+    opts_dict['chem_spn'] = 10
+    opts_dict['out_bin']  = opts_dict['out_bin'][:-1] + \
+        ', "chem"  : {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 10,\
+                      "moms": ["O3_a",   "H2O2_a", "H", "OH",\
+                               "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI",\
+                               "CO2_a",  "HCO3_a", "CO3_a",\
+                               "NH3_a",  "NH4_a",  "HNO3_a", "NO3_a"]}}'
+ 
     # run parcel
-    parcel(dt = dt, z_max = z_max, outfreq = outfreq, w = w, \
-           T_0 = T_init, p_0 = p_init, r_0 = r_init,\
-           SO2_g = SO2_g_init,  O3_g = O3_g_init,   H2O2_g = H2O2_g_init,\
-           CO2_g = CO2_g_init, NH3_g = NH3_g_init, HNO3_g = HNO3_g_init,\
-           chem_sys = 'closed',   outfile = outfile,\
-           mean_r = mean_r, gstdev = gstdev, n_tot = n_tot, sd_conc=sd_conc, \
-           chem_dsl = chem_dsl, chem_dsc = chem_dsc, chem_rct = chem_rct, \
-           chem_spn=chem_spn, \
-           out_bin = '{\
-                  "chem"  : {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 500,\
-                             "moms": ["O3_a",   "H2O2_a", "H", "OH",\
-                                      "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI",\
-                                      "CO2_a",  "HCO3_a", "CO3_a",\
-                                      "NH3_a",  "NH4_a",  "HNO3_a", "NO3_a"]},\
-                  "radii" : {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 500, "moms": [3]},\
-                  "plt_rw": {"rght": 1,    "left": 0,    "drwt": "wet", "lnli": "lin", "nbin": 1,   "moms": [0, 1, 3]},\
-                  "plt_rd": {"rght": 1,    "left": 0,    "drwt": "dry", "lnli": "lin", "nbin": 1,   "moms": [0, 1, 3]},\
-                  "plt_ch": {"rght": 1,    "left": 0,    "drwt": "dry", "lnli": "lin", "nbin": 1,\
-                             "moms": ["O3_a",   "H2O2_a", "H", "OH",\
-                                      "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI",\
-                                      "CO2_a",  "HCO3_a", "CO3_a",\
-                                      "NH3_a",  "NH4_a",  "HNO3_a", "NO3_a"]}}'
-    )
+    parcel(**opts_dict)
 
-    data = netcdf.netcdf_file(outfile,   "r")
+    # simulation results
+    data = netcdf.netcdf_file(opts_dict['outfile'],   "r")
 
     # removing all netcdf files after all tests                                      
     def removing_files():
-        subprocess.call(["rm", outfile])
+        subprocess.call(["rm", opts_dict['outfile']])
 
-    #request.addfinalizer(removing_files)
+    request.addfinalizer(removing_files)
     return data
+
+@pytest.mark.parametrize("chem", ["SO2", "CO2", "NH3", "HNO3"])
+def test_moles_const_dsl_dsc_rct(data, chem, eps =\
+                                             {"SO2": 2e-14, "CO2": 7e-15, "NH3": 2e-13, "HNO3":4e-14}):
+     """
+     Checking if the total number of moles in closed chemical system 
+     with dissocoation and chemical reactions remains constant
+     
+     ini - number of moles in gas phase and aq phase (both ions and not) at t=0
+     end - number of moles in gas phase and aq phase (both ions and not) at t=end
+
+     The test is not done for H2O2 and O3 since they are depleted during oxidation
+     """
+     # NH3 -> NH4+ + OH-
+     if chem == "NH3":
+
+         ini = data.variables[chem+"_g"][0] / cm.M_NH3 +\
+               data.variables["chem_"+chem+"_a"][0, :].sum() / cm.M_NH3_H2O +\
+               data.variables["chem_NH4_a"][0, :].sum()      / cm.M_NH4
+
+         end = data.variables[chem+"_g"][-1] / cm.M_NH3 +\
+               data.variables["chem_"+chem+"_a"][-1, :].sum() / cm.M_NH3_H2O +\
+               data.variables["chem_NH4_a"][-1, :].sum()      / cm.M_NH4
+
+     # HNO3 -> H+ + NO3-
+     if chem == "HNO3":
+
+         ini = data.variables[chem+"_g"][0] / cm.M_HNO3 +\
+               data.variables["chem_"+chem+"_a"][0, :].sum() / cm.M_HNO3 +\
+               data.variables["chem_NO3_a"][0, :].sum()      / cm.M_NO3
+
+         end = data.variables[chem+"_g"][-1] / cm.M_HNO3 +\
+               data.variables["chem_"+chem+"_a"][-1, :].sum() / cm.M_HNO3 +\
+               data.variables["chem_NO3_a"][-1, :].sum()      / cm.M_NO3
+
+     # SO2_g -> SO2_a HSO3- SO3-- HSO4- SO4--
+     if chem == "SO2":
+
+         ini = data.variables[chem+"_g"][0] / cm.M_SO2 + \
+               data.variables["chem_" + chem + "_a"][0, :].sum() / cm.M_SO2_H2O + \
+               data.variables["chem_H"+ chem.replace('2','3')+"_a"][0, :].sum() / cm.M_HSO3 + \
+               data.variables["chem_" + chem.replace('2','3')+"_a"][0, :].sum() / cm.M_SO3  + \
+               data.variables["chem_H"+ chem.replace('2','4')+"_a"][0, :].sum() / cm.M_HSO4 + \
+               data.variables["chem_" + chem.replace('2','4')+"_a"][0, :].sum() / cm.M_SO4
+
+         end = data.variables[chem+"_g"][-1] / cm.M_SO2 + \
+               data.variables["chem_" + chem + "_a"][-1, :].sum() / cm.M_SO2_H2O + \
+               data.variables["chem_H"+ chem.replace('2','3')+"_a"][-1, :].sum() / cm.M_HSO3 + \
+               data.variables["chem_" + chem.replace('2','3')+"_a"][-1, :].sum() / cm.M_SO3  + \
+               data.variables["chem_H"+ chem.replace('2','4')+"_a"][-1, :].sum() / cm.M_HSO4 + \
+               data.variables["chem_" + chem.replace('2','4')+"_a"][-1, :].sum() / cm.M_SO4
+
+     # CO2_g -> CO2_a HCO3- CO3--
+     if chem == "CO2":
+
+         ini = data.variables[chem+"_g"][0] / cm.M_CO2 + \
+               data.variables["chem_" + chem + "_a"][0, :].sum() / cm.M_CO2_H2O + \
+               data.variables["chem_H"+ chem.replace('2','3')+"_a"][0, :].sum() / cm.M_HCO3 + \
+               data.variables["chem_" + chem.replace('2','3')+"_a"][0, :].sum() / cm.M_CO3
+
+         end = data.variables[chem+"_g"][-1] / cm.M_CO2 + \
+               data.variables["chem_" + chem + "_a"][-1, :].sum() / cm.M_CO2_H2O + \
+               data.variables["chem_H"+ chem.replace('2','3')+"_a"][-1, :].sum() / cm.M_HCO3 + \
+               data.variables["chem_" + chem.replace('2','3')+"_a"][-1, :].sum() / cm.M_CO3
+     
+     # do the checking
+     assert np.isclose(end, ini, atol=0, rtol=eps[chem]), chem + " : " + str((ini-end)/ini)
 
 def test_chem_plot(data):
     """
@@ -93,10 +123,4 @@ def test_chem_plot(data):
     """
     data_to_plot = {'closed' : data}
     plot_chem(data_to_plot, output_folder="plots/outputs", output_title='/test_chem_closed_rct_')
-
-def test_chem_fig1(data):
-    """
-    Fig 1 from Kreidenweis et al 2003
-    """
-    plot_fig1(data, output_folder="plots/outputs", output_title='/Kreidenweis_fig1')
 
