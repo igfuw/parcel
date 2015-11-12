@@ -108,7 +108,7 @@ def plot_fig2(data, output_folder = '', output_title = ''):
     for t in range(data.variables['t'].shape[0]):
 
         g('reset')
-        g('set output "' + output_folder + 'Kreidenweis_plot_spec_' + str("%03d" % t) + '.svg"')
+        g('set output "' + output_folder + '/Kreidenweis_plot_spec_' + str("%03d" % t) + '.svg"')
         g('set logscale xy')
         g('set ylabel "[mg^{-1} μm^{-1}]"')
         g('set yrange [' +  str(ymin) + ':' + str(ymax) + ']')
