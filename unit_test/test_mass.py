@@ -28,13 +28,13 @@ def data(request):
     r_init  = rh_to_rv(RH_init, T_init, p_init)
 
     # running parcel model for open / closed chem system  ...
-#    parcel(dt = .1, sd_conc = 1024, outfreq = 40, outfile = outfile, z_max = 600., w = .5,\
-#           T_0 = T_init, p_0 = p_init, r_0 = r_init, \
-#           chem_rho = 1.8e3, mean_r = .04e-6, gstdev = 2., n_tot = 566.e6, out_bin = \
-#            '{"wradii": {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "lin", "nbin": 500, "moms": [0, 3]}, \
-#              "dradii": {"rght": 1e-4, "left": 1e-10, "drwt": "dry", "lnli": "lin", "nbin": 500, "moms": [0, 3]}}'
-#          )
-#
+    parcel(dt = .1, sd_conc = 1024, outfreq = 40, outfile = outfile, z_max = 600., w = .5,\
+           T_0 = T_init, p_0 = p_init, r_0 = r_init, \
+           chem_rho = 1.8e3, mean_r = .04e-6, gstdev = 2., n_tot = 566.e6, out_bin = \
+            '{"wradii": {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "lin", "nbin": 500, "moms": [0, 3]}, \
+              "dradii": {"rght": 1e-4, "left": 1e-10, "drwt": "dry", "lnli": "lin", "nbin": 500, "moms": [0, 3]}}'
+          )
+
     data = netcdf.netcdf_file(outfile, "r")
 
     # removing all netcdf files after all tests
