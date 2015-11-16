@@ -65,7 +65,7 @@ def _micro_init(opts, state, info):
   opts_init = lgrngn.opts_init_t()  
   for opt in ["dt",]:  
     setattr(opts_init, opt, opts[opt])
-  opts_init.sd_conc_mean = opts["sd_conc"]
+  opts_init.sd_conc = opts["sd_conc"]
   opts_init.dry_distros = {opts["kappa"]:lognormal}
   opts_init.kernel = lgrngn.kernel_t.geometric #TODO: will not be needed soon (libcloud PR #89)
   opts_init.chem_rho = opts["chem_rho"]
