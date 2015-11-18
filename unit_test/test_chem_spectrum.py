@@ -35,7 +35,7 @@ def data(request):
     opts_dict['out_bin'] = '{"drad": {"rght": 1e-06, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 26, "moms": [0]}}'
 
     # run parcel
-    parcel(**opts_dict)
+    #parcel(**opts_dict)
 
     # simulation results
     data = netcdf.netcdf_file(opts_dict['outfile'],   "r")
@@ -44,7 +44,7 @@ def data(request):
     def removing_files():
         subprocess.call(["rm", opts_dict['outfile']])
 
-    request.addfinalizer(removing_files)
+    #request.addfinalizer(removing_files)
     return data
 
 def test_init_spectrum(data, eps = 1):
