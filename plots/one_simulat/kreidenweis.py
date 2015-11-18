@@ -93,8 +93,8 @@ def plot_fig2(data, output_folder = '', output_title = ''):
     ymin = 1e-1
 
     # diameter
-    rw = data.variables["radii_r_wet"][:] * 1e6 * 2  
-    rd = data.variables["radiidry_r_dry"][:] * 1e6 * 2
+    rw = data.variables["specw_r_wet"][:] * 1e6 * 2  
+    rd = data.variables["specd_r_dry"][:] * 1e6 * 2
 
     #TODO - add test if it is == to dr in netcdf
     drw = np.empty(rw.shape)
@@ -104,6 +104,19 @@ def plot_fig2(data, output_folder = '', output_title = ''):
     drd = np.empty(rd.shape)
     drd[0] = rd[0] - 0
     drd[1:] = (rd[1:] - rd[0:-1]) * 1e6
+
+    print "drw: "
+    print drw
+    print "wet bins at t=0 "
+    print data.variables['specw_m0'][0,:] / drw
+    print "wet bins at t=end "
+    print data.variables['specw_m0'][-1,:] / drw
+    print "drd: "
+    print drd
+    print "dry bins at t=0 "
+    print data.variables['specd_m0'][0,:] / drd
+    print "dry bins at t=end "
+    print data.variables['specd_m0'][-1,:] / drd
 
     for t in range(data.variables['t'].shape[0]):
 
@@ -121,8 +134,8 @@ def plot_fig2(data, output_folder = '', output_title = ''):
 
         g('set xlabel "particle diameter [μm]" ')
 
-        nw = data.variables['radii_m0'][t,:] / drw
-        nd = data.variables['radiidry_m0'][t,:] / drd
+        nw = data.variables['specw_m0'][t,:] / drw
+        nd = data.variables['specd_m0'][t,:] / drd
 
         plot_rw = Gnuplot.PlotItems.Data(rw, nw, with_="fsteps", title="wet radius")
         plot_rd = Gnuplot.PlotItems.Data(rd, nd, with_="fsteps", title="dry radius")

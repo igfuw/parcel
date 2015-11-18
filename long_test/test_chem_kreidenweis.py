@@ -37,16 +37,18 @@ def data(request):
     opts_dict['outfreq']  = int(z_max / dt / 100) * 4
 
     opts_dict['out_bin']  = '{\
-                  "chem"  : {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 500,\
+                  "chem"  : {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "log", "nbin": 500,\
                              "moms": ["O3_a",   "H2O2_a", "H", "OH",\
                                       "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI",\
                                       "CO2_a",  "HCO3_a", "CO3_a",\
                                       "NH3_a",  "NH4_a",  "HNO3_a", "NO3_a"]},\
-                  "radii" : {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 500, "moms": [0, 3]},\
-                "radiidry": {"rght": 1e-4, "left": 1e-9, "drwt": "dry", "lnli": "log", "nbin": 500, "moms": [0, 3]},\
-                  "plt_rw": {"rght": 1,    "left": 0,    "drwt": "wet", "lnli": "lin", "nbin": 1,   "moms": [0, 1, 3]},\
-                  "plt_rd": {"rght": 1,    "left": 0,    "drwt": "dry", "lnli": "lin", "nbin": 1,   "moms": [0, 1, 3]},\
-                  "plt_ch": {"rght": 1,    "left": 0,    "drwt": "dry", "lnli": "lin", "nbin": 1,\
+                   "specw": {"rght": 0.0001, "left": 1e-10, "drwt": "wet", "lnli": "log", "nbin": 26, "moms": [0, 1, 3]}, \
+                   "specd": {"rght": 1e-06,  "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 26, "moms": [0, 1, 3]}, \
+                  "radii" : {"rght": 1e-4,   "left": 1e-10, "drwt": "wet", "lnli": "log", "nbin": 500,"moms": [0, 3]},\
+                "radiidry": {"rght": 1e-4,   "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 500,"moms": [0, 3]},\
+                  "plt_rw": {"rght": 1,      "left": 0,    "drwt": "wet", "lnli": "lin", "nbin": 1,  "moms": [0, 1, 3]},\
+                  "plt_rd": {"rght": 1,      "left": 0,    "drwt": "dry", "lnli": "lin", "nbin": 1,  "moms": [0, 1, 3]},\
+                  "plt_ch": {"rght": 1,      "left": 0,    "drwt": "dry", "lnli": "lin", "nbin": 1,\
                              "moms": ["O3_a",   "H2O2_a", "H", "OH",\
                                       "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI",\
                                       "CO2_a",  "HCO3_a", "CO3_a",\
