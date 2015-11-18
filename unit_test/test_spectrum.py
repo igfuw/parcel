@@ -35,7 +35,6 @@ def data(request):
     request.addfinalizer(removing_files)
     return data
 
-
 @pytest.mark.parametrize("name_spect", ["wradii_r_wet", "dradii_r_dry", #log bins
                                         "linwradii_r_wet", "lindradii_r_dry"]) # lin bins
 def test_bin_checker(data, name_spect, eps_d=1.e-14):
@@ -65,11 +64,11 @@ def test_spectrum_diff(data, var, eps_d = 1e-15):
     assert np.isclose(f_ref.variables[var][:], data.variables[var][:],atol=0, rtol=eps_d).all()
 
     # ... and 0th, 1st, 3rd moment of wet and dry radius size distribution             
-@pytest.mark.parametrize("mom, eps", [("wradii_m0", 1.e-15), ("dradii_m0", 1e-15), 
+@pytest.mark.parametrize("mom, eps", [("wradii_m0",    1e-15), ("dradii_m0",    1e-15), 
                                       ("lindradii_m0", 1e-15), ("linwradii_m0", 1e-15),
-                                      ("wradii_m1", 4e-5), ("dradii_m1", 5e-15), 
+                                      ("wradii_m1",    7e-4),  ("dradii_m1",    5e-15), 
                                       ("lindradii_m1", 4e-15), ("linwradii_m1", 2e-6),
-                                      ("wradii_m3", 2e-4), ("dradii_m3", 2e-14), 
+                                      ("wradii_m3",    1.6e-3),("dradii_m3",    2e-14), 
                                       ("lindradii_m3", 2e-14), ("linwradii_m3", 5e-6)])
 
 def test_mom_checker(data, mom, eps):

@@ -45,7 +45,7 @@ def main(dt_list = [1e-3, 1.5e-3, 2e-3, 3e-3, 4e-3, 8e-3, 1e-2, 2e-2, 4e-2, 8e-2
         outfile_nc = "timesteptest_dt=" + str(dt) + ".nc"
         parcel(dt=dt, outfreq = int(z_max/w/dt),   outfile = outfile_nc,\
                 w = w, T_0 = T_init, p_0 = p_init, r_0 = r_init, z_max = z_max, \
-                mean_r = 5e-8, gstdev = 1.5, n_tot = 1e9, sd_conc = 1000., \
+                mean_r = 5e-8, gstdev = 1.5, n_tot = 1e9, sd_conc = 1000, \
                 radii = 1e-6 * pow(10, -3 + np.arange(26) * .2)
               )
 
