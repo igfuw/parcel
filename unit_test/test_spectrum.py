@@ -35,7 +35,6 @@ def data(request):
     request.addfinalizer(removing_files)
     return data
 
-
 @pytest.mark.parametrize("name_spect", ["wradii_r_wet", "dradii_r_dry", #log bins
                                         "linwradii_r_wet", "lindradii_r_dry"]) # lin bins
 def test_bin_checker(data, name_spect, eps_d=1.e-14):
