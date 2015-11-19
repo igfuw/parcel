@@ -6,15 +6,24 @@ from functions import *
 Common initail conditions for: test_chem_closed_dsl, test_chem_closed_dsc, test_chem_closed_rct
 
 """
-
-# initial condition
+# initial conditions (from Kreidenweis et al 2003)
 RH_init = .95
 T_init  = 285.2
 p_init  = 95000.
 r_init  = rh_to_rv(RH_init, T_init, p_init)
 
+# STP conditions (needed to initialize dry radii distribution)
+p_stp = 101325
+T_stp = 273.15 + 15
+
 # calculate rhod for initial gas mixing ratio
 rhod_init   = rhod_calc(T_init, p_init, r_init)
+
+# calculate density of air in the model and in standard conditions 
+# (needed to initialize dry radii distribution)
+rho_init = p_init / T_init / (r_init / (1.+r_init) * cm.R_v + 1./ (1.+r_init) * cm.R_d)
+rho_stp  = p_stp  / T_stp / cm.R_d
+
 # initial condition for trace geses
 SO2_g_init  = mole_frac_to_mix_ratio(200e-12, p_init, cm.M_SO2,  T_init, rhod_init)
 O3_g_init   = mole_frac_to_mix_ratio(50e-9,   p_init, cm.M_O3,   T_init, rhod_init)
@@ -24,9 +33,9 @@ NH3_g_init  = mole_frac_to_mix_ratio(100e-12, p_init, cm.M_NH3,  T_init, rhod_in
 HNO3_g_init = mole_frac_to_mix_ratio(100e-12, p_init, cm.M_HNO3, T_init, rhod_init)
 
 # aerosol size distribution
-mean_r = .08e-6 / 2.
+mean_r = .04e-6
 gstdev = 2.
-n_tot  = 566.e6
+n_tot  = 566.e6 * rho_stp / rho_init
 
 # chem process toggling
 chem_dsl = False

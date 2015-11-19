@@ -30,12 +30,14 @@ def data(request):
     opts_dict['dt']       = .1
     opts_dict['w']        = .5
     opts_dict['outfreq']  = 1
-    opts_dict['sd_conc']  = 1024
+    opts_dict['sd_conc']  = 1024 * 2000
 
-    opts_dict['out_bin'] = '{"drad": {"rght": 1e-06, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 26, "moms": [0]}}'
+    opts_dict['out_bin'] = '{"drad": {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 50, "moms": [0]},\
+                           "wradii": {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "lin", "nbin": 50, "moms": [0, 3]},\
+                           "dradii": {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "lin", "nbin": 50, "moms": [0, 3]}}'
 
     # run parcel
-    #parcel(**opts_dict)
+    parcel(**opts_dict)
 
     # simulation results
     data = netcdf.netcdf_file(opts_dict['outfile'],   "r")
@@ -47,57 +49,120 @@ def data(request):
     #request.addfinalizer(removing_files)
     return data
 
-def test_init_spectrum(data, eps = 1):
+def test_water_const(data, eps = 7e-15):
+    """
+    Check if the total water is preserved
+
+    ini = water vapor mixing ratio at t = 0    + water for aerosol to reach equilibrum at t = 0
+    end = water vapor mixing ratio at t = end  + water in all particles (cloud + aerosol) t = end
+
+    """
+    rho_w = cm.rho_w
+    rv    = data.variables["r_v"][:]
+    mom3  = data.variables["wradii_m3"][:,:]
+
+    ini = mom3[0,:].sum()  * 4./3 * math.pi * rho_w + rv[0]
+    end = mom3[-1,:].sum() * 4./3 * math.pi * rho_w + rv[-1]
+
+    assert np.isclose(end, ini, atol=0, rtol=eps), str((ini-end)/ini)
+
+def test_dry_mass_const(data, eps = 1e-20):
+    """
+    Check if the total dry mass is preserved
+
+    ini = dry particulate mass / kg dry air at t=0
+    end = dry particulate mass / kg dry air at t=end
+
+    """
+    chem_rho = getattr(data, "chem_rho")
+    mom3     = data.variables["dradii_m3"][:,:]
+    rhod     = data.variables["rhod"][:]
+    rv       = data.variables["r_v"][:]
+
+    ini = mom3[0,:].sum()  * 4./3 * math.pi * chem_rho
+    end = mom3[-1,:].sum() * 4./3 * math.pi * chem_rho
+
+    #assert np.isclose(end, ini, atol=0, rtol=eps), str((ini-end)/ini)
+
+    #epp = cm.R_d / cm.R_v
+    rhod_parc_init = rhod[0]
+    #rho_parc_init  = rhod[0] * (rv[0] * rv[0] + 1.) / (rv[0] + 1.)
+
+    print " "
+    print "sd_conc = 1024 * 50,   nbin = 50,  mix = 2.04312254645e-09  [kg/kg dry air]"
+    print "sd_conc = 1024 * 100,  nbin = 50,  mix = 2.02454798163e-09  [kg/kg dry air]"
+    print "sd_conc = 1024 * 200,  nbin = 50,  mix = 2.00070482127e-09  [kg/kg dry air]"
+    print "sd_conc = 1024 * 300,  nbin = 50,  mix = 1.98218151415e-09  [kg/kg dry air]"
+    print "sd_conc = 1024 * 500,  nbin = 50,  mix = 1.97226250868e-09  [kg/kg dry air]"
+    print "sd_conc = 1024 * 1000, nbin = 50,  mix = 1.92057052417e-09  [kg/kg dry air]"
+    print "sd_conc = 1024 * 2000, nbin = 50,  mix = 1.87114810921e-09  [kg/kg dry air]"
+
+    print " "
+    print "initial mixing ratio: ", ini, " [kg/kg dry air]"
+    print "final mixing ratio:   ", end, " [kg/kg dry air]"
+    print " "
+ 
+    a = 2.375 * 1e-9 / rhod_parc_init
+    print "article init mixing ratio (/ rhod parc init):  ", a, " [kg / kg dry air]"
+
+def test_plot_init_spectrum(data, eps = 1):
     """
     Checking if the initial aerosol size distribution is close to the analytic solution 
 
     """
     import Gnuplot
 
-    ymax = 1e4
-    ymin = 1e-1
+    # size distribution params
+    n_tot   = 566e6
+    mean_r  = 0.04e-6
+    gstdev  = 2
 
-    # log size distribution
-    def log_size_of_r(n_tot, mean_r, radii, gstdev):
-        return n_tot / math.sqrt(2.* math.pi) / math.log(gstdev, 10) / radii\
-               * math.exp(-1. * math.pow(math.log(radii/mean_r, 10) / math.sqrt(2.) / math.log(gstdev, 10), 2))
-
-    def log_size_of_lnr(n_tot, mean_r, lnr, gstdev):
+    # size distribution (defined as a function of log_10(radius))
+    def log10_size_of_lnr(n_tot, mean_r, lnr, gstdev):
         return n_tot / math.sqrt(2 * math.pi) / math.log(gstdev, 10)\
                * math.exp(-1. * math.pow((lnr - math.log(mean_r, 10)), 2) / 2. / math.pow(math.log(gstdev,10),2))
 
-    # dry diameter bins
-    rd      = data.variables["drad_r_dry"][:] * 1e6
-    drd     = np.empty(rd.shape)
-    drd[0]  = rd[0] - 0
-    drd[1:] = (rd[1:] - rd[0:-1])
+    # variables for plotting theoretical solution
+    # TODO - use the same bins as in the model
+    radii     = np.logspace(-3, 1, 100) * 1e-6
+    radii_log = np.empty(radii.shape)
+    theor_n     = np.empty(radii.shape) 
+    for it in range(radii.shape[0]):
+        radii_log[it] = math.log(radii[it], 10)
+        theor_n[it]     = log10_size_of_lnr(n_tot, mean_r, radii_log[it], gstdev)
 
-    # initial dry radii
-    nd = data.variables['drad_m0'][0,:] / drd / 1e6
+    # variables for plotting model initail condition
+    # (for plotting purpose model solution needs to be divided by ln(d1) - ln(d2) )
+    rd       = data.variables["drad_r_dry"][:]
+    log_rd   = np.empty(rd.shape)
+    d_log_rd = np.empty(rd.shape)
 
-    # theoretical dry radii
-    td  = np.empty(rd.shape)
-    td2 = np.empty(rd.shape)
+    for it in range(rd.shape[0]):
+        log_rd[it] = math.log(rd[it], 10)
 
-    for i in range(td.shape[0]):
-      td[i]  = log_size_of_r(  n_tot, mean_r, rd[i] / 1e6, gstdev) / drd[i] / 1e6
-      #td2[i] = log_size_of_lnr(n_tot, mean_r, rd[i] / 1e6, gstdev) / drd[i] / 1e6
+    d_log_rd[0]  = log_rd[0] - 1
+    d_log_rd[1:] = (log_rd[1:] - log_rd[0:-1])
+
+    # initial size distribution from the model
+    model_n = data.variables['drad_m0'][0,:]
+
+    # initial density
+    rhod = data.variables["rhod"][0]
 
     g = Gnuplot.Gnuplot()
     g('set term svg dynamic enhanced')
     g('reset')
     g('set output "plots/outputs/init_spectrum.svg" ')
-    g('set logscale xy')
-    g('set ylabel "[mg^{-1} μm^{-1}]"')
-    #g('set yrange [' +  str(ymin) + ':' + str(ymax) + ']')
-    g('set grid')
-    g('set nokey')
-
+    g('set logscale x')
     g('set xlabel "particle dry diameter [μm]" ')
+    g('set ylabel "dN/dlog_{10}(D) [cm^{-3} log_{10}(size interval)]"')
+    g('set grid')
+    g('set xrange [0.001:10]')
+    g('set yrange [0:800]')
 
-    plot_rd  = Gnuplot.PlotItems.Data(rd, nd, with_="fsteps", title="dry diameter")
-    plot_td  = Gnuplot.PlotItems.Data(rd, td, with_="fsteps", title="theory")
-    plot_td2 = Gnuplot.PlotItems.Data(rd, td2, with_="fsteps", title="theory 2")
+    theory_r = Gnuplot.PlotItems.Data(radii * 2 * 1e6,  theor_n   * 1e-6,                 with_="lines", title="theory")
+    plot     = Gnuplot.PlotItems.Data(rd    * 2 * 1e6,  model_n * rhod * 1e-6 / d_log_rd, with_="steps", title="model" )
 
-    g.plot(plot_rd, plot_td, plot_td2)
+    g.plot(theory_r, plot)
+
 
