@@ -39,8 +39,8 @@ def data(request):
     return data
 
 @pytest.mark.parametrize("chem", ["SO2", "O3", "H2O2", "CO2", "NH3", "HNO3"])
-def test_moles_const_dsl(data, chem, eps = {"SO2": 2e-14, "O3": 5e-15,  "H2O2": 2e-14,\
-                                            "CO2": 3e-15, "NH3": 2e-14, "HNO3": 2e-14}):
+def test_moles_const_dsl(data, chem, eps = {"SO2": 2e-14, "O3": 9e-15,  "H2O2": 2e-14,\
+                                            "CO2": 4e-15, "NH3": 2e-14, "HNO3": 2e-14}):
     """
     Checking if the total number of moles in closed chemical system 
     with only dissolving chem species into droplets, remains constant

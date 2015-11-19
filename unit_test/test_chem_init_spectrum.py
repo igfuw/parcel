@@ -30,7 +30,7 @@ def data(request):
     opts_dict['dt']       = .1
     opts_dict['w']        = .5
     opts_dict['outfreq']  = 1
-    opts_dict['sd_conc']  = 1024 * 2000
+    opts_dict['sd_conc']  = 1024 * 50
 
     opts_dict['out_bin'] = '{"drad": {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 50, "moms": [0]},\
                            "wradii": {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "lin", "nbin": 50, "moms": [0, 3]},\
@@ -49,29 +49,10 @@ def data(request):
     #request.addfinalizer(removing_files)
     return data
 
-def test_water_const(data, eps = 7e-15):
+def test_todo(data, eps = 1e-20):
     """
-    Check if the total water is preserved
-
-    ini = water vapor mixing ratio at t = 0    + water for aerosol to reach equilibrum at t = 0
-    end = water vapor mixing ratio at t = end  + water in all particles (cloud + aerosol) t = end
-
-    """
-    rho_w = cm.rho_w
-    rv    = data.variables["r_v"][:]
-    mom3  = data.variables["wradii_m3"][:,:]
-
-    ini = mom3[0,:].sum()  * 4./3 * math.pi * rho_w + rv[0]
-    end = mom3[-1,:].sum() * 4./3 * math.pi * rho_w + rv[-1]
-
-    assert np.isclose(end, ini, atol=0, rtol=eps), str((ini-end)/ini)
-
-def test_dry_mass_const(data, eps = 1e-20):
-    """
-    Check if the total dry mass is preserved
-
-    ini = dry particulate mass / kg dry air at t=0
-    end = dry particulate mass / kg dry air at t=end
+    Check if the initial mass is the same as in the article
+    TODO - convergence with the initial sd_conc
 
     """
     chem_rho = getattr(data, "chem_rho")
@@ -82,13 +63,10 @@ def test_dry_mass_const(data, eps = 1e-20):
     ini = mom3[0,:].sum()  * 4./3 * math.pi * chem_rho
     end = mom3[-1,:].sum() * 4./3 * math.pi * chem_rho
 
-    #assert np.isclose(end, ini, atol=0, rtol=eps), str((ini-end)/ini)
-
-    #epp = cm.R_d / cm.R_v
     rhod_parc_init = rhod[0]
-    #rho_parc_init  = rhod[0] * (rv[0] * rv[0] + 1.) / (rv[0] + 1.)
 
     print " "
+
     print "sd_conc = 1024 * 50,   nbin = 50,  mix = 2.04312254645e-09  [kg/kg dry air]"
     print "sd_conc = 1024 * 100,  nbin = 50,  mix = 2.02454798163e-09  [kg/kg dry air]"
     print "sd_conc = 1024 * 200,  nbin = 50,  mix = 2.00070482127e-09  [kg/kg dry air]"

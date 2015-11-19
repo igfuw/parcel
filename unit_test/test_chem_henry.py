@@ -41,7 +41,7 @@ def data(request):
     n_tot  = 566.e6
 
     # output
-    sd_conc     = 8.
+    sd_conc     = 8
     outfreq     = 20
     z_max       = 30.
     outfile     = "test_chem_dsl_"

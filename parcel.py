@@ -252,7 +252,7 @@ def _p_hydro_const_th_rv(z_lev, p_0, th_std, r_v, z_0=0.):
 def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, 
   outfile="test.nc", 
   pprof="pprof_piecewise_const_rhod",
-  outfreq=100, sd_conc=64., kappa=.5,
+  outfreq=100, sd_conc=64, kappa=.5,
   mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
   out_bin = '{"radii": {"rght": 0.0001, "moms": [0], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09}}',
   SO2_g = 0., O3_g = 0., H2O2_g = 0., CO2_g = 0., HNO3_g = 0., NH3_g = 0.,
