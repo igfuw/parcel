@@ -15,7 +15,7 @@ from libcloudphxx import common as cm
 from chemical_plot import plot_chem
 #from kreidenweis_fig1 import plot_fig1
 #from functions import *
-from chem_conditions import *
+from chem_conditions import parcel_dict
 
 @pytest.fixture(scope="module")
 def data(request):

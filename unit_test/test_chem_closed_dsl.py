@@ -13,7 +13,7 @@ import copy
 from parcel import parcel
 from libcloudphxx import common as cm
 from chemical_plot import plot_chem
-from chem_conditions import *
+from chem_conditions import parcel_dict
 
 @pytest.fixture(scope="module")
 def data(request):

@@ -72,3 +72,12 @@ def henry_teor_2(chem, p, T, vol, mixr_g, rhod):
 
     # dissolved  = partial prsessure * Henry_const * molar mass * drop volume
     return partial_prs * H * M_aq * vol
+
+def log10_size_of_lnr(n_tot, mean_r, lnr, gstdev):
+    """
+    log-normal size distribution (defined as a function of log_10(radius))
+
+    """
+    return n_tot / math.sqrt(2 * math.pi) / math.log(gstdev, 10)\
+           * math.exp(-1. * math.pow((lnr - math.log(mean_r, 10)), 2) / 2. / math.pow(math.log(gstdev,10),2))
+
