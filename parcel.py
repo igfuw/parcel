@@ -80,7 +80,10 @@ def _micro_init(opts, state, info):
 
   # initialisation
   micro = lgrngn.factory(lgrngn.backend_t.serial, opts_init)
-  micro.init(state["th_d"], state["r_v"], state["rhod"])
+  ambient_chem = {}
+  if micro.opts_init.chem_switch:
+    ambient_chem = dict((v, state[k]) for k,v in _Chem_g_id.iteritems())
+  micro.init(state["th_d"], state["r_v"], state["rhod"], ambient_chem=ambient_chem)
   return micro
 
 def _micro_step(micro, state, info, opts, it):
@@ -91,10 +94,6 @@ def _micro_step(micro, state, info, opts, it):
   libopts.sedi = False
 
   if micro.opts_init.chem_switch:
-    tmp = {}
-    for id_str, id_int in _Chem_g_id.iteritems():
-      tmp[id_int] = state[id_str]
-    libopts.chem_gas = tmp
     libopts.chem_dsl = opts["chem_dsl"]
     libopts.chem_dsc = opts["chem_dsc"]
     if it < opts["chem_spn"]:
@@ -102,7 +101,10 @@ def _micro_step(micro, state, info, opts, it):
     else:
         libopts.chem_rct = opts["chem_rct"]
 
-  micro.step_sync(libopts, state["th_d"], state["r_v"], state["rhod"]) 
+  ambient_chem = {}
+  if micro.opts_init.chem_switch:
+    ambient_chem = dict((v, state[k]) for k,v in _Chem_g_id.iteritems())
+  micro.step_sync(libopts, state["th_d"], state["r_v"], state["rhod"], ambient_chem=ambient_chem)
 
   micro.step_async(libopts)
   _stats(state, info) # give updated T needed for chemistry below
@@ -241,7 +243,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   outfreq=100, sd_conc=64, kappa=.5,
   mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
   out_bin = '{"radii": {"rght": 0.0001, "moms": [0], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09}}',
-  SO2_g_0 = 0., O3_g_0 = 0., H2O2_g_0 = 0.,
+  SO2_g = 0., O3_g = 0., H2O2_g = 0.,
   chem_sys = 'open',
   chem_dsl = False, chem_dsc = False, chem_rct = False, 
   chem_spn = 1,
@@ -271,9 +273,9 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
                                   - 0,1,2 & 3-rd moments for 49 bins spaced linearly between .5e-6 and 25e-6
                                     for wet radius
                                     (TODO - add chemistry output description)
-    SO2_g_0  (Optional[float]):   initial SO2  gas volume concentration (mole fraction) [1]
-    O3_g_0   (Optional[float]):   initial O3   gas volume concentration (mole fraction) [1]
-    H2O2_g_0 (Optional[float]):   initial H2O2 gas volume concentration (mole fraction) [1]
+    SO2_g  (Optional[float]):     initial SO2  gas volume concentration (mole fraction) [1]
+    O3_g   (Optional[float]):     initial O3   gas volume concentration (mole fraction) [1]
+    H2O2_g (Optional[float]):     initial H2O2 gas volume concentration (mole fraction) [1]
     chem_sys (Optional[string]):  accepted values: 'open', 'closed'
                                   (in open/closed system gas volume concentration in the air doesn't/does change 
                                    due to chemical reactions)
@@ -307,11 +309,14 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   info = { "RH_max" : 0, "libcloud_Git_revision" : libcloud_version, 
            "parcel_Git_revision" : parcel_version }
 
+  if opts["chem_dsl"] or opts["chem_dsc"] or opts["chem_rct"]:
+    for key in _Chem_g_id.iterkeys():
+      state.update({ key : np.array([opts[key]])}) 
+
   micro = _micro_init(opts, state, info)
   with _output_init(micro, opts, spectra) as fout:
     # adding chem state vars
     if micro.opts_init.chem_switch:
-      state.update({ "SO2_g" : SO2_g_0, "O3_g" : O3_g_0, "H2O2_g" : H2O2_g_0 })
       state.update({ "SO2_a" : 0.,      "O3_a" : 0.,     "H2O2_a" : 0.       })
 
     # t=0 : init & save
