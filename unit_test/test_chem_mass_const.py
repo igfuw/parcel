@@ -8,7 +8,6 @@ import numpy as np
 import pytest
 import subprocess
 import math
-import copy
 
 from parcel import parcel
 from libcloudphxx import common as cm
@@ -18,27 +17,26 @@ from chem_conditions import parcel_dict
 def data(request):
     """
     Run parcel simulation and return opened netdcf file
+
     """
-    # copy options from chem_conditions ...
-    opts_dict = copy.deepcopy(parcel_dict)
-    opts_dict['outfreq'] = opts_dict['z_max'] / opts_dict['w'] / opts_dict['dt'] / 4
 
-    # ... and modify them for the current test
-    opts_dict['outfile']  = "test_mass.nc"
-    opts_dict['chem_dsl'] = True
+    # modify options from chem_conditions
+    parcel_dict['outfreq']  = parcel_dict['z_max'] / parcel_dict['w'] / parcel_dict['dt'] / 4
+    parcel_dict['outfile']  = "test_mass.nc"
+    parcel_dict['chem_dsl'] = True
 
-    opts_dict['out_bin'] = \
+    parcel_dict['out_bin'] = \
              '{"wradii": {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "lin", "nbin": 500, "moms": [0, 3]}, \
                "dradii": {"rght": 1e-4, "left": 1e-10, "drwt": "dry", "lnli": "lin", "nbin": 500, "moms": [0, 3]}}'
 
-    # running parcel model
-    parcel(**opts_dict)
+    # run parcel model
+    parcel(**parcel_dict)
 
-    data = netcdf.netcdf_file(opts_dict['outfile'], "r")
+    data = netcdf.netcdf_file(parcel_dict['outfile'], "r")
 
-    # removing all netcdf files after all tests
+    # remove all netcdf files after all tests
     def removing_files():
-        subprocess.call(["rm", opts_dict['outfile']])
+        subprocess.call(["rm", parcel_dict['outfile']])
 
     request.addfinalizer(removing_files)
     return data

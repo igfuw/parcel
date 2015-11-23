@@ -9,7 +9,6 @@ import numpy as np
 import math
 import subprocess
 import pytest
-import copy
 import ast
 
 from parcel import parcel
@@ -21,31 +20,28 @@ from init_spectrum_plot import plot_init_spectrum
 @pytest.fixture(scope="module")
 def data(request):
 
-    # copy options from chem_conditions ...
-    opts_dict = copy.deepcopy(parcel_dict)
+    # modify options from chem_conditions
+    parcel_dict['outfile']  = "test_init_spectrum.nc"
+    parcel_dict['chem_dsl'] = True
 
-    # ... and modify them for the current test
-    opts_dict['outfile']  = "test_init_spectrum.nc"
-    opts_dict['chem_dsl'] = True
+    parcel_dict['z_max']    = .05
+    parcel_dict['dt']       = .1
+    parcel_dict['w']        = .5
+    parcel_dict['outfreq']  = 1
+    parcel_dict['sd_conc']  = 1024 * 44
+    parcel_dict['outfreq']  = 1
 
-    opts_dict['z_max']    = .05
-    opts_dict['dt']       = .1
-    opts_dict['w']        = .5
-    opts_dict['outfreq']  = 1
-    opts_dict['sd_conc']  = 1024 * 44
-    opts_dict['outfreq']  = 1
-
-    opts_dict['out_bin'] = '{"drad": {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 26, "moms": [0,3]}}'
+    parcel_dict['out_bin'] = '{"drad": {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 26, "moms": [0,3]}}'
 
     # run parcel
-    parcel(**opts_dict)
+    parcel(**parcel_dict)
 
     # simulation results
-    data = netcdf.netcdf_file(opts_dict['outfile'],   "r")
+    data = netcdf.netcdf_file(parcel_dict['outfile'],   "r")
 
     # removing all netcdf files after all tests                                      
     def removing_files():
-        subprocess.call(["rm", opts_dict['outfile']])
+        subprocess.call(["rm", parcel_dict['outfile']])
 
     #request.addfinalizer(removing_files)
     return data
@@ -62,8 +58,6 @@ def test_init_mass(data, eps = 1e-20):
 
     mom3_init = data.variables["drad_m3"][0,:]
     rhod_init = data.variables["rhod"][0]
-
-    rhod_parc_init = rhod[0]
 
     # initial dry mass of aerosol [kg/kg dry air]
     ini = mom3_init.sum()  * 4./3 * math.pi * chem_rho
