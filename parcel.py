@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 # TEMP TODO TEMP TODO !!!
-import sys
-sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
+#import sys
+#sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
 # TEMP TODO TEMP TODO !!!
 
 from argparse import ArgumentParser, RawTextHelpFormatter
@@ -82,13 +82,7 @@ def _micro_init(opts, state, info):
   micro = lgrngn.factory(lgrngn.backend_t.serial, opts_init)
   ambient_chem = {}
   if micro.opts_init.chem_switch:
-    for k,v in _Chem_g_id.iteritems():
-      print "  "
-      print "AQQ"
-      print v
-      print k 
-      print state[k]
-    #ambient_chem = dict((v, state[k]) for k,v in _Chem_g_id.iteritems())
+    ambient_chem = dict((v, state[k]) for k,v in _Chem_g_id.iteritems())
   micro.init(state["th_d"], state["r_v"], state["rhod"], ambient_chem=ambient_chem)
   return micro
 
@@ -315,15 +309,15 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   info = { "RH_max" : 0, "libcloud_Git_revision" : libcloud_version, 
            "parcel_Git_revision" : parcel_version }
 
+  if opts["chem_dsl"] or opts["chem_dsc"] or opts["chem_rct"]:
+    for key in _Chem_g_id.iterkeys():
+      state.update({ key : np.array([opts[key]])}) 
+
   micro = _micro_init(opts, state, info)
   with _output_init(micro, opts, spectra) as fout:
     # adding chem state vars
     if micro.opts_init.chem_switch:
       state.update({ "SO2_a" : 0.,      "O3_a" : 0.,     "H2O2_a" : 0.       })
-
-    if micro.opts_init.chem_switch:
-      for key in _Chem_g_id.iterkeys():
-        state.update({ key : np.array([opts[key]])}) 
 
     # t=0 : init & save
     _output(fout, opts, micro, state, 0, spectra)
