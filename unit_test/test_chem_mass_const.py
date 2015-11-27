@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 import subprocess
 import math
+import copy
 
 from parcel import parcel
 from libcloudphxx import common as cm
@@ -19,29 +20,31 @@ def data(request):
     Run parcel simulation and return opened netdcf file
 
     """
+    # copy options from chem_conditions
+    p_dict = copy.deepcopy(parcel_dict)
 
     # modify options from chem_conditions
-    parcel_dict['outfreq']  = parcel_dict['z_max'] / parcel_dict['w'] / parcel_dict['dt'] / 4
-    parcel_dict['outfile']  = "test_mass.nc"
-    parcel_dict['chem_dsl'] = True
+    p_dict['outfreq']  = p_dict['z_max'] / p_dict['w'] / p_dict['dt'] / 4
+    p_dict['outfile']  = "test_mass.nc"
+    p_dict['chem_dsl'] = True
 
-    parcel_dict['out_bin'] = \
-             '{"wradii": {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "lin", "nbin": 500, "moms": [0, 3]}, \
-               "dradii": {"rght": 1e-4, "left": 1e-10, "drwt": "dry", "lnli": "lin", "nbin": 500, "moms": [0, 3]}}'
+    p_dict['out_bin'] = \
+           '{"wradii": {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "lin", "nbin": 500, "moms": [0, 3]}, \
+             "dradii": {"rght": 1e-4, "left": 1e-10, "drwt": "dry", "lnli": "lin", "nbin": 500, "moms": [0, 3]}}'
 
     # run parcel model
-    parcel(**parcel_dict)
+    parcel(**p_dict)
 
-    data = netcdf.netcdf_file(parcel_dict['outfile'], "r")
+    data = netcdf.netcdf_file(p_dict['outfile'], "r")
 
     # remove all netcdf files after all tests
     def removing_files():
-        subprocess.call(["rm", parcel_dict['outfile']])
+        subprocess.call(["rm", p_dict['outfile']])
 
     request.addfinalizer(removing_files)
     return data
 
-def test_water_const(data, eps = 1e-15):
+def test_water_const(data, eps = 2.6e-15):
     """
     Check if the total water is preserved
 

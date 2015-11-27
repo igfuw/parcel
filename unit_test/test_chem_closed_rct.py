@@ -8,6 +8,7 @@ import numpy as np
 import math
 import subprocess
 import pytest
+import copy
 
 from parcel import parcel
 from libcloudphxx import common as cm
@@ -19,14 +20,17 @@ from chem_conditions import parcel_dict
 @pytest.fixture(scope="module")
 def data(request):
 
-    # modify options from chem_conditions
-    parcel_dict['outfile']  = "test_chem_closed_rct.nc"
+    # copy options from chem_conditions
+    p_dict = copy.deepcopy(parcel_dict)
 
-    parcel_dict['chem_dsl'] = True
-    parcel_dict['chem_dsc'] = True
-    parcel_dict['chem_rct'] = True
-    parcel_dict['chem_spn'] = 10
-    parcel_dict['out_bin']  = parcel_dict['out_bin'][:-1] + \
+    # modify options from chem_conditions
+    p_dict['outfile']  = "test_chem_closed_rct.nc"
+
+    p_dict['chem_dsl'] = True
+    p_dict['chem_dsc'] = True
+    p_dict['chem_rct'] = True
+    p_dict['chem_spn'] = 10
+    p_dict['out_bin']  = p_dict['out_bin'][:-1] + \
         ', "chem"  : {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 10,\
                       "moms": ["O3_a",   "H2O2_a", "H", "OH",\
                                "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI",\
@@ -34,20 +38,19 @@ def data(request):
                                "NH3_a",  "NH4_a",  "HNO3_a", "NO3_a"]}}'
  
     # run parcel
-    parcel(**parcel_dict)
+    parcel(**p_dict)
 
     # simulation results
-    data = netcdf.netcdf_file(parcel_dict['outfile'],   "r")
+    data = netcdf.netcdf_file(p_dict['outfile'],   "r")
 
     # removing all netcdf files after all tests                                      
     def removing_files():
-        subprocess.call(["rm", parcel_dict['outfile']])
+        subprocess.call(["rm", p_dict['outfile']])
 
     request.addfinalizer(removing_files)
     return data
 
-#TODO - fix initial condition for NH4+
-@pytest.mark.xfail
+#@pytest.mark.xfail
 @pytest.mark.parametrize("chem", ["SO2", "CO2", "NH3", "HNO3"])
 def test_moles_const_dsl_dsc_rct(data, chem, eps =\
                                              {"SO2": 2e-14, "CO2": 7e-15, "NH3": 2e-13, "HNO3":4e-14}):

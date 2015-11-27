@@ -3,7 +3,9 @@ from libcloudphxx import common as cm
 from functions import *
 
 """
-Common initail conditions for: test_chem_closed_dsl, test_chem_closed_dsc, test_chem_closed_rct
+Common initail conditions for: 
+test_chem_closed_dsl, test_chem_closed_dsc,    test_chem_closed_rct
+tes_chem_mass_const,  test_chem_init_spectrum, test_sd_convergence
 
 """
 # initial conditions (from Kreidenweis et al 2003)

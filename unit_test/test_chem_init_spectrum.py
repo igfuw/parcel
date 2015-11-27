@@ -10,6 +10,7 @@ import math
 import subprocess
 import pytest
 import ast
+import copy
 
 from parcel import parcel
 from libcloudphxx import common as cm
@@ -20,28 +21,31 @@ from init_spectrum_plot import plot_init_spectrum
 @pytest.fixture(scope="module")
 def data(request):
 
+    # copy options from chem_conditions
+    p_dict = copy.deepcopy(parcel_dict)
+
     # modify options from chem_conditions
-    parcel_dict['outfile']  = "test_init_spectrum.nc"
-    parcel_dict['chem_dsl'] = True
+    p_dict['outfile']  = "test_init_spectrum.nc"
+    p_dict['chem_dsl'] = True
 
-    parcel_dict['z_max']    = .05
-    parcel_dict['dt']       = .1
-    parcel_dict['w']        = .5
-    parcel_dict['outfreq']  = 1
-    parcel_dict['sd_conc']  = 1024 * 44
-    parcel_dict['outfreq']  = 1
+    p_dict['z_max']    = .05
+    p_dict['dt']       = .1
+    p_dict['w']        = .5
+    p_dict['outfreq']  = 1
+    p_dict['sd_conc']  = 1024 * 44
+    p_dict['outfreq']  = 1
 
-    parcel_dict['out_bin'] = '{"drad": {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 26, "moms": [0,3]}}'
+    p_dict['out_bin'] = '{"drad": {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 26, "moms": [0,3]}}'
 
     # run parcel
-    parcel(**parcel_dict)
+    parcel(**p_dict)
 
     # simulation results
-    data = netcdf.netcdf_file(parcel_dict['outfile'],   "r")
+    data = netcdf.netcdf_file(p_dict['outfile'],   "r")
 
     # removing all netcdf files after all tests                                      
     def removing_files():
-        subprocess.call(["rm", parcel_dict['outfile']])
+        subprocess.call(["rm", p_dict['outfile']])
 
     #request.addfinalizer(removing_files)
     return data

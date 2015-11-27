@@ -73,7 +73,7 @@ def data(request):
     return data
 
 @pytest.mark.parametrize("chem", ["SO2", "O3", "H2O2", "CO2", "HNO3", "NH3"])
-def test_henry_checker(data, chem, eps = {"SO2": 3e-10, "O3":1e-10, "H2O2": 7e-6, "CO2": 8e-11, "NH3": 5e-9, "HNO3":3e-5}):
+def test_henry_checker(data, chem, eps = {"SO2": 5e-8, "O3":4e-8, "H2O2": 6e-8, "CO2": 4e-8, "NH3": 6e-8, "HNO3":1e-7}):
     """                              
     Checking if dissolving chemical compounds into cloud droplets follows Henrys law
     http://www.henrys-law.org/

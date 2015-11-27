@@ -13,6 +13,7 @@ import pytest
 import os, glob
 import subprocess
 import math
+import copy
 
 sd_conc_list = [64, 128, 256, 512, 1024, 2*1024, 4*1024, 8*1024, 16*1024, 32*1204]
 
@@ -23,11 +24,14 @@ def data(request):
     return data with values of sd_conc and initial dry mass of the aerosol
 
     """
+    # copy options from chem_conditions
+    p_dict = copy.deepcopy(parcel_dict)
+
     # ... and modify them for the current test
-    parcel_dict['chem_dsl'] = True
-    parcel_dict['z_max']    = .05
-    parcel_dict['outfreq']  = 1
-    parcel_dict['out_bin']  = '{"drad": {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 26, "moms": [3]}}'
+    p_dict['chem_dsl'] = True
+    p_dict['z_max']    = .05
+    p_dict['outfreq']  = 1
+    p_dict['out_bin']  = '{"drad": {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 26, "moms": [3]}}'
 
     # lists to store sd_conc at the total dry mass at t=0 of each test run
     out_sd_conc = []
@@ -36,14 +40,14 @@ def data(request):
     for sd_conc in sd_conc_list:
         print "sd_conc = ", sd_conc
  
-        parcel_dict['outfile'] = "convergence_test_sd_conc=" + str(sd_conc) + ".nc" 
-        parcel_dict['sd_conc'] = sd_conc
+        p_dict['outfile'] = "convergence_test_sd_conc=" + str(sd_conc) + ".nc" 
+        p_dict['sd_conc'] = sd_conc
 
         # run parcel simulation
-        parcel(**parcel_dict)
+        parcel(**p_dict)
 
         # read data
-        f_out     = netcdf.netcdf_file(parcel_dict['outfile'], "r")
+        f_out     = netcdf.netcdf_file(p_dict['outfile'], "r")
         mom3_init = f_out.variables["drad_m3"][0,:]
         rhod_init = f_out.variables["rhod"][0]
         chem_rho  = getattr(f_out, "chem_rho")

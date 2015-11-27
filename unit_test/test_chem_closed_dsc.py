@@ -8,6 +8,7 @@ import numpy as np
 import math
 import subprocess
 import pytest
+import copy
 
 from parcel import parcel
 from libcloudphxx import common as cm
@@ -17,11 +18,15 @@ from chem_conditions import parcel_dict
 @pytest.fixture(scope="module")
 def data(request):
 
+    # copy options from chem_conditions
+    p_dict = copy.deepcopy(parcel_dict)
+
     # modify options from chem_conditions
-    parcel_dict['outfile']  = "test_chem_closed_dsc.nc"
-    parcel_dict['chem_dsl'] = True
-    parcel_dict['chem_dsc'] = True
-    parcel_dict['out_bin']  = parcel_dict['out_bin'][:-1] + \
+    p_dict['sd_conc']  = 1024
+    p_dict['outfile']  = "test_chem_closed_dsc.nc"
+    p_dict['chem_dsl'] = True
+    p_dict['chem_dsc'] = True
+    p_dict['out_bin']  = p_dict['out_bin'][:-1] + \
         ', "radii" : {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 10, "moms": [3]}, \
            "chem"  : {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 10,\
                       "moms": ["O3_a",   "H2O2_a", "H", "OH",\
@@ -30,20 +35,18 @@ def data(request):
                                "NH3_a",  "NH4_a",  "HNO3_a", "NO3_a"]}}'
 
     # run parcel
-    parcel(**parcel_dict)
+    parcel(**p_dict)
 
     # simulation results
-    data = netcdf.netcdf_file(parcel_dict['outfile'],   "r")
+    data = netcdf.netcdf_file(p_dict['outfile'],   "r")
 
     # removing all netcdf files after all tests                                      
     def removing_files():
-        subprocess.call(["rm", parcel_dict['outfile']])
+        subprocess.call(["rm", p_dict['outfile']])
 
     request.addfinalizer(removing_files)
     return data
 
-#TODO - fix in initail condition is needed
-@pytest.mark.xfail
 def test_is_electroneutral(data, eps = 2e-7):
     """
     Check if after dissociation the electrical charge of cloud droplets is 0
@@ -89,7 +92,8 @@ def test_is_electroneutral(data, eps = 2e-7):
               "\n     NO3 " + str(n4) + \
               "\n     S6  " + str(n5)
 
-# TODO why n_S6_ini = 0?
+#TODO
+@pytest.mark.skipif(True, reason="init chem not ready (now initial cond = 0)")
 def test_is_mass_S6_const_with_dsl_dsc(data, eps=1e-15):
     """
     Check if the mas of H2SO4 remains constant.
@@ -156,7 +160,7 @@ def test_is_mass_S6_const_with_dsl_dsc(data, eps=1e-15):
 
 def test_dissoc_constants(data, ion, eps =\
                                 {"H2O": 5e-16, "SO2":  6e-16, "HSO3": 5e-16,\
-                                 "CO2": 7e-16, "HCO3": 6e-16, "NH3":  5e-16, "HNO3":6e-16}):
+                                 "CO2": 7e-16, "HCO3": 6e-16, "NH3":  5e-16, "HNO3":4e-16}):
 
      """
      Check if the mass of chemical compounds agrees with the dissociation constants
@@ -212,7 +216,7 @@ def test_dissoc_constants(data, ion, eps =\
 
 @pytest.mark.parametrize("chem", ["SO2", "O3", "H2O2", "CO2", "NH3", "HNO3"])
 def test_moles_const_dsl_dsc(data, chem, eps =\
-                                           {"SO2": 2e-14, "O3":9e-15, "H2O2": 9e-15, "CO2": 7e-15, "NH3": 3e-13, "HNO3":4e-14}):
+                                           {"SO2": 2e-14, "O3":9e-15, "H2O2": 1e-14, "CO2": 7e-15, "NH3": 3e-13, "HNO3":4e-14}):
      """
      Checking if the total number of moles in closed chemical system 
      with dissolving chem species into droplets and dissocoation remains constant

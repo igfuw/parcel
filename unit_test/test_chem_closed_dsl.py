@@ -8,6 +8,7 @@ import numpy as np
 import math
 import subprocess
 import pytest
+import copy
 
 from parcel import parcel
 from libcloudphxx import common as cm
@@ -17,19 +18,22 @@ from chem_conditions import parcel_dict
 @pytest.fixture(scope="module")
 def data(request):
 
+    # copy options from chem_conditions
+    p_dict = copy.deepcopy(parcel_dict)
+
     # modify options from chem_conditions
-    parcel_dict['outfile']  = "test_chem_closed_dsl.nc"
-    parcel_dict['chem_dsl'] = True
+    p_dict['outfile']  = "test_chem_closed_dsl.nc"
+    p_dict['chem_dsl'] = True
 
     # run parcel
-    parcel(**parcel_dict)
+    parcel(**p_dict)
 
     # simulation results
-    data = netcdf.netcdf_file(parcel_dict['outfile'],   "r")
+    data = netcdf.netcdf_file(p_dict['outfile'],   "r")
 
     # removing all netcdf files after all tests                                      
     def removing_files():
-        subprocess.call(["rm", parcel_dict['outfile']])
+        subprocess.call(["rm", p_dict['outfile']])
 
     request.addfinalizer(removing_files)
     return data

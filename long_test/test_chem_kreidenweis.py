@@ -32,7 +32,7 @@ def data(request):
     opts_dict['chem_rct'] = True
     opts_dict['chem_spn'] = 10
 
-    opts_dict['sd_conc']  = 1024.
+    opts_dict['sd_conc']  = 1024
     opts_dict['z_max']    = 1400.
     opts_dict['outfreq']  = int(z_max / dt / 100) * 4
 
