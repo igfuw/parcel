@@ -14,7 +14,7 @@ import os, glob
 import subprocess
 import math
 
-sd_conc_list = [1024, 2*1024, 4*1024, 8*1024, 16*1024, 32*1204, 64*1024, 128*1024, 256*1024]
+sd_conc_list = [64, 128, 256, 512, 1024, 2*1024, 4*1024, 8*1024, 16*1024, 32*1204]
 
 @pytest.fixture(scope="module")
 def data(request):
@@ -54,10 +54,7 @@ def data(request):
         out_sd_conc.append(sd_conc)
         out_m3_dry.append(ini)
 
-    # initial dry mass of aerosol from paper [kg/kg dry air]
-    art     = 2.375 * 1e-9 / rhod_init
-
-    data = {"sd_conc" : out_sd_conc, "dry_mass" : out_m3_dry, "art" : art}
+    data = {"sd_conc" : out_sd_conc, "dry_mass" : out_m3_dry}
 
     # removing all netcdf files after all tests
     def removing_files():
@@ -66,10 +63,18 @@ def data(request):
     request.addfinalizer(removing_files)
     return data
 
-@pytest.mark.xfail
-def test_timestep_print(data):
+def test_timestep_print(data, eps=3e-3):
+    """
+    Check if the total mass of dry aerosol (sum of 3rm moment of dry radii)
+    doesn't change too much with different initail super droplet concentration
 
-    print "sd_conc:         ", data["sd_conc"]
-    print "dry mass at t=0: ", data["dry_mass"]
-    print "article dry mass at t=0: ", data["art"]
+    """
+
+    dry_mass = np.array(data["dry_mass"]).reshape(data["dry_mass"].__len__());
+
+    # average dry mass from all sd_conc runs
+    av = dry_mass.sum() / dry_mass.shape[0]
+
+    for it in range(dry_mass.shape[0]):
+        assert np.isclose(av, dry_mass[it], atol=0, rtol=eps), "difference: " + str((av - dry_mass[it]) / av)
 
