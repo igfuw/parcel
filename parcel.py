@@ -122,6 +122,7 @@ def _micro_step(micro, state, info, opts, it, fout):
     if it < opts["chem_spn"]:
         libopts.chem_rct = False
     else:
+        #print "chem is on"
         libopts.chem_rct = opts["chem_rct"]
 
   ambient_chem = {}
@@ -353,6 +354,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
       # - same as in 2D kinematic model
       state["z"] += w * dt
       state["t"] = it * dt
+      #print state["z"]
 
       # pressure
       if pprof == "pprof_const_th_rv":

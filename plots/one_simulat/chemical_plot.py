@@ -94,22 +94,17 @@ def plot_chem(data, output_folder = '', output_title = ''):
 
     plots[0].set_xlabel('n O3g 1/kg dry air') 
     plots[1].set_xlabel('n O3a 1/kg dry air')  
-    plots[2].set_xlabel('dn O3 sum')
+    plots[2].set_xlabel('n O3 - init 1/kg dry air')
   
     plots[3].set_xlabel('n H2O2g 1/kg dry air')
     plots[4].set_xlabel('n H2O2a 1/kg dry air')
-    plots[5].set_xlabel('dn H2O2 sum')
+    plots[5].set_xlabel('n H2O2 - init 1/kg dry air')
 
     for ax in plots:
       ax.set_ylabel('t [s]')
 
     for i, f in f_out_chem.iteritems():
       t = f.variables["t"][spn_idx:]
-
-      dn_o3g   = dn_calc(f.variables["O3_g"][spn_idx:],   f.variables["O3_g"][spn_idx],   cm.M_O3)
-      dn_o3a   = dn_calc(f.variables["O3_a"][spn_idx:],   f.variables["O3_a"][spn_idx],   cm.M_O3)
-      dn_h2o2g = dn_calc(f.variables["H2O2_g"][spn_idx:], f.variables["H2O2_g"][spn_idx], cm.M_H2O2)
-      dn_h2o2a = dn_calc(f.variables["H2O2_a"][spn_idx:], f.variables["H2O2_a"][spn_idx], cm.M_H2O2)
 
       n_o3g   = f.variables["O3_g"][spn_idx:] / cm.M_O3
       n_o3a   = f.variables["O3_a"][spn_idx:] / cm.M_O3
@@ -119,10 +114,10 @@ def plot_chem(data, output_folder = '', output_title = ''):
       plots[0].plot(n_o3g, t, style[i])
       plots[0].legend(loc='upper right')
       plots[1].plot(n_o3a, t, style[i])
-      plots[2].plot(dn_o3g + dn_o3a, t, style[i])
+      plots[2].plot(n_o3g + n_o3a - n_o3g[0] - n_o3a[0], t, style[i])
       plots[3].plot(n_h2o2g, t, style[i])
-      plots[4].plot(dn_h2o2a, t, style[i])
-      plots[5].plot(dn_h2o2g + dn_h2o2a, t, style[i])
+      plots[4].plot(n_h2o2a, t, style[i])
+      plots[5].plot(n_h2o2g + n_h2o2a - n_h2o2g[0] - n_h2o2a[0], t, style[i])
 
     plt.savefig(output_folder + output_title + "O3_H2O2.pdf")
 
@@ -166,7 +161,7 @@ def plot_chem(data, output_folder = '', output_title = ''):
     plots[0].set_xlabel('n NH3 g 1/kg dry air')
     plots[1].set_xlabel('n NH3 a 1/kg dry air')
     plots[2].set_xlabel('n NH4 a 1/kg dry air')
-    plots[3].set_xlabel('sum of dn')  
+    plots[3].set_xlabel('n - init 1/kg dry air')  
  
     for ax in plots:
       ax.set_ylabel('t [s]')
@@ -174,21 +169,18 @@ def plot_chem(data, output_folder = '', output_title = ''):
     for i, f in f_out_chem.iteritems():
       t   = f.variables["t"][spn_idx:]
 
-      dn_nh3g = dn_calc(f.variables["NH3_g"][spn_idx:], f.variables["NH3_g"][spn_idx], cm.M_NH3)
-      dn_nh3a = dn_calc(f.variables["NH3_a"][spn_idx:], f.variables["NH3_a"][spn_idx], cm.M_NH3_H2O)
-      dn_nh4  = dn_calc(np.squeeze(f.variables["plt_ch_NH4_a"][spn_idx:]),\
-                        np.squeeze(f.variables["plt_ch_NH4_a"][spn_idx]), cm.M_NH4)
-
       n_nh3g = f.variables["NH3_g"][spn_idx:] / cm.M_NH3
       n_nh3a = f.variables["NH3_a"][spn_idx:] / cm.M_NH3_H2O
-      n_nh4  = f.variables["plt_ch_NH4_a"][spn_idx:] / cm.M_NH4
+      n_nh4  = np.squeeze(f.variables["plt_ch_NH4_a"][spn_idx:]) / cm.M_NH4
 
       plots[0].plot(n_nh3g, t, style[i])
       plots[1].plot(n_nh3a, t, style[i])
       plots[2].plot(n_nh4,  t, style[i])
-      plots[3].plot(dn_nh3g + dn_nh3a + dn_nh4, t, style[i])
+      
+      plots[3].plot(n_nh3g + n_nh3a + n_nh4 - n_nh3g[0] - n_nh3a[0] - n_nh4[0], t, style[i])
 
     plt.savefig(output_folder + output_title  + "NH3.pdf")
+
     #-----------------------------------------------------------------------
     # plot HNO3_g, NHO3_a, NO3+ 
     plt.figure(5, figsize=(12,7))
@@ -201,18 +193,13 @@ def plot_chem(data, output_folder = '', output_title = ''):
     plots[0].set_xlabel('n HNO3 g 1/kg dry air')
     plots[1].set_xlabel('n HNO3 a 1/kg dry air')
     plots[2].set_xlabel('n NO3  a 1/kg dry air')  
-    plots[3].set_xlabel('sum of dn')  
+    plots[3].set_xlabel('n - init 1/kg dry air')  
 
     for ax in plots:
       ax.set_ylabel('t [s]')
 
     for i, f in f_out_chem.iteritems():
       t   = f.variables["t"][spn_idx:]
-
-      dn_hno3g = dn_calc(f.variables["HNO3_g"][spn_idx:], f.variables["HNO3_g"][spn_idx], cm.M_HNO3)
-      dn_hno3a = dn_calc(f.variables["HNO3_a"][spn_idx:], f.variables["HNO3_a"][spn_idx], cm.M_HNO3)
-      dn_no3   = dn_calc(np.squeeze(f.variables["plt_ch_NO3_a"][spn_idx:]), \
-                         np.squeeze(f.variables["plt_ch_NO3_a"][spn_idx]), cm.M_NO3) 
 
       n_hno3g = f.variables["HNO3_g"][spn_idx:] / cm.M_HNO3
       n_hno3a = f.variables["HNO3_a"][spn_idx:] / cm.M_HNO3
@@ -221,7 +208,7 @@ def plot_chem(data, output_folder = '', output_title = ''):
       plots[0].plot(n_hno3g, t, style[i])
       plots[1].plot(n_hno3a, t, style[i])
       plots[2].plot(n_no3,   t, style[i])
-      plots[3].plot(dn_hno3g + dn_hno3a + dn_no3,   t, style[i])
+      plots[3].plot(n_hno3g + n_hno3a + n_no3 - n_hno3g[0] - n_hno3a[0] - n_no3[0], t, style[i])
 
     plt.savefig(output_folder + output_title  + "HNO3.pdf")
  
@@ -238,7 +225,7 @@ def plot_chem(data, output_folder = '', output_title = ''):
     plots[1].set_xlabel('n CO2 a 1/kg dry air')
     plots[2].set_xlabel('n HCO3 a 1/kg dry air')  
     plots[3].set_xlabel('n CO3 a 1/kg dry air')  
-    plots[4].set_xlabel('sum of dn')  
+    plots[4].set_xlabel('n - int 1/kg dry air')  
  
     for ax in plots:
       ax.set_ylabel('t [s]')
@@ -246,24 +233,16 @@ def plot_chem(data, output_folder = '', output_title = ''):
     for i, f in f_out_chem.iteritems():
       t   = f.variables["t"][spn_idx:]
 
-      dn_co2g = dn_calc(f.variables["CO2_g"][spn_idx:], f.variables["CO2_g"][spn_idx], cm.M_CO2)
-      dn_co2a = dn_calc(f.variables["CO2_a"][spn_idx:], f.variables["CO2_a"][spn_idx], cm.M_CO2_H2O)
-      dn_hco3 = dn_calc(np.squeeze(f.variables["plt_ch_HCO3_a"][spn_idx:]),\
-                        np.squeeze(f.variables["plt_ch_HCO3_a"][spn_idx]), cm.M_HCO3)
-      dn_co3  = dn_calc(np.squeeze(f.variables["plt_ch_CO3_a"][spn_idx:]),\
-                        np.squeeze(f.variables["plt_ch_CO3_a"][spn_idx]), cm.M_CO3)
-
       n_co2g = f.variables["CO2_g"][spn_idx:] / cm.M_CO2
       n_co2a = f.variables["CO2_a"][spn_idx:] / cm.M_CO2_H2O
       n_hco3 = np.squeeze(f.variables["plt_ch_HCO3_a"][spn_idx:]) / cm.M_HCO3
       n_co3  = np.squeeze(f.variables["plt_ch_CO3_a"][spn_idx:]) / cm.M_CO3
 
-
       plots[0].plot(n_co2g, t, style[i])
       plots[1].plot(n_co2a, t, style[i])
       plots[2].plot(n_hco3, t, style[i])
       plots[3].plot(n_co3,  t, style[i])
-      plots[4].plot(dn_co2g + dn_co2a + dn_hco3 + dn_co3,  t, style[i])
+      plots[4].plot(n_co2g + n_co2a + n_hco3 + n_co3 - n_co2g[0] - n_co2a[0] - n_hco3[0] - n_co3[0],  t, style[i])
 
     plt.savefig(output_folder + output_title + "CO2.pdf")
  
@@ -285,7 +264,7 @@ def plot_chem(data, output_folder = '', output_title = ''):
 
     plots[3].set_xlabel('n HSO3_a 1 / kg dry air')  
     plots[4].set_xlabel('n SO3_a  1 / kg dry air')
-    plots[5].set_xlabel('sum of dn')
+    plots[5].set_xlabel('n - init 1/kg dry air')
 
     plots[6].set_xlabel('n HSO4_a 1 / kg dry air')  
     plots[7].set_xlabel('n SO4_a  1 / kg dry air')
@@ -300,19 +279,6 @@ def plot_chem(data, output_folder = '', output_title = ''):
       T    = f.variables["T"][spn_idx:]
       rhod = f.variables["rhod"][spn_idx:]
   
-      dn_so2g = dn_calc(f.variables["SO2_g"][spn_idx:], f.variables["SO2_g"][spn_idx], cm.M_SO2)
-      dn_so2a = dn_calc(f.variables["SO2_a"][spn_idx:], f.variables["SO2_a"][spn_idx], cm.M_SO2_H2O)
-      dn_hso3 = dn_calc(np.squeeze(f.variables["plt_ch_HSO3_a"][spn_idx:]), \
-                        np.squeeze(f.variables["plt_ch_HSO3_a"][spn_idx]), cm.M_HSO3)
-      dn_so3  = dn_calc(np.squeeze(f.variables["plt_ch_SO3_a"][spn_idx:]),\
-                        np.squeeze(f.variables["plt_ch_SO3_a"][spn_idx]), cm.M_SO3)
-      dn_hso4 = dn_calc(np.squeeze(f.variables["plt_ch_HSO4_a"][spn_idx:]), \
-                        np.squeeze(f.variables["plt_ch_HSO4_a"][spn_idx]), cm.M_HSO4)
-      dn_so4  = dn_calc(np.squeeze(f.variables["plt_ch_SO4_a"][spn_idx:]),\
-                        np.squeeze(f.variables["plt_ch_SO4_a"][spn_idx]), cm.M_SO4)
-      dn_h2so4= dn_calc(np.squeeze(f.variables["plt_ch_S_VI"][spn_idx:]),\
-                        np.squeeze(f.variables["plt_ch_S_VI"][spn_idx]), cm.M_H2SO4)
-
       n_so2g = f.variables["SO2_g"][spn_idx:] / cm.M_SO2
       n_so2a = f.variables["SO2_a"][spn_idx:] / cm.M_SO2_H2O
       n_hso3 = np.squeeze(f.variables["plt_ch_HSO3_a"][spn_idx:]) / cm.M_HSO3
@@ -327,7 +293,8 @@ def plot_chem(data, output_folder = '', output_title = ''):
 
       plots[3].plot(n_hso3, t, style[i])
       plots[4].plot(n_so3,  t, style[i])
-      plots[5].plot(dn_so2g + dn_so2a + dn_hso3 + dn_so3 + dn_hso4 + dn_so4,  t, style[i])
+      plots[5].plot(n_so2g + n_so2a + n_hso3 + n_so3 + n_hso4 + n_so4\
+                  - n_so2g[0] + n_so2a[0] + n_hso3[0] + n_so3[0] + n_hso4[0] + n_so4[0],  t, style[i])
 
       plots[6].plot(n_hso4, t, style[i])
       plots[7].plot(n_so4,  t, style[i])

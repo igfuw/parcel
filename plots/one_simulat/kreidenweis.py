@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 import math
 import subprocess
+import ast
 
 from parcel import parcel
 from libcloudphxx import common as cm
@@ -86,62 +87,55 @@ def plot_fig1(data, output_folder = '', output_title = ''):
 def plot_fig2(data, output_folder = '', output_title = ''):
     import Gnuplot
 
+    # from ncdf file attributes read out_bin parameters as a dictionary ...
+    out_bin = ast.literal_eval(getattr(data, "out_bin"))
+    # ... and check if the spacing used in the test was logarithmic
+    #assert out_bin["specw"]["lnli"] == 'log', "this plot should be used with logarithmic spacing of bins"
+    assert out_bin["specd"]["lnli"] == 'log', "this plot should be used with logarithmic spacing of bins"
+
+    # left bin edges
+    #rw = data.variables["specw_r_wet"][:]
+    rd = data.variables["specd_r_dry"][:]
+
+    # for comparison, model solution needs to be divided by log(d2) - log(d2)
+    # since the test is run with log spacing of bins log(d2) - log(d1) = const
+    #d_log_rw = math.log(rw[2], 10) - math.log(rw[1], 10)
+    d_log_rd = math.log(rd[2], 10) - math.log(rd[1], 10)
+
     g = Gnuplot.Gnuplot()# persist=1)
     g('set term svg dynamic enhanced')
 
-    ymax = 1e4
-    ymin = 1e-1
-
-    # diameter
-    rw = data.variables["specw_r_wet"][:] * 1e6 * 2  
-    rd = data.variables["specd_r_dry"][:] * 1e6 * 2
-
-    #TODO - add test if it is == to dr in netcdf
-    drw = np.empty(rw.shape)
-    drw[0] = rw[0] - 0
-    drw[1:] = (rw[1:] - rw[0:-1]) * 1e6
-
-    drd = np.empty(rd.shape)
-    drd[0] = rd[0] - 0
-    drd[1:] = (rd[1:] - rd[0:-1]) * 1e6
-
-    print "drw: "
-    print drw
-    print "wet bins at t=0 "
-    print data.variables['specw_m0'][0,:] / drw
-    print "wet bins at t=end "
-    print data.variables['specw_m0'][-1,:] / drw
-    print "drd: "
-    print drd
-    print "dry bins at t=0 "
-    print data.variables['specd_m0'][0,:] / drd
-    print "dry bins at t=end "
-    print data.variables['specd_m0'][-1,:] / drd
+    ymin = 0
+    ymax = 1500
+    xmin = 0.001
+    xmax = 10
 
     for t in range(data.variables['t'].shape[0]):
+        if t % 10 == 0:
+            g('reset')
+            g('set output "' + output_folder + '/Kreidenweis_plot_spec_' + str("%03d" % t) + '.svg"')
+            g('set logscale x')
+            g('set xlabel "particle diameter [μm]" ')
+            g('set ylabel "dN/dlog_{10}(D) [cm^{-3} log_{10}(size interval)]"')
+            g('set xrange [' +  str(xmin) + ':' + str(xmax) + ']')
+            g('set yrange [' +  str(ymin) + ':' + str(ymax) + ']')
+            g('set grid')
+            g('set nokey')
+    
+            # FSSP range
+            #g('set arrow from .5,' + str(ymin) + 'to .5,' + str(ymax) + 'nohead')
+            #g('set arrow from 25,' + str(ymin) + 'to 25,' + str(ymax) + 'nohead')
+    
+    
+            #nw = data.variables['specw_m0'][t,:] * data.variables["rhod"][0] / d_log_rw
+            nd = data.variables['specd_m0'][t,:] * data.variables["rhod"][0] / d_log_rd
+    
+            #plot_rw = Gnuplot.PlotItems.Data(rw * 2 * 1e6, nw * 1e-6, with_="steps", title="wet radius")
+            plot_rd = Gnuplot.PlotItems.Data(rd * 2 * 1e6, nd * 1e-6, with_="steps", title="dry radius")
+    
+            #g.plot(plot_rw, plot_rd)
+            g.plot(plot_rd)
 
-        g('reset')
-        g('set output "' + output_folder + '/Kreidenweis_plot_spec_' + str("%03d" % t) + '.svg"')
-        g('set logscale xy')
-        g('set ylabel "[mg^{-1} μm^{-1}]"')
-        g('set yrange [' +  str(ymin) + ':' + str(ymax) + ']')
-        g('set grid')
-        g('set nokey')
-
-        # FSSP range
-        g('set arrow from .5,' + str(ymin) + 'to .5,' + str(ymax) + 'nohead')
-        g('set arrow from 25,' + str(ymin) + 'to 25,' + str(ymax) + 'nohead')
-
-        g('set xlabel "particle diameter [μm]" ')
-
-        nw = data.variables['specw_m0'][t,:] / drw
-        nd = data.variables['specd_m0'][t,:] / drd
-
-        plot_rw = Gnuplot.PlotItems.Data(rw, nw, with_="fsteps", title="wet radius")
-        plot_rd = Gnuplot.PlotItems.Data(rd, nd, with_="fsteps", title="dry radius")
-
-        g.plot(plot_rw, plot_rd)
- 
 def main():
     # initial condition
     RH_init = .95

@@ -35,7 +35,7 @@ def henry_teor(chem, p, T, vol, mixr_g, rhod):
     # correction to Henry constant due to temperature
     H       = getattr(cm, "H_"  +chem)
     dHR     = getattr(cm, "dHR_"+chem)
-    henry_T = H * np.exp(-1 * dHR * (1./T - 1./298))
+    henry_T = H * np.exp(dHR * (1./T - 1./298))
 
     # molar mass of chemical species dissolved in water
     if chem in ["SO2", "CO2", "NH3"]:
@@ -72,6 +72,19 @@ def henry_teor_2(chem, p, T, vol, mixr_g, rhod):
 
     # dissolved  = partial prsessure * Henry_const * molar mass * drop volume
     return partial_prs * H * M_aq * vol
+
+def dissoc_teor(chem, T):
+    """ 
+    calculate theoretical dissociation constants (as a function of temperature)
+
+    """
+    # correction to dissoc constant due to temperature
+    K        = getattr(cm, "K_"  +chem)
+    dKR      = getattr(cm, "dKR_"+chem)
+
+    print K, dKR
+
+    return K * np.exp(dKR * (1./T - 1./298))
 
 def log10_size_of_lnr(n_tot, mean_r, lnr, gstdev):
     """
