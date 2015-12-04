@@ -88,6 +88,7 @@ def _micro_init(opts, state, info):
   opts_init.dry_distros = {opts["kappa"]:lognormal}
   opts_init.kernel = lgrngn.kernel_t.geometric #TODO: will not be needed soon (libcloud PR #89)
   opts_init.chem_rho = opts["chem_rho"]
+  opts_init.sstp_cond = opts["sstp_cond"]
   
   # switch off sedimentation and collisions
   opts_init.sedi_switch = False
@@ -261,6 +262,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   chem_dsl = False, chem_dsc = False, chem_rct = False, 
   chem_spn = 1,
   chem_rho = 1.8e3,
+  sstp_cond = 1,
   wait = 0
 ):
   """
@@ -354,7 +356,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
       # - same as in 2D kinematic model
       state["z"] += w * dt
       state["t"] = it * dt
-      #print state["z"]
+      #print it
 
       # pressure
       if pprof == "pprof_const_th_rv":

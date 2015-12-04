@@ -27,6 +27,9 @@ def data(request):
     p_dict['outfile']  = "test_chem_closed_dsc.nc"
     p_dict['chem_dsl'] = True
     p_dict['chem_dsc'] = True
+    #p_dict['chem_spn'] = 50
+    #p_dict['z_max'] = 10
+    #p_dict['outfreq'] = 1
 
     p_dict['out_bin']  = p_dict['out_bin'][:-1] + \
         ', "radii" : {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 2, "moms": [3]}, \

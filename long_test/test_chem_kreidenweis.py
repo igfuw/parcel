@@ -30,11 +30,13 @@ def data(request):
     p_dict['chem_dsl'] = True
     p_dict['chem_dsc'] = True
     p_dict['chem_rct'] = True
-    p_dict['chem_spn'] = 10
 
-    p_dict['sd_conc']  = 256 
-    p_dict['z_max']    = 1400.
+    p_dict['chem_spn'] = 4000
+
+    p_dict['sd_conc']  = 512 
     p_dict['outfreq']  = int(z_max / dt / 100) * 4
+
+    p_dict['sstp_cond'] = 1
 
     p_dict['out_bin']  = '{\
                   "chem"  : {"rght": 1e-4,  "left": 1e-10, "drwt": "wet", "lnli": "log", "nbin": 50, "moms": ["H"]},\
