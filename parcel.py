@@ -84,11 +84,11 @@ def _micro_init(opts, state, info):
   opts_init = lgrngn.opts_init_t()  
   for opt in ["dt",]:  
     setattr(opts_init, opt, opts[opt])
-  opts_init.sd_conc = opts["sd_conc"]
+  opts_init.sd_conc     = opts["sd_conc"]
   opts_init.dry_distros = {opts["kappa"]:lognormal}
-  opts_init.kernel = lgrngn.kernel_t.geometric #TODO: will not be needed soon (libcloud PR #89)
-  opts_init.chem_rho = opts["chem_rho"]
-  opts_init.sstp_cond = opts["sstp_cond"]
+  opts_init.kernel      = lgrngn.kernel_t.geometric #TODO: will not be needed soon (libcloud PR #89)
+  opts_init.chem_rho    = opts["chem_rho"]
+  opts_init.sstp_cond   = opts["sstp_cond"]
   
   # switch off sedimentation and collisions
   opts_init.sedi_switch = False
@@ -113,24 +113,29 @@ def _micro_step(micro, state, info, opts, it, fout):
   libopts.adve = False
   libopts.sedi = False
 
+  # chemical options
   if micro.opts_init.chem_switch:
+    # open/closed chem system
     if opts['chem_sys'] == 'closed':
       libopts.chem_sys_cls = True
     else:
       libopts.chem_sys_cls = False
+ 
+    # chem processes: dissolving, dissociation, reactions
     libopts.chem_dsl = opts["chem_dsl"]
     libopts.chem_dsc = opts["chem_dsc"]
     if it < opts["chem_spn"]:
         libopts.chem_rct = False
     else:
-        #print "chem is on"
         libopts.chem_rct = opts["chem_rct"]
 
+  # trace gases
   ambient_chem = {}
   if micro.opts_init.chem_switch:
     ambient_chem = dict((v, state[k]) for k,v in _Chem_g_id.iteritems())
+
+  # call libcloudphxx microphysics
   micro.step_sync(libopts, state["th_d"], state["r_v"], state["rhod"], ambient_chem=ambient_chem)
- 
   micro.step_async(libopts)
   _stats(state, info) # give updated T needed for chemistry below
 
