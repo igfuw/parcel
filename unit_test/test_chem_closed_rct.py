@@ -31,7 +31,7 @@ def data(request):
     p_dict['chem_dsc'] = True
     p_dict['chem_rct'] = True
 
-    p_dict['chem_spn'] = 4000
+    p_dict['chem_spn'] = 5100
 
     p_dict['out_bin']  = p_dict['out_bin'][:-1] + \
         ', "chem"  : {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 5,\

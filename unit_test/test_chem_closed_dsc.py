@@ -49,7 +49,7 @@ def data(request):
     def removing_files():
         subprocess.call(["rm", p_dict['outfile']])
 
-    request.addfinalizer(removing_files)
+    #request.addfinalizer(removing_files)
     return data
 
 def test_is_electroneutral(data, eps = 2e-7):
@@ -148,13 +148,15 @@ def test_dissoc_constants(data, ion, eps =\
              if vol > 0:
 
                  dissoc_const  = (m_A[idx] / M_A * m_B[idx] / M_B) / (m_AB[idx] / M_AB) / vol
-                 
+                
                  print dissoc_const, " vs ", teor_const, "err = ", (teor_const-dissoc_const)/teor_const
 
                  assert np.isclose(dissoc_const, teor_const, atol=0, rtol=eps),\
                            ion + " : " + str((teor_const-dissoc_const)/teor_const)
 
      # do the checking
+     
+     print "temperature: ", T 
      if   ion == "H2O":  check_water(m_OH, m_H, V, eps[ion])
      elif ion == "SO2":\
        check_ions(m_H,   cm.M_H,   m_HSO3, cm.M_HSO3, m_SO2,  cm.M_SO2_H2O, V, dissoc_teor(ion, T),  eps[ion])

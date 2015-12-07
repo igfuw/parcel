@@ -9,6 +9,7 @@ import math
 import subprocess
 import pytest
 import copy
+import pprint
 
 from parcel import parcel
 from libcloudphxx import common as cm
@@ -31,9 +32,9 @@ def data(request):
     p_dict['chem_dsc'] = True
     p_dict['chem_rct'] = True
 
-    p_dict['chem_spn'] = 4000
+    p_dict['chem_spn'] = 5100 #6000
 
-    p_dict['sd_conc']  = 512 
+    p_dict['sd_conc']  = 12
     p_dict['outfreq']  = int(z_max / dt / 100) * 4
 
     p_dict['sstp_cond'] = 1
@@ -49,6 +50,8 @@ def data(request):
                                       "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI",\
                                       "CO2_a",  "HCO3_a", "CO3_a",\
                                       "NH3_a",  "NH4_a",  "HNO3_a", "NO3_a"]}}'
+
+    pprint.pprint(p_dict)
 
     # run parcel
     parcel(**p_dict)

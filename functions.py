@@ -82,7 +82,10 @@ def dissoc_teor(chem, T):
     K        = getattr(cm, "K_"  +chem)
     dKR      = getattr(cm, "dKR_"+chem)
 
-    print K, dKR
+    print "K =        ", K 
+    print "dKR =      ", dKR
+    print "exp(...) = ", np.exp(dKR * (1./T - 1./298)) 
+    print "K(T) =     ", K * np.exp(dKR * (1./T - 1./298)) 
 
     return K * np.exp(dKR * (1./T - 1./298))
 

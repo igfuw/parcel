@@ -61,7 +61,7 @@ def test_water_const(data, eps = 5e-15):
 
     assert np.isclose(end, ini, atol=0, rtol=eps), str((ini-end)/ini)
 
-def test_dry_mass_const(data, eps = 1e-20):
+def test_dry_mass_const(data, eps = 3e-16):
     """
     Check if the total dry mass is preserved
 
