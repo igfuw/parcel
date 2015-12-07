@@ -33,8 +33,10 @@ def data(request):
 
     p_dict['chem_spn'] = 5100
 
+    p_dict['sd_conc'] = 1
+
     p_dict['out_bin']  = p_dict['out_bin'][:-1] + \
-        ', "chem"  : {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 5,\
+        ', "chem"  : {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 1,\
                       "moms": ["O3_a",   "H2O2_a", "H", "OH",\
                                "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI",\
                                "CO2_a",  "HCO3_a", "CO3_a",\
@@ -55,10 +57,9 @@ def data(request):
     #request.addfinalizer(removing_files)
     return data
 
-@pytest.mark.xfail
 @pytest.mark.parametrize("chem", ["SO2", "CO2", "NH3", "HNO3"])
 def test_moles_const_dsl_dsc_rct(data, chem, eps =\
-                                             {"SO2": 2e-14, "CO2": 2e-14, "NH3": 8e-13, "HNO3":1e-13}):
+                                             {"SO2": 2e-14, "CO2": 2e-14, "NH3": 2e-12, "HNO3":4e-13}):
      """
      Checking if the total number of moles in closed chemical system 
      with dissocoation and chemical reactions remains constant
@@ -97,15 +98,13 @@ def test_moles_const_dsl_dsc_rct(data, chem, eps =\
                data.variables["chem_" + chem + "_a"][0, :].sum() / cm.M_SO2_H2O + \
                data.variables["chem_H"+ chem.replace('2','3')+"_a"][0, :].sum() / cm.M_HSO3 + \
                data.variables["chem_" + chem.replace('2','3')+"_a"][0, :].sum() / cm.M_SO3  + \
-               data.variables["chem_H"+ chem.replace('2','4')+"_a"][0, :].sum() / cm.M_HSO4 + \
-               data.variables["chem_" + chem.replace('2','4')+"_a"][0, :].sum() / cm.M_SO4
+               data.variables["chem_S_VI"][0, :].sum() / cm.M_H2SO4
 
          end = data.variables[chem+"_g"][-1] / cm.M_SO2 + \
                data.variables["chem_" + chem + "_a"][-1, :].sum() / cm.M_SO2_H2O + \
                data.variables["chem_H"+ chem.replace('2','3')+"_a"][-1, :].sum() / cm.M_HSO3 + \
                data.variables["chem_" + chem.replace('2','3')+"_a"][-1, :].sum() / cm.M_SO3  + \
-               data.variables["chem_H"+ chem.replace('2','4')+"_a"][-1, :].sum() / cm.M_HSO4 + \
-               data.variables["chem_" + chem.replace('2','4')+"_a"][-1, :].sum() / cm.M_SO4
+               data.variables["chem_S_VI"][-1, :].sum() / cm.M_H2SO4
 
      # CO2_g -> CO2_a HCO3- CO3--
      if chem == "CO2":
@@ -121,9 +120,29 @@ def test_moles_const_dsl_dsc_rct(data, chem, eps =\
                data.variables["chem_" + chem.replace('2','3')+"_a"][-1, :].sum() / cm.M_CO3
      
      # do the checking
-     print " "
-     print end, " vs ", ini, "error", str((ini-end)/ini)
      assert np.isclose(end, ini, atol=0, rtol=eps[chem]), chem + " : " + str((ini-end)/ini)
+
+def test_H2SO4(data, eps = 1e-20):
+    """
+    Check if athe number of dissociated H2SO4 ions is equal to the total number of H2SO4 moles.
+    (The library assumes that all H2SO4 dissociates)    
+    
+    """
+
+    # read the data
+    n_H2SO4 = data.variables["chem_S_VI"][-1, :].sum() / cm.M_H2SO4
+    n_HSO4  = data.variables["chem_HSO4_a"][-1, :].sum() / cm.M_HSO4
+    n_SO4   =  data.variables["chem_SO4_a"][-1, :].sum() / cm.M_SO4
+
+    # number of moles of H2SO4 ions
+    n_S6_ions = n_HSO4 + n_SO4
+
+    print " "
+    print n_H2SO4
+    print n_S6_ions
+
+    # do the checking
+    assert np.isclose(n_H2SO4, n_S6_ions, atol=0, rtol=eps), str((n_H2SO4 - n_S6_ions) / n_H2SO4)
 
 def test_chem_plot(data):
     """

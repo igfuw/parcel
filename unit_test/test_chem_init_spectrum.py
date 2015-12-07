@@ -50,8 +50,6 @@ def data(request):
     #request.addfinalizer(removing_files)
     return data
 
-#TODO - merge with fix in sd_init from libcloudph
-#TODO - check converegence with sd_conc
 @pytest.mark.xfail
 def test_init_mass(data, eps = 1e-20):
     """

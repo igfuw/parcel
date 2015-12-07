@@ -27,13 +27,10 @@ def data(request):
     p_dict['outfile']  = "test_chem_closed_dsc.nc"
     p_dict['chem_dsl'] = True
     p_dict['chem_dsc'] = True
-    #p_dict['chem_spn'] = 50
-    #p_dict['z_max'] = 10
-    #p_dict['outfreq'] = 1
 
     p_dict['out_bin']  = p_dict['out_bin'][:-1] + \
-        ', "radii" : {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 2, "moms": [3]}, \
-           "chem"  : {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 2,\
+        ', "radii" : {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 1, "moms": [3]}, \
+           "chem"  : {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 1,\
                       "moms": ["O3_a",   "H2O2_a", "H", "OH",\
                                "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI",\
                                "CO2_a",  "HCO3_a", "CO3_a",\
@@ -98,12 +95,10 @@ def test_is_electroneutral(data, eps = 2e-7):
               "\n     S6  " + str(n5)
 
          
-
 @pytest.mark.parametrize("ion", ["H2O", "SO2", "HSO3", "CO2", "HCO3", "NH3", "HNO3"])
-
 def test_dissoc_constants(data, ion, eps =\
-                                {"H2O": 5e-16, "SO2":  6e-16, "HSO3": 5e-16,\
-                                 "CO2": 7e-16, "HCO3": 8e-16, "NH3":  5e-16, "HNO3":4e-16}):
+                                {"H2O": 5e-16, "SO2":  8e-6, "HSO3": 6e-6,\
+                                 "CO2": 4e-6, "HCO3": 7e-6, "NH3":  2e-6, "HNO3":4e-5}):
 
      """
      Check if the mass of chemical compounds agrees with the dissociation constants
@@ -111,7 +106,14 @@ def test_dissoc_constants(data, ion, eps =\
      For each droplet, from the current mass of chemical compounds in the droplet
      calculate the dissociation constant and compare it with the theoretical value.
 
-     Has to be done per droplet, hence sd_conc = 2 and n_bins = 2
+     Has to be done per droplet, hence sd_conc = 1 and n_bins = 1
+
+     The accuracy should accually be ~1e-15 
+     (that's how it was before adding temperature dependance of dissociation constants).
+     However, because the condensation process alters the temperature, there is no way to know
+     in what exact temperature the dissociation process takes place. Using the temperature 
+     available in parcel output as an approximation of the emperature within droplets during dissociation
+     results in lower accuracy.
 
      """
      # read the data
@@ -142,21 +144,16 @@ def test_dissoc_constants(data, ion, eps =\
 
      # dissociation constants K = [A][B]/[AB]
      
-     print " "
      def check_ions(m_A, M_A, m_B, M_B, m_AB, M_AB, vol, teor_const, eps):
          for idx, vol in np.ndenumerate(V):
              if vol > 0:
 
                  dissoc_const  = (m_A[idx] / M_A * m_B[idx] / M_B) / (m_AB[idx] / M_AB) / vol
                 
-                 print dissoc_const, " vs ", teor_const, "err = ", (teor_const-dissoc_const)/teor_const
-
                  assert np.isclose(dissoc_const, teor_const, atol=0, rtol=eps),\
                            ion + " : " + str((teor_const-dissoc_const)/teor_const)
 
      # do the checking
-     
-     print "temperature: ", T 
      if   ion == "H2O":  check_water(m_OH, m_H, V, eps[ion])
      elif ion == "SO2":\
        check_ions(m_H,   cm.M_H,   m_HSO3, cm.M_HSO3, m_SO2,  cm.M_SO2_H2O, V, dissoc_teor(ion, T),  eps[ion])
@@ -172,9 +169,37 @@ def test_dissoc_constants(data, ion, eps =\
        check_ions(m_H,   cm.M_H,   m_NO3,  cm.M_NO3,  m_HNO3, cm.M_HNO3,    V, dissoc_teor(ion, T), eps[ion])
      else: assert False
 
+#TODO - add temperature dependance
+def test_S6_dissoc(data, eps1=4e-16, eps2 = 2e-16):
+    """
+    Check dissociation of H2SO4
+
+    """
+    # read the data 
+    V      = data.variables["radii_m3"][-1, :] * 4./3 * math.pi
+    T      = data.variables["T"][-1]
+    m_H    = data.variables["chem_H"][-1, :]
+    m_SO4  = data.variables["chem_SO4_a"][-1, :]
+    m_HSO4 = data.variables["chem_HSO4_a"][-1, :]
+    m_S6   = data.variables["chem_S_VI"][-1, :]
+
+    # dissociation for HSO4 
+    left_HSO4 = m_HSO4 / cm.M_HSO4 / V
+    rght_HSO4 = (m_H / cm.M_H  / V * m_S6 / cm.M_H2SO4 / V) / (m_H / cm.M_H / V + cm.K_HSO4)
+
+    assert np.isclose(left_HSO4, rght_HSO4 , atol=0, rtol=eps1),\
+                       " HSO4 dissoc error: "+ str((left_HSO4 - rght_HSO4)/left_HSO4)
+
+    # dissociation for SO4
+    left_SO4 = m_SO4 / cm.M_SO4 / V
+    rght_SO4 = (cm.K_HSO4 * m_S6 / cm.M_H2SO4 / V)  / (m_H / cm.M_H / V + cm.K_HSO4)
+
+    assert np.isclose(left_SO4, rght_SO4 , atol=0, rtol=eps2),\
+                       " SO4 dissoc error: " + str((left_SO4 -  rght_SO4)/left_SO4)
+ 
 @pytest.mark.parametrize("chem", ["SO2", "O3", "H2O2", "CO2", "NH3", "HNO3"])
 def test_moles_const_dsl_dsc(data, chem, eps =\
-                                {"SO2": 4e-13, "O3":2e-14, "H2O2": 2e-14, "CO2": 2e-14, "NH3": 1e-12, "HNO3":2e-13}):
+                                {"SO2": 4e-13, "O3":2e-14, "H2O2": 2e-14, "CO2": 2e-14, "NH3": 2e-12, "HNO3":5e-13}):
      """
      Checking if the total number of moles in closed chemical system 
      with dissolving chem species into droplets and dissocoation remains constant
@@ -236,68 +261,25 @@ def test_moles_const_dsl_dsc(data, chem, eps =\
      # do the checking
      assert np.isclose(end, ini, atol=0, rtol=eps[chem]), chem + " : " + str((ini-end)/ini)
 
-#TODO
-@pytest.mark.skipif(True, reason="init chem not ready (now initial cond = 0)")
-def test_is_mass_S6_const_with_dsl_dsc(data, eps=1e-15):
+def test_moles_const_S6_dsl_dsc(data, eps=1e-15):
     """
-    Check if the mas of H2SO4 remains constant.
+    Check if the number of H2SO4 moles remains constant.
     (There are no chemical reactions, so the mass should stay the same)
 
     """
-    print " "
-    print data.variables["chem_S_VI"][0, :]
-    print data.variables["chem_S_VI"][1, :]
-    print data.variables["chem_S_VI"][-1, :]
-
     # read the data
-    m_HSO4 = data.variables["chem_HSO4_a"][-1, :]
-    m_SO4  = data.variables["chem_SO4_a"][-1, :]
-    m_S6   = data.variables["chem_S_VI"][-1, :]
-
     m_S6_ini = data.variables["chem_S_VI"][0, :]
+    m_HSO4   = data.variables["chem_HSO4_a"][-1, :]
+    m_SO4    = data.variables["chem_SO4_a"][-1, :]
+    m_S6     = data.variables["chem_S_VI"][-1, :]
 
-#    # check mass
-#    n_S6_ini       = m_S6_ini.sum()  / cm.M_H2SO4
-#    n_S6_end       = m_S6.sum() / cm.M_H2SO4
-#    n_SO4_HSO4_end = m_SO4.sum() / cm.M_SO4 + m_HSO4.sum() / cm.M_HSO4
-#
-#    print n_S6_ini, n_S6_end, n_SO4_HSO4_end
-#
-#    assert np.isclose(n_S6_ini, n_S6_end, atol=0, rtol=eps),       "1: " + str((n_S6_end - n_S6_ini) / n_S6_ini)
-#    assert np.isclose(n_S6_ini, n_SO4_HSO4_end, atol=0, rtol=eps), "2: " + str((n_SO4_HSO4_end - n_S6_ini) / n_S6_ini)
+    # convert to moles
+    n_S6_ini       = m_S6_ini.sum() / cm.M_H2SO4
+    n_S6_end       = m_S6.sum() / cm.M_H2SO4
+    n_SO4_HSO4_end = m_SO4.sum() / cm.M_SO4 + m_HSO4.sum() / cm.M_HSO4
 
-#     m_HSO4 = data.variables["chem_HSO4_a"][-1, :]
-#     m_SO4  = data.variables["chem_SO4_a"][-1, :]
-#     m_S6   = data.variables["chem_S_VI"][-1, :]
- 
-# TODO
-#     def check_S6_ions(m_HSO4, M_HSO4, m_SO4, M_SO4, m_S6, M_H2SO4, m_H, M_H, vol, K_HSO4, eps1, eps2):
-     # check for dissociation of H2SO4 (assumes no non-dissociated H2SO4) 
-#         max_error_1 = 0
-#         max_error_2 = 0
-
-#         for idx, vol in np.ndenumerate(V):
-#             if vol > 0:
-
-#                 left_HSO4  = m_HSO4[idx] / M_HSO4 / vol
-#                 right_HSO4 = (m_H[idx] / M_H  / vol * m_S6[idx] / M_H2SO4 / vol) / (m_H[idx] / M_H / vol + K_HSO4)
-#                 left_SO4   = m_SO4[idx] / M_SO4 / vol
-#                 right_SO4  = (K_HSO4 * m_S6[idx] / M_H2SO4 / vol)  / (m_H[idx] / M_H / vol + K_HSO4)
-
-#                 current_error_1 = abs(left_HSO4 - right_HSO4) / left_HSO4
-#                 current_error_2 = abs(left_SO4 - right_SO4)   / left_SO4
-
-#                 print "( ", left_HSO4, " - ", right_HSO4, " ) / ", left_HSO4
-#                 print "( ", left_SO4, " - ", right_SO4, " ) / ", left_SO4
-
-#                 if max_error_1 < current_error_1: max_error_1 = current_error_1
-#                 if max_error_2 < current_error_2: max_error_2 = current_error_2
-
-#         assert max_error_1 <= eps1, "K_HSO4 error = " + str(max_error_1)
-#         assert max_error_1 <= eps1, "K_SO4 error = " + str(max_error_2)
- 
-#     elif ion == "S6":   check_S6_ions(m_HSO4, cm.M_HSO4, m_SO4, cm.M_SO4, m_S6, cm.M_H2SO4, m_H, cm.M_H,\
-#                                         V, cm.K_HSO4, 1e-20, 1e-20)
+    assert np.isclose(n_S6_ini, n_S6_end, atol=0, rtol=eps),       "1: " + str((n_S6_end - n_S6_ini) / n_S6_ini)
+    assert np.isclose(n_S6_ini, n_SO4_HSO4_end, atol=0, rtol=eps), "2: " + str((n_SO4_HSO4_end - n_S6_ini) / n_S6_ini)
 
 def test_chem_plot(data):
     """
