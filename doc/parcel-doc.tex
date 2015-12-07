@@ -1,0 +1,183 @@
+\documentclass{article}
+\pdfoutput=1
+\usepackage[utf8]{inputenc}
+\usepackage[tiny]{titlesec}
+\usepackage{latexsym,nicefrac,multirow}
+
+\usepackage{savetrees}
+\linespread{1.16}
+\setlength{\footskip}{20pt}
+
+\usepackage{filecontents}
+\begin{filecontents}{\jobname.bib}
+
+  @article{Arabas_et_al_2015,
+         title = {libcloudph++ 1.0: single-moment bulk, double-moment bulk, and particle-based warm-rain microphysics library in C++},
+        author = {Arabas, S. and Jaruga, A. and Pawlowska, H. and Grabowski, W.W.},
+       journal = {Geosci. Model. Dev.},
+          year = {2015},
+          note = {submitted, arXiv:\href{http://arxiv.org/abs/1310.1905}{1310.1905}}
+  }
+
+  @book{Lin_2012a,
+         title = {A Hands-On Introduction to Using Python in the Atmospheric and Oceanic Sciences},
+        author = {Lin, J. W.-B.},
+          year = {2012},
+          isbn = {130007616X}
+  }
+
+  @article{Arabas_et_al_2014,
+         title = {Formula translation in Blitz++, NumPy and modern Fortran: A case study of~the language choice tradeoffs},
+        author = {Arabas, S. and Jarecka, D. and Jaruga, A. and Fijałkowski, M.},
+       journal = {Sci. Prog.}, 
+           doi = {10.3233/SPR-140379},
+        volume = {22},
+         pages = {201--222},
+          year = {2014}
+  }
+
+  @article{Petters_et_al_2007,
+         title = {A single parameter representation of~hygroscopic growth and cloud condensation nucleus activity},
+        author = {Petters, M.D. and Kreidenweis, S.M},
+       journal = {Atmos. Chem. Phys.},
+          year = {2007},
+        volume = {7},
+           doi = {10.5194/acp-8-6273-2008},
+         pages = {1961--1971}
+  }
+
+  @book{Curry_and_Webster_1999,
+    author = {Curry, J.A. and Webster, P.J.},
+    title = {Thermodynamics of Atmospheres and Oceans},
+    year = {1999},
+    publisher = {Academic Press}
+  }
+
+  @misc{Thrust,
+    author = {Hoberock, J. and Bell, N.},
+    title = {Thrust: A Parallel Template Library},
+    year = {2010},
+    url = {http://thrust.github.io/}
+  }
+
+  @article{Arabas_and_Pawlowska_2011,
+         title = {Adaptive method of lines for multi-component aerosol condensational growth and CCN activation},
+        author = {Arabas, S. and Pawlowska, H.},
+       journal = {Geosci. Model. Dev.},
+          year = {2011},
+        volume = {4},
+         pages = {15--31},
+           doi = {10.5194/gmd-4-15-2011}
+  }
+
+\end{filecontents}
+
+%\usepackage{xcolor,hyperref}
+\usepackage[colorlinks=true,allcolors=blue]{hyperref}
+
+\usepackage[backend=bibtex,natbib=true,style=numeric,maxbibnames=99,firstinits=true]{biblatex}
+\addbibresource{\jobname.bib}
+
+\renewbibmacro{in:}{%
+  \ifentrytype{article}{}{%
+  \printtext{\bibstring{in}\intitlepunct}}}
+
+\date{} % arXiv anyhow adds the date of submission on the page margin
+
+% listings
+\usepackage{fancyvrb,relsize}
+\fvset{frame=single,framerule=.2mm,fontsize=\relscale{.6}}
+\input{lst/pygments}
+
+\newcommand*\FancyVerbStartString{}
+\newcommand*\FancyVerbStopString{}
+
+\newcommand{\codepyt}[4]{%
+  \refstepcounter{Listing}%
+  \fvset{label=Listing~\theListing#4}%
+  \fvset{gobble=#3}%
+  \renewcommand*\FancyVerbStartString{\PY{c}{\PYZsh{}\PYZlt{}listing\PYZhy{}#2\PYZgt{}}}%
+  \renewcommand*\FancyVerbStopString{\PY{c}{\PYZsh{}\PYZlt{}/listing\PYZhy{}#2\PYZgt{}}}%
+  \input{#1}%
+  \vspace{-1.5em}%
+}
+
+\newcommand{\codefor}[4]{%
+  \refstepcounter{Listing}%
+  \fvset{label=Listing~\theListing#4}%
+  \fvset{gobble=#3}%
+  \renewcommand*\FancyVerbStartString{\PY{c}{!\PYZlt{}listing\PYZhy{}#2\PYZgt{}}}%
+  \renewcommand*\FancyVerbStopString{\PY{c}{!\PYZlt{}/listing\PYZhy{}#2\PYZgt{}}}%
+  \input{#1}%
+  \vspace{-1.5em}%
+}
+
+\newcommand{\codetxt}[4]{%
+  \refstepcounter{Listing}%
+  \fvset{label=Listing~\theListing#4}%
+  \fvset{gobble=#3}%
+  \renewcommand*\FancyVerbStartString{\PYZsh{}\PYZlt{}listing\PYZhy{}#2\PYZgt{}}%
+  \renewcommand*\FancyVerbStopString{\PYZsh{}\PYZlt{}/listing\PYZhy{}#2\PYZgt{}}%
+  \input{#1}%
+  \vspace{-1.5em}%
+}
+
+\usepackage{float}
+\newfloat{Listing}{hbtp}{lop}
+
+\newcommand{\prog}[1]{{\tt#1}}
+
+% title page
+\usepackage{authblk}
+%\author[1]{Sylwester Arabas}
+%\author[1,2]{Dorota Jarecka}
+%\author[1]{Anna Jaruga}
+%\affil[1]{Institute of Geophysics, Faculty of Physics, University of Warsaw, Poland}
+%\affil[2]{National Center for Atmospheric Research, USA}
+
+\title{Parcel model documentation}
+
+\begin{document}
+\twocolumn[
+  \begin{@twocolumnfalse}
+    \maketitle
+%    \begin{abstract}
+%    \end{abstract}
+%    \vspace{2em}
+  \end{@twocolumnfalse}
+]
+
+  \section{Introduction}\label{sec:intro}
+
+  
+
+  \section{Solved equations}\label{sec:eqs}
+    \subsection{Solving for pessure}
+
+    
+
+
+    \subsection{Open/closed system for chemistry}
+
+  \section{Usage examples}
+    \subsection{python}
+    \subsection{gdl/idl}
+    \subsection{matlab}
+    \subsection{bash}
+ 
+  %\begin{Listing}
+  %  \codepyt{lst/git_revision.py}{1}{0}{}
+  %  \label{lst:git_revision}
+  %\end{Listing}
+  
+  \appendix
+
+  \section{Installation}\label{sec:install}
+
+  \section*{Acknowledgements}
+  \footnotesize
+
+  \renewcommand*{\bibfont}{\footnotesize}
+  \printbibliography
+
+\end{document}
