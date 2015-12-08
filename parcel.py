@@ -85,6 +85,7 @@ def _micro_init(opts, state, info):
   for opt in ["dt",]:  
     setattr(opts_init, opt, opts[opt])
   opts_init.sd_conc     = opts["sd_conc"]
+  opts_init.n_sd_max    = opts_init.sd_conc
   opts_init.dry_distros = {opts["kappa"]:lognormal}
   opts_init.kernel      = lgrngn.kernel_t.geometric #TODO: will not be needed soon (libcloud PR #89)
   opts_init.chem_rho    = opts["chem_rho"]
@@ -100,6 +101,7 @@ def _micro_init(opts, state, info):
 
   # initialisation
   micro = lgrngn.factory(lgrngn.backend_t.serial, opts_init)
+  #micro = lgrngn.factory(lgrngn.backend_t.CUDA, opts_init)
   ambient_chem = {}
   if micro.opts_init.chem_switch:
     ambient_chem = dict((v, state[k]) for k,v in _Chem_g_id.iteritems())

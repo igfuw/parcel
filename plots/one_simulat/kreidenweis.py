@@ -169,7 +169,7 @@ def main():
     dt          = .1
     w           = 1.
     outfreq     = int(z_max / dt / 100)
-    sd_conc     = 1024.
+    sd_conc     = 1024
     outfile     = "Kreidenweis.nc"
 
     # define output for moments and chemistry
@@ -181,8 +181,8 @@ def main():
     # run parcel, run!
     parcel(dt = dt, z_max = z_max, w = w, outfreq = outfreq,\
            T_0 = T_init, p_0 = p_init, r_0 = r_init,\
-           SO2_g_0 = SO2_g_init, O3_g_0 = O3_g_init, H2O2_g_0 = H2O2_g_init,\
-           CO2_g_0 = CO2_g_init, NH3_g_0 = NH3_g_init, HNO3_g_0 = HNO3_g_init,\
+           SO2_g = SO2_g_init, O3_g = O3_g_init, H2O2_g = H2O2_g_init,\
+           CO2_g = CO2_g_init, NH3_g = NH3_g_init, HNO3_g = HNO3_g_init,\
            chem_sys = 'closed', outfile = outfile,\
            sd_conc = sd_conc,\
            chem_dsl = chem_dsl, chem_dsc = chem_dsc, chem_rct = chem_rct, chem_spn = chem_spn, \

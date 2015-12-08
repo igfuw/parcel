@@ -294,7 +294,7 @@ def plot_chem(data, output_folder = '', output_title = ''):
       plots[3].plot(n_hso3, t, style[i])
       plots[4].plot(n_so3,  t, style[i])
       plots[5].plot(n_so2g + n_so2a + n_hso3 + n_so3 + n_hso4 + n_so4\
-                  - n_so2g[0] + n_so2a[0] + n_hso3[0] + n_so3[0] + n_hso4[0] + n_so4[0],  t, style[i])
+                  - n_so2g[0] + n_so2a[0] + n_hso3[0] + n_so3[0] + n_h2so4[0],  t, style[i])
 
       plots[6].plot(n_hso4, t, style[i])
       plots[7].plot(n_so4,  t, style[i])
