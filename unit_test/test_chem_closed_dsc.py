@@ -162,10 +162,14 @@ def test_dissoc_constants(data, ion, eps =\
        check_ions(m_H,   cm.M_H,   m_NO3,  cm.M_NO3,  m_HNO3, cm.M_HNO3,    V, dissoc_teor(ion, T), eps[ion])
      else: assert False
 
-#TODO - add temperature dependance
-def test_S6_dissoc(data, eps_HSO4=5e-16, eps_SO4 = 3e-16):
+def test_S6_dissoc(data, eps_HSO4=2e-5, eps_SO4 = 2e-9):
     """
-    Check dissociation of H2SO4
+    Check dissociation of H2SO4 
+
+    Done separately because the dissociation formulation assumes no H2SO4 (only ions present)
+    and results in different formulation.
+
+    See comment form test_dissoc_const about the accuracy of te test
 
     """
     # read the data 
@@ -176,16 +180,22 @@ def test_S6_dissoc(data, eps_HSO4=5e-16, eps_SO4 = 3e-16):
     m_HSO4 = data.variables["chem_HSO4_a"][-1, :]
     m_S6   = data.variables["chem_S_VI"][-1, :]
 
+    # temperatre dependance
+    Kt_HSO4 = dissoc_teor("HSO4", T)
+
+    print "K", cm.K_HSO4
+    print "Kt", Kt_HSO4
+
     # dissociation for HSO4 
     left_HSO4 = m_HSO4 / cm.M_HSO4 / V
-    rght_HSO4 = (m_H / cm.M_H  / V * m_S6 / cm.M_H2SO4 / V) / (m_H / cm.M_H / V + cm.K_HSO4)
+    rght_HSO4 = (m_H / cm.M_H  / V * m_S6 / cm.M_H2SO4 / V) / (m_H / cm.M_H / V + Kt_HSO4)
 
     assert np.isclose(left_HSO4, rght_HSO4 , atol=0, rtol=eps_HSO4),\
                        " HSO4 dissoc error: "+ str((left_HSO4 - rght_HSO4)/left_HSO4)
 
     # dissociation for SO4
     left_SO4 = m_SO4 / cm.M_SO4 / V
-    rght_SO4 = (cm.K_HSO4 * m_S6 / cm.M_H2SO4 / V)  / (m_H / cm.M_H / V + cm.K_HSO4)
+    rght_SO4 = (Kt_HSO4 * m_S6 / cm.M_H2SO4 / V)  / (m_H / cm.M_H / V + Kt_HSO4)
 
     assert np.isclose(left_SO4, rght_SO4 , atol=0, rtol=eps_SO4),\
                        " SO4 dissoc error: " + str((left_SO4 -  rght_SO4)/left_SO4)

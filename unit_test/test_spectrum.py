@@ -67,7 +67,7 @@ def test_spectrum_diff(data, var, eps_d = 1e-15):
 @pytest.mark.parametrize("mom, eps", [("wradii_m0",    1e-15), ("dradii_m0",    1e-15), 
                                       ("lindradii_m0", 1e-15), ("linwradii_m0", 1e-15),
                                       ("wradii_m1",    7e-4),  ("dradii_m1",    5e-15), 
-                                      ("lindradii_m1", 4e-15), ("linwradii_m1", 2e-6),
+                                      ("lindradii_m1", 4e-15), ("linwradii_m1", 5e-6),
                                       ("wradii_m3",    1.6e-3),("dradii_m3",    2e-14), 
                                       ("lindradii_m3", 2e-14), ("linwradii_m3", 5e-6)])
 
