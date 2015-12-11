@@ -1,12 +1,20 @@
-\documentclass{article}
+\documentclass[11pt]{article}
 \pdfoutput=1
 \usepackage[utf8]{inputenc}
 %\usepackage[tiny]{titlesec}
-\usepackage{latexsym,nicefrac,multirow}
+%\usepackage{latexsym,nicefrac,multirow}
 
-\usepackage{savetrees}
-\linespread{1.16}
-\setlength{\footskip}{20pt}
+%\usepackage{savetrees}
+%\linespread{1.16}
+%\setlength{\footskip}{20pt}
+
+\usepackage{indentfirst}
+\setlength{\parindent}{0.4cm}
+\usepackage{microtype}
+\usepackage[hmarginratio=1:1,top=24mm,bottom=20mm,left=17mm,right=17mm,columnsep=20pt]{geometry}
+\usepackage[pdftex]{graphicx}
+\usepackage{caption}
+
 
 \usepackage{filecontents}
 \begin{filecontents}{\jobname.bib}
@@ -139,46 +147,110 @@
 \title{Parcel model documentation}
 
 \begin{document}
-\twocolumn[
-  \begin{@twocolumnfalse}
-    \maketitle
+\maketitle
+
+%\twocolumn[
+%  \begin{@twocolumnfalse}
+%    \maketitle
 %    \begin{abstract}
 %    \end{abstract}
 %    \vspace{2em}
-  \end{@twocolumnfalse}
-]
+%  \end{@twocolumnfalse}
+%]
 
-  \section{Introduction}\label{sec:intro}
+\section{Introduction}\label{sec:intro}
 
-TODO TODO TODO 
+The parcel model simulates zero - dimensional air parcel, which is adiabatically risen with constant vertical velocity. In the parcel there is aerosol distribution and water vapour mixing ratio specified. The model solves equations for temperature and pressure. Change of these variables in every timestep determines the water vapour condensation.
 
-  \section{Solved equations}\label{sec:eqs}
-    \subsection{Solving for pessure}
+Actual state variables (potential temperature, density of dry air and water vapour mixing ratio) are passed on to microphysics library. It solves condensation equantions for every 'super-droplet', which represents particles attributed to one bin in the spectrum. This bins are moving, while spectrum is evaluating, which means that a size of each 'super-droplet' is changing. Nevertheless every 'super-droplet' still represents the same group of particles, which are growing with time. 'Super-droplets' are lagrangian descritption of microphysics. It is 'lagrangian', because it calculates evolution of the spectrum, by tracing changes of each bin.
 
-    
+The parcel model enables tracing the evolution of droplet spectrum with time starting with given initial conditions. Simultaneously it gives information about the evolution of state variables and the amount of water vapour.
 
+\section{Solved equations}\label{sec:eqs}
+\subsection{Solving for pressure}
 
-    \subsection{Open/closed system for chemistry}
+Microphysics library needs actual value of density of dry air. To calculate it, there is helper pressure profile needed. To calculate the helper pressure profile, the hydrostatic equation has to be integrated:
 
-  \section{Usage examples}
-    \subsection{python}
-    \subsection{gdl/idl}
-    \subsection{matlab}
-    \subsection{bash}
+\begin{equation}
+	\frac{dp}{dz} = -\rho g,
+	\label{hydro}
+\end{equation}
+
+\noindent{where p - pressure, z - vertical displacement, $\rho$ - density of air, g - gravitational acceleration.}
+
+In the model there are three methods for integrating the hydrostatic equation:
+
+1) Assuming constant potential temperature, $\theta$, and constant water vapour mixing ratio, $r_v$. Then $\rho$ is specified by this constant values and pressure profile is retrieved;
+
+2) Integrating equation (\ref{hydro}) by assuming constant $\rho$;
+
+3) Integrating equation (\ref{hydro}) by assuming piecewise constant $\rho$.
+
+\subsection{Open/closed system for chemistry}
+
+\section{Arguments}
+
+The model takes following optional arguments:
+
+\begin{itemize}
+	\item \textbf{dt} : float (default = 0.1) \newline Timestep [s]
+	\item \textbf{z\_max} : float (default = 200) \newline Maximum vertical displacement [m]
+	\item \textbf{w} : float (default = 1) \newline Updraft velocity [m/s]
+	\item \textbf{T\_0} : float (default = 300) \newline Initial temperature [K]
+	\item \textbf{p\_0} : float (default = 101300) \newline Initial pressure [Pa]
+	\item \textbf{r\_0} : float (default = 0.022) \newline Initial water vapour mass mixing ratio [kg/kg]
+	\item \textbf{outfile} : string (default = "test.nc") \newline Output netCDF file name
+	\item \textbf{outfreq} : int (default = 100) \newline Output interval (in number of time steps)
+	\item \textbf{sd\_conc} : int (default = 64) \newline Number of moving bins (super-droplets)
+	\item \textbf{kappa} : float (default = 0.5) \newline Kappa hygroscopicity parameter \newline (see doi:10.5194/acp-7-1961-2007)
+	\item \textbf{mean\_r} : float (default = 0.04$\cdot10^{-6}$) \newline Lognormal distribution mode radius [m]
+	\item \textbf{gstdev} : float (default = 1.4) \newline Lognormal distribution geometric standard deviation [1]
+	\item \textbf{n\_tot} : float (default = 60$\cdot10^{6}$) \newline Lognormal distribution total concentration under standard conditions (T = 20C, p = 1013.25 hPa, r = 0) [m\textsuperscript{-3}]
+	\item \textbf{out\_bin} : jason string \newline (default = '\{"radii": \{"rght": 0.0001, "moms": [0], "drwt": "dry", "nbin": 26, "lnli": "log", "left": 1e-09\}\}') \newline Dictionary of dictionaries defining spectrum diagnostics, i.e.: \newline '\{"radii": \{"rght": 0.0001, "moms": [0], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09\}, \newline "cloud": \{"rght": 2.5e-05, "moms": [0, 1, 2, 3], "drwt": "wet", "nbin": 49, "lnli": "lin", "left": 5e-07\}\}' 
+
+In the example, there are two variables defined: "radii" and "cloud". In a brace after a variable name, there are several output spectrum characteristics. "rght" and "left" specify right hand side and left hand side egde of the spectrum (in meters). Square bracket named "moms" consists of a list of numbers, specyfying moments of the spectrum. "drwt" has two possible values: "dry" for dry aerosol spectrum and "wet" for wet particles. "nbin" is a number of bins and "lnli" allows to determine, if they would be spaced linearly ("lin") or logaritmically ("log") between the edges.
+
+Example dictionary of dictionaries will generate five output spectra:
+
+- 0-th spectrum moment for 26 bins spaced logaritmically between 0 and $10^{-4}$ m for dry radius;
+
+- 0, 1, 2 and 3-rd moments for 49 bins spaced linearly between $0.5\cdot10^{-6}$ and $25\cdot10^{-6}$ m for wet radius.
+
+\item \textbf{pprof} : string (default = "pprof\_piecewise\_const\_rhod") \newline Specification of a way of counting helper pressure profile. This variable can have three possible values corresponding do three methods descibed in the section "solving for pressure":
+
+1) "pprof\_const\_th\_rv" - constant potential temperature and water vapour mixing ratio;
+
+2) "pprof\_const\_rhod" - constant density of dry air;
+
+3) "pprof\_piecewise\_const\_rhod" - piecewise constant density of dry air.
+
+\end{itemize}
+
+\section{Output}
+
+Output files format is netCDF. It includes information about all input and output variables. It also includes information about maximum relative humidity (RH\_max) reached during the simulation.
+
+Data are attributed to the names of variables. For example, variable 'p' consists of a list of values of pressure reached during the simulation. The number of data in each variable depends on 
+
+\section{Usage examples}
+\subsection{python}
+\subsection{gdl/idl}
+\subsection{matlab}
+\subsection{bash}
  
-  %\begin{Listing}
-  %  \codepyt{lst/git_revision.py}{1}{0}{}
-  %  \label{lst:git_revision}
-  %\end{Listing}
+%\begin{Listing}
+%  \codepyt{lst/git_revision.py}{1}{0}{}
+%  \label{lst:git_revision}
+%\end{Listing}
   
-  \appendix
+\appendix
 
-  \section{Installation}\label{sec:install}
+\section{Installation}\label{sec:install}
 
-  \section*{Acknowledgements}
-  \footnotesize
+\section*{Acknowledgements}
+\footnotesize
 
-  \renewcommand*{\bibfont}{\footnotesize}
-  \printbibliography
+\renewcommand*{\bibfont}{\footnotesize}
+\printbibliography
 
 \end{document}
