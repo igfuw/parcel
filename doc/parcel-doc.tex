@@ -230,7 +230,29 @@ Example dictionary of dictionaries will generate five output spectra:
 
 Output files format is netCDF. It includes information about all input and output variables. It also includes information about maximum relative humidity (RH\_max) reached during the simulation.
 
-Data are attributed to the names of variables. For example, variable 'p' consists of a list of values of pressure reached during the simulation. The number of data in each variable depends on 
+Data are attributed to the names of variables. For example, variable 'p' consists of a list of values of pressure reached during the simulation. The number of data in each variable equals to the number od timesteps, which is $\frac{z_{max}}{v\cdot dt}$, divided by the output interval, outfreq. 
+
+In the output file, there are data for subsequent variables:
+\begin{itemize}
+	\item \textbf{t} - time [s];
+	\item \textbf{z} - vertical displacement [m];
+	\item \textbf{p} - pressure [Pa];
+	\item \textbf{r\_v} - water vapour mixing ratio [kg/kg];
+	\item \textbf{RH} - relative humidity [1];
+	\item \textbf{T} - temperature [K];
+	\item \textbf{th\_d} - dry potential temperature [K].
+
+There are also variables describing spectrum for each variable defined in the dictionary 'out\_bin'. For example, if there was variable named 'radii', specified to be 'wet' and generate 0,1 and 2-nd moment of spectrum, in the output file there would be:
+	\item \textbf{radii\_r\_wet} - left bin edge of spectrum histogram [m];
+	\item \textbf{radii\_dr\_wet} - distance between the edges [m].
+
+Variables describing moments of spectrum consist of a list of lists. Every one list consists of values attributed to bins in actual spectrum. The number of elements in the list equals to the number of bins. This lists of moments of spectrum woud be (for example case) in subsequent variables:
+	\item \textbf{radii\_m0} - 0-th moment of spectrum;
+	\item \textbf{radii\_m1} - 1-st moment of spectrum;
+	\item \textbf{radii\_m2} - 2-nd moment of spectrum.
+\end{itemize}
+
+
 
 \section{Usage examples}
 \subsection{python}
