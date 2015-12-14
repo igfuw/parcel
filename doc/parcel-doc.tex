@@ -252,10 +252,39 @@ Variables describing moments of spectrum consist of a list of lists. Every one l
 	\item \textbf{radii\_m2} - 2-nd moment of spectrum.
 \end{itemize}
 
+The content of the output file could be seen by writing subsequent command in terminal:
 
+\vspace{0.35cm}
+\noindent{ncdump test.nc}
+\vspace{0.35cm}
 
 \section{Usage examples}
 \subsection{python}
+
+To run the model in python, with all default parameters, there should be subsequent command written in terminal:
+
+\vspace{0.35cm}
+\noindent{python parcel.py}
+\vspace{0.35cm}
+
+\noindent{This command will generate an output file.} There is a possibility to change the input parameters by adding them to the command, which runs the model. For example:
+
+\vspace{0.35cm}
+\noindent{python parcel.py \texttt{--}outfile 'test2.nc' \texttt{--}p\_0 100000 \texttt{--}T\_0 280 \texttt{--}r\_v0 0.025}
+\vspace{0.35cm}
+
+\noindent{will generate an output file 'test2.nc' including results of the simulation, which starts with subsequent initial conditions: pressure 1000 hPa, temperature 280 K and water vapour mixing ratio 25 g/kg. Other input parameters will be default.} There is a possibility to specify any of the input parameter in that way.
+
+To get a variable from the output file (for example T), subsequent commands should be written in python:
+
+\vspace{0.35cm}
+\noindent{from scipy.io import netcdf}
+
+\noindent{data = netcdf.netcdf\_file('test.nc','r')}
+
+\noindent{T = data.variables['T'][:]}
+\vspace{0.35cm}
+
 \subsection{gdl/idl}
 \subsection{matlab}
 \subsection{bash}
