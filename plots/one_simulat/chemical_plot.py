@@ -1,3 +1,4 @@
+# This Python file uses the following encoding: utf-8
 import sys
 sys.path.insert(0, "../")
 sys.path.insert(0, "./")
@@ -49,12 +50,16 @@ def plot_chem(data, output_folder = '', output_title = ''):
     plots[2].set_xlabel('RH')
 
     plots[3].set_xlabel('m0 1/kg dry air ')
-    plots[4].set_xlabel('m1 mm/kg dry air ')
+    plots[4].set_xlabel('m1 um/kg dry air ')
     plots[5].set_xlabel('lwc g/kg dry air')
 
     plots[6].set_xlabel('m0_dry 1/kg dry air ')
     plots[7].set_xlabel('m1_dry um/kg dry air ')
     plots[8].set_xlabel('mass cont ug/kg dry air')
+
+    plots[7].set_xlim([0.05, 0.06])
+    plots[7].set_xticks([0.05, 0.052, 0.054, 0.056, 0.058, 0.06])
+
 
     for ax in plots:
       ax.set_ylabel('t [s]')
@@ -71,7 +76,7 @@ def plot_chem(data, output_folder = '', output_title = ''):
       )
       plots[3].plot(np.squeeze(f.variables["plt_rw_m0"][spn_idx:]), t, style[i])
       plots[4].plot(\
-          np.squeeze(f.variables["plt_rw_m1"][spn_idx:]) / np.squeeze(f.variables["plt_rw_m0"][spn_idx:]) * 1e3, t, style[i])
+          np.squeeze(f.variables["plt_rw_m1"][spn_idx:]) / np.squeeze(f.variables["plt_rw_m0"][spn_idx:]) * 1e6, t, style[i])
       plots[5].plot(\
           np.squeeze(f.variables["plt_rw_m3"][spn_idx:]) * 4. / 3 * math.pi * 998.2 * 1e3, t, style[i])
  

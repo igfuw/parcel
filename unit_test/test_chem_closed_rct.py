@@ -31,7 +31,7 @@ def data(request):
     p_dict['chem_dsc'] = True
     p_dict['chem_rct'] = True
 
-    p_dict['chem_spn'] = 5100
+    #p_dict['chem_spn'] = 5100
 
     p_dict['sd_conc'] = 1
 
@@ -120,9 +120,9 @@ def test_moles_const_dsl_dsc_rct(data, chem, eps =\
      # do the checking
      assert np.isclose(end, ini, atol=0, rtol=eps[chem]), chem + " : " + str((ini-end)/ini)
 
-def test_H2SO4(data, eps = 3e-5):
+def test_H2SO4(data, eps = 3.5e-5):
     """
-    Check if athe number of dissociated H2SO4 ions is equal to the total number of H2SO4 moles.
+    Check if the number of dissociated H2SO4 ions is equal to the total number of H2SO4 moles.
     (The library assumes that all H2SO4 dissociates)    
 
     In libcloudpxx after chemical reactions there is no dissociation step. Therefore, the number
