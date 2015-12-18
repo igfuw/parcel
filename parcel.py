@@ -108,7 +108,10 @@ def _micro_step(micro, state, info, opts, it, fout):
     # chem processes: dissolving, dissociation, reactions
     libopts.chem_dsl = opts["chem_dsl"]
     libopts.chem_dsc = opts["chem_dsc"]
-    libopts.chem_rct = opts["chem_rct"]
+    if it < opts["chem_spn"]:
+        libopts.chem_rct = False
+    else:
+        libopts.chem_rct = opts["chem_rct"]
 
   # get trace gases
   ambient_chem = {}
@@ -251,6 +254,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   chem_dsl = False, chem_dsc = False, chem_rct = False, 
   chem_rho = 1.8e3,
   sstp_cond = 1,
+  chem_spn = 1,
   wait = 0
 ):
   """
@@ -287,6 +291,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
     chem_dsl (Optional[bool]):    on/off for dissolving chem species into droplets
     chem_dsc (Optional[bool]):    on/off for dissociation of chem species in droplets
     chem_rct (Optional[bool]):    on/off for oxidation of S_IV to S_VI
+    chem_spn (Optional[int]):     number of spinup timesteps before enabling chemical reactions
     pprof   (Optional[string]):   method to calculate pressure profile used to calculate 
                                   dry air density that is used by the super-droplet scheme
                                   valid options are: pprof_const_th_rv, pprof_const_rhod, pprof_piecewise_const_rhod
