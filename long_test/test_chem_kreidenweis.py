@@ -54,7 +54,7 @@ def data(request):
     pprint.pprint(p_dict)
 
     # run parcel
-    #parcel(**p_dict)
+    parcel(**p_dict)
 
     #simulation results
     data = netcdf.netcdf_file(p_dict['outfile'],   "r")
