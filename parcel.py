@@ -119,10 +119,10 @@ def _micro_step(micro, state, info, opts, it, fout):
   micro.step_sync(libopts, state["th_d"], state["r_v"], state["rhod"], ambient_chem=ambient_chem)
   micro.step_async(libopts)
 
-  # update state after microphysics
+  # update state after microphysics (needed for below update for chemistry)
   _stats(state, info)
 
-  # TODO - checkme
+  # update in state for aqueous chem (TODO do we still want it?)
   if micro.opts_init.chem_switch:
     micro.diag_all() # selecting all particles
     for id_str, id_int in _Chem_g_id.iteritems():
