@@ -52,22 +52,6 @@ _Chem_a_id = {
   "S_VI"   : lgrngn.chem_species_t.S_VI
 }
 
-# id_int   ...
-_molar_mass = {
-  lgrngn.chem_species_t.SO2  : common.M_SO2_H2O,
-  lgrngn.chem_species_t.H2O2 : common.M_H2O2,
-  lgrngn.chem_species_t.O3   : common.M_O3,
-  lgrngn.chem_species_t.HSO3 : common.M_HSO3,
-  lgrngn.chem_species_t.SO3  : common.M_SO3,
-  lgrngn.chem_species_t.CO2  : common.M_CO2_H2O,
-  lgrngn.chem_species_t.HNO3 : common.M_HNO3,
-  lgrngn.chem_species_t.NH3  : common.M_NH3_H2O,
-  lgrngn.chem_species_t.HCO3 : common.M_HCO3,
-  lgrngn.chem_species_t.CO3  : common.M_CO3,
-  lgrngn.chem_species_t.NO3  : common.M_NO3,
-  lgrngn.chem_species_t.NH4  : common.M_NH4
-}
-
 def _micro_init(opts, state, info):
   # sanity check
   _stats(state, info)
@@ -87,7 +71,6 @@ def _micro_init(opts, state, info):
   opts_init.sd_conc     = opts["sd_conc"]
   opts_init.n_sd_max    = opts_init.sd_conc
   opts_init.dry_distros = {opts["kappa"]:lognormal}
-  opts_init.kernel      = lgrngn.kernel_t.geometric #TODO: will not be needed soon (libcloud PR #89)
   opts_init.chem_rho    = opts["chem_rho"]
   opts_init.sstp_cond   = opts["sstp_cond"]
   
@@ -101,7 +84,6 @@ def _micro_init(opts, state, info):
 
   # initialisation
   micro = lgrngn.factory(lgrngn.backend_t.serial, opts_init)
-  #micro = lgrngn.factory(lgrngn.backend_t.CUDA, opts_init)
   ambient_chem = {}
   if micro.opts_init.chem_switch:
     ambient_chem = dict((v, state[k]) for k,v in _Chem_g_id.iteritems())
@@ -126,12 +108,9 @@ def _micro_step(micro, state, info, opts, it, fout):
     # chem processes: dissolving, dissociation, reactions
     libopts.chem_dsl = opts["chem_dsl"]
     libopts.chem_dsc = opts["chem_dsc"]
-    if it < opts["chem_spn"]:
-        libopts.chem_rct = False
-    else:
-        libopts.chem_rct = opts["chem_rct"]
+    libopts.chem_rct = opts["chem_rct"]
 
-  # trace gases
+  # get trace gases
   ambient_chem = {}
   if micro.opts_init.chem_switch:
     ambient_chem = dict((v, state[k]) for k,v in _Chem_g_id.iteritems())
@@ -139,8 +118,11 @@ def _micro_step(micro, state, info, opts, it, fout):
   # call libcloudphxx microphysics
   micro.step_sync(libopts, state["th_d"], state["r_v"], state["rhod"], ambient_chem=ambient_chem)
   micro.step_async(libopts)
-  _stats(state, info) # give updated T needed for chemistry below
 
+  # update state after microphysics
+  _stats(state, info)
+
+  # TODO - checkme
   if micro.opts_init.chem_switch:
     micro.diag_all() # selecting all particles
     for id_str, id_int in _Chem_g_id.iteritems():
@@ -267,7 +249,6 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   SO2_g = 0., O3_g = 0., H2O2_g = 0., CO2_g = 0., HNO3_g = 0., NH3_g = 0.,
   chem_sys = 'open',
   chem_dsl = False, chem_dsc = False, chem_rct = False, 
-  chem_spn = 1,
   chem_rho = 1.8e3,
   sstp_cond = 1,
   wait = 0
@@ -306,7 +287,6 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
     chem_dsl (Optional[bool]):    on/off for dissolving chem species into droplets
     chem_dsc (Optional[bool]):    on/off for dissociation of chem species in droplets
     chem_rct (Optional[bool]):    on/off for oxidation of S_IV to S_VI
-    chem_spn (Optional[int]):     number of spinup timesteps before enabling chemical reactions
     pprof   (Optional[string]):   method to calculate pressure profile used to calculate 
                                   dry air density that is used by the super-droplet scheme
                                   valid options are: pprof_const_th_rv, pprof_const_rhod, pprof_piecewise_const_rhod
