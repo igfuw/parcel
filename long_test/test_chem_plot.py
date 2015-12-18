@@ -26,7 +26,7 @@ def data(request):
     dt          = .06
     w           = 1.
     outfreq     = int(z_max / dt / 100)
-    sd_conc     = 2048.
+    sd_conc     = 2048
     
     # turn on chemistry
     chem_dsl = True
