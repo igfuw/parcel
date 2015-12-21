@@ -6,8 +6,8 @@ The parcel model represents an idealised scenario of a 0-dimensional
 The representation of microphysical and chemical processes in the parcel model 
   is done using the particle-based scheme from the [libcloudph++](http://libcloudphxx.igf.fuw.edu.pl/) 
   library of cloud microphysics schemes.
-For more information on the libcloudph++ library, its' dependencies, installation
-  and source code please check the project repository at:
+For more information on the [libcloudph++](http://libcloudphxx.igf.fuw.edu.pl/) library, 
+  its' dependencies, installation and source code please check the project repository at:
   https://github.com/igfuw/libcloudphxx.
 
 The parcel model is written in Python 2.7. 
@@ -22,7 +22,7 @@ The .travis.yml file shipped with the parcel model
 # testing
 
 The parcel model is shipped with a set of tests for the particle-based scheme 
-  from the ``libcloudph++'' library.
+  from the [libcloudph++](http://libcloudphxx.igf.fuw.edu.pl/) library.
 For test automation pytest Python package is used.
 
 To run all the tests  please type in terminal
