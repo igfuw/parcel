@@ -9,7 +9,6 @@ import math
 import subprocess
 import pytest
 import copy
-import pprint 
 
 from parcel import parcel
 from libcloudphxx import common as cm
@@ -25,8 +24,6 @@ def data(request):
     # modify options from chem_conditions
     p_dict['outfile']  = "test_chem_closed_dsl.nc"
     p_dict['chem_dsl'] = True
-
-    pprint.pprint(p_dict)
 
     # run parcel
     parcel(**p_dict)

@@ -46,7 +46,7 @@ def data(request):
     def removing_files():
         subprocess.call(["rm", p_dict['outfile']])
 
-    #request.addfinalizer(removing_files)
+    request.addfinalizer(removing_files)
     return data
 
 def test_is_electroneutral(data, eps = 2e-7):

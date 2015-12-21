@@ -1,7 +1,7 @@
 import sys, os, subprocess
 sys.path.insert(0, "../../")
 sys.path.insert(0, "./")
-from libcloudphxx import common
+
 from scipy.io import netcdf
 import numpy as np
 
@@ -46,7 +46,6 @@ def plot_profiles(fnc, output_folder="../outputs"):
     if not os.path.exists(output_folder):
         subprocess.call(["mkdir", output_folder])
     plt.savefig(os.path.join(output_folder, "plot_profiles_onesim.svg"))
-
 
 def main(dt=1):
     # running parcel model for different ways to solve for pressure  ...            

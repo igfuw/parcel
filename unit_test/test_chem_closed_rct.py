@@ -9,13 +9,10 @@ import math
 import subprocess
 import pytest
 import copy
-import pprint
 
 from parcel import parcel
 from libcloudphxx import common as cm
 from chemical_plot import plot_chem
-#from kreidenweis_fig1 import plot_fig1
-#from functions import *
 from chem_conditions import parcel_dict
 
 @pytest.fixture(scope="module")
@@ -31,8 +28,6 @@ def data(request):
     p_dict['chem_dsc'] = True
     p_dict['chem_rct'] = True
 
-    #p_dict['chem_spn'] = 5100
-
     p_dict['sd_conc'] = 1
 
     p_dict['out_bin']  = p_dict['out_bin'][:-1] + \
@@ -40,8 +35,6 @@ def data(request):
                       "moms": ["SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI",\
                                "CO2_a",  "HCO3_a", "CO3_a", "NH3_a",  "NH4_a",  "HNO3_a", "NO3_a"]}}'
  
-    pprint.pprint(p_dict)
-
     # run parcel
     parcel(**p_dict)
 
@@ -52,7 +45,7 @@ def data(request):
     def removing_files():
         subprocess.call(["rm", p_dict['outfile']])
 
-    #request.addfinalizer(removing_files)
+    request.addfinalizer(removing_files)
     return data
 
 @pytest.mark.parametrize("chem", ["SO2", "CO2", "NH3", "HNO3"])
@@ -127,14 +120,14 @@ def test_H2SO4(data, eps = 3.5e-5):
 
     In libcloudpxx after chemical reactions there is no dissociation step. Therefore, the number
     of HSO4- and SO4-- ions is not the same as the number of H2SO4 moles.
-    ???TODO??? 
+    TODO? 
     
     """
 
     # read the data
     n_H2SO4 = data.variables["chem_S_VI"][-1, :].sum() / cm.M_H2SO4
     n_HSO4  = data.variables["chem_HSO4_a"][-1, :].sum() / cm.M_HSO4
-    n_SO4   =  data.variables["chem_SO4_a"][-1, :].sum() / cm.M_SO4
+    n_SO4   = data.variables["chem_SO4_a"][-1, :].sum() / cm.M_SO4
 
     # number of moles of H2SO4 ions
     n_S6_ions = n_HSO4 + n_SO4

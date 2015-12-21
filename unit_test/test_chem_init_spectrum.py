@@ -15,7 +15,7 @@ import copy
 from parcel import parcel
 from libcloudphxx import common as cm
 from chem_conditions import parcel_dict
-from functions import *
+import functions as fn
 from init_spectrum_plot import plot_init_spectrum
 
 @pytest.fixture(scope="module")
@@ -47,7 +47,7 @@ def data(request):
     def removing_files():
         subprocess.call(["rm", p_dict['outfile']])
 
-    #request.addfinalizer(removing_files)
+    request.addfinalizer(removing_files)
     return data
 
 @pytest.mark.xfail
@@ -100,7 +100,7 @@ def test_init_spectrum(data, eps = 0.06):
     # theoretical solution
     theor     = np.empty(rd.shape) 
     for it in range(rd.shape[0]):                      # evaluate at the middle of the log bin                
-        theor[it]   = log10_size_of_lnr(n_tot, mean_r, math.log(rd[it], 10) + d_log_rd / 2, gstdev)
+        theor[it]   = fn.log10_size_of_lnr(n_tot, mean_r, math.log(rd[it], 10) + d_log_rd / 2, gstdev)
 
     # check for each bin where there are droplets
     # (TODO missing differences where from empty bin vs analityc solution)
