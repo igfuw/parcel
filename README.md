@@ -4,10 +4,11 @@ The parcel model represents an idealised scenario of a 0-dimensional
   air parcel rising adiabatically with a constant vertical velocity. 
 
 The representation of microphysical and chemical processes in the parcel model 
-  is done using the particle-based scheme from the ``libcloudph++'' library
+  is done using the particle-based scheme from the libcloudph++ library
   of cloud microphysics schemes.
-For more information on the ``libcloudph++'' library, its' dependencies, installation
-  and source code please check the project repository at 
+For more information on the libcloudph++ library, its' dependencies, installation
+  and source code please check the project repository at:
+ 
   https://github.com/igfuw/libcloudphxx.
 
 The parcel model is written in Python 2.7. 
