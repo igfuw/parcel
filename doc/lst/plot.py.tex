@@ -1,0 +1,47 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PY{k+kn}{import} \PY{n+nn}{sys}\PY{o}{,} \PY{n+nn}{os}\PY{o}{,} \PY{n+nn}{subprocess}
+\PY{n}{sys}\PY{o}{.}\PY{n}{path}\PY{o}{.}\PY{n}{insert}\PY{p}{(}\PY{l+m+mi}{0}\PY{p}{,} \PY{l+s}{\PYZdq{}}\PY{l+s}{../../}\PY{l+s}{\PYZdq{}}\PY{p}{)}
+\PY{n}{sys}\PY{o}{.}\PY{n}{path}\PY{o}{.}\PY{n}{insert}\PY{p}{(}\PY{l+m+mi}{0}\PY{p}{,} \PY{l+s}{\PYZdq{}}\PY{l+s}{./}\PY{l+s}{\PYZdq{}}\PY{p}{)}
+
+\PY{c}{\PYZsh{}listing00}
+\PY{k+kn}{from} \PY{n+nn}{scipy.io} \PY{k+kn}{import} \PY{n}{netcdf}
+
+\PY{k+kn}{import} \PY{n+nn}{matplotlib}
+\PY{n}{matplotlib}\PY{o}{.}\PY{n}{use}\PY{p}{(}\PY{l+s}{\PYZsq{}}\PY{l+s}{Agg}\PY{l+s}{\PYZsq{}}\PY{p}{)}
+\PY{k+kn}{import} \PY{n+nn}{matplotlib.pyplot} \PY{k+kn}{as} \PY{n+nn}{plt}
+
+\PY{k+kn}{from} \PY{n+nn}{parcel} \PY{k+kn}{import} \PY{n}{parcel}
+
+\PY{c}{\PYZsh{} define parcel arguments}
+\PY{n}{outfile} \PY{o}{=} \PY{l+s}{\PYZdq{}}\PY{l+s}{example\PYZus{}py.nc}\PY{l+s}{\PYZdq{}}
+\PY{n}{dt}      \PY{o}{=} \PY{l+m+mf}{0.5}
+\PY{n}{outfreq} \PY{o}{=} \PY{l+m+mi}{10}
+
+\PY{c}{\PYZsh{}run parcel model}
+\PY{n}{parcel}\PY{p}{(}\PY{n}{dt}\PY{o}{=}\PY{n}{dt}\PY{p}{,} \PY{n}{outfreq} \PY{o}{=} \PY{n}{outfreq}\PY{p}{,} \PY{n}{outfile}\PY{o}{=}\PY{n}{outfile}\PY{p}{)}
+
+\PY{c}{\PYZsh{} open ncdf file with model results}
+\PY{n}{ncfile} \PY{o}{=} \PY{n}{netcdf}\PY{o}{.}\PY{n}{netcdf\PYZus{}file}\PY{p}{(}\PY{n}{outfile}\PY{p}{)}
+
+\PY{c}{\PYZsh{} plot the results}
+\PY{n}{plt}\PY{o}{.}\PY{n}{figure}\PY{p}{(}\PY{l+m+mi}{1}\PY{p}{,} \PY{n}{figsize}\PY{o}{=}\PY{p}{(}\PY{l+m+mi}{20}\PY{p}{,}\PY{l+m+mi}{10}\PY{p}{)}\PY{p}{)}
+\PY{n}{plots}    \PY{o}{=} \PY{p}{[}\PY{p}{]}
+\PY{n}{legend\PYZus{}l} \PY{o}{=} \PY{p}{[}\PY{p}{]}
+\PY{k}{for} \PY{n}{i} \PY{o+ow}{in} \PY{n+nb}{range}\PY{p}{(}\PY{l+m+mi}{3}\PY{p}{)}\PY{p}{:}
+    \PY{n}{plots}\PY{o}{.}\PY{n}{append}\PY{p}{(}\PY{n}{plt}\PY{o}{.}\PY{n}{subplot}\PY{p}{(}\PY{l+m+mi}{1}\PY{p}{,}\PY{l+m+mi}{3}\PY{p}{,}\PY{n}{i}\PY{o}{+}\PY{l+m+mi}{1}\PY{p}{)}\PY{p}{)}
+
+\PY{n}{plots}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}xlabel}\PY{p}{(}\PY{l+s}{\PYZsq{}}\PY{l+s}{p [hPa]}\PY{l+s}{\PYZsq{}}\PY{p}{)}
+\PY{n}{plots}\PY{p}{[}\PY{l+m+mi}{1}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}xlabel}\PY{p}{(}\PY{l+s}{\PYZsq{}}\PY{l+s}{T [K]}\PY{l+s}{\PYZsq{}}\PY{p}{)}
+\PY{n}{plots}\PY{p}{[}\PY{l+m+mi}{2}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}xlabel}\PY{p}{(}\PY{l+s}{\PYZsq{}}\PY{l+s}{RH}\PY{l+s}{\PYZsq{}}\PY{p}{)}
+
+\PY{k}{for} \PY{n}{ax} \PY{o+ow}{in} \PY{n}{plots}\PY{p}{:}
+    \PY{n}{ax}\PY{o}{.}\PY{n}{set\PYZus{}ylabel}\PY{p}{(}\PY{l+s}{\PYZsq{}}\PY{l+s}{z [m]}\PY{l+s}{\PYZsq{}}\PY{p}{)}
+
+\PY{n}{z} \PY{o}{=} \PY{n}{ncfile}\PY{o}{.}\PY{n}{variables}\PY{p}{[}\PY{l+s}{\PYZdq{}}\PY{l+s}{z}\PY{l+s}{\PYZdq{}}\PY{p}{]}\PY{p}{[}\PY{p}{:}\PY{p}{]}
+\PY{n}{plots}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{]}\PY{o}{.}\PY{n}{plot}\PY{p}{(}\PY{n}{ncfile}\PY{o}{.}\PY{n}{variables}\PY{p}{[}\PY{l+s}{\PYZdq{}}\PY{l+s}{p}\PY{l+s}{\PYZdq{}}\PY{p}{]}\PY{p}{[}\PY{p}{:}\PY{p}{]} \PY{o}{/} \PY{l+m+mf}{100.} \PY{p}{,} \PY{n}{z}\PY{p}{)}
+\PY{n}{plots}\PY{p}{[}\PY{l+m+mi}{1}\PY{p}{]}\PY{o}{.}\PY{n}{plot}\PY{p}{(}\PY{n}{ncfile}\PY{o}{.}\PY{n}{variables}\PY{p}{[}\PY{l+s}{\PYZdq{}}\PY{l+s}{T}\PY{l+s}{\PYZdq{}}\PY{p}{]}\PY{p}{[}\PY{p}{:}\PY{p}{]}        \PY{p}{,} \PY{n}{z}\PY{p}{)}
+\PY{n}{plots}\PY{p}{[}\PY{l+m+mi}{2}\PY{p}{]}\PY{o}{.}\PY{n}{plot}\PY{p}{(}\PY{n}{ncfile}\PY{o}{.}\PY{n}{variables}\PY{p}{[}\PY{l+s}{\PYZdq{}}\PY{l+s}{RH}\PY{l+s}{\PYZdq{}}\PY{p}{]}\PY{p}{[}\PY{p}{:}\PY{p}{]}       \PY{p}{,} \PY{n}{z}\PY{p}{)} 
+   
+\PY{n}{plt}\PY{o}{.}\PY{n}{savefig}\PY{p}{(}\PY{l+s}{\PYZdq{}}\PY{l+s}{doc\PYZus{}python.pdf}\PY{l+s}{\PYZdq{}}\PY{p}{)}
+\PY{c}{\PYZsh{}listing01}
+\end{Verbatim}

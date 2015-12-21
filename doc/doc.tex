@@ -1,0 +1,358 @@
+\documentclass[11pt]{article}
+\pdfoutput=1
+\usepackage[utf8]{inputenc}
+
+% misc
+\usepackage{amsmath}
+
+% refrerences, url
+\usepackage[colorlinks=true,allcolors=blue]{hyperref}
+
+% document layout
+\usepackage{indentfirst}
+\setlength{\parindent}{0.4cm}
+\usepackage{microtype}
+\usepackage[hmarginratio=1:1,top=24mm,bottom=20mm,left=17mm,right=17mm,columnsep=20pt]{geometry}
+\usepackage[pdftex]{graphicx}
+\usepackage{caption}
+
+% bibliography
+\usepackage{natbib}
+\bibliographystyle{plain}
+
+% inline code style
+\newcommand{\prog}[1]{{\tt#1}}
+
+% TODO - do I need those?
+%\usepackage{abstract} 
+\usepackage{dblfloatfix} 
+\usepackage{type1cm}
+%\usepackage{vmargin}
+\usepackage{latexsym}
+\usepackage{setspace} 
+\usepackage{placeins}
+%\usepackage{nicefrac}
+\usepackage{fancyvrb}
+\usepackage{relsize}
+\usepackage{lineno}
+
+% listings
+\fvset{frame=single,framerule=.2mm,fontsize=\relscale{.9}}
+\input{pygments}
+\newcommand*\FancyVerbStartString{}
+\newcommand*\FancyVerbStopString{}
+
+\newcounter{lstnopyt}
+\setcounter{lstnopyt}{0}
+\newcounter{linenopyt}
+\setcounter{linenopyt}{0}
+
+\newcounter{lstnogdl}
+\setcounter{lstnogdl}{0}
+\newcounter{linenogdl}
+\setcounter{linenogdl}{0}
+
+\newcommand{\codepyt}[3]{%
+  \addtocounter{lstnopyt}{1}%
+  \setcounter{linenopyt}{\value{FancyVerbLine}}%
+  \renewcommand*\FancyVerbStartString{\PY{c}{\PYZsh{}#2}}
+  \renewcommand*\FancyVerbStopString{\PY{c}{\PYZsh{}#3}}
+  \setcounter{FancyVerbLine}{\thelinenopyt}%
+  \fvset{label={list.P\thelstnopyt~(Python)}, rulecolor=\color{blue}}%
+  \input{#1}%
+}
+
+\newcommand{\codegdl}[3]{%
+  \addtocounter{lstnogdl}{1}%
+  \setcounter{linenogdl}{\value{FancyVerbLine}}%
+  \renewcommand*\FancyVerbStartString{\PY{c+cSingleline}{;#2}}
+  \renewcommand*\FancyVerbStopString{\PY{c+cSingleline}{;#3}}
+  \setcounter{FancyVerbLine}{\thelinenogdl}%
+  \fvset{label={list.GDL\thelstnogdl~(gdl/idl)}, rulecolor=\color{black}}%
+  \input{#1}%
+}
+
+
+% title page content
+\usepackage{authblk}
+\author[1]{Anna Zimniak}
+\author[1]{Anna Jaruga}
+\affil[1]{Institute of Geophysics, Faculty of Physics, University of Warsaw, Poland}
+\title{parcel model documentation}
+
+\begin{document}
+
+\maketitle
+\vspace{-4em}
+
+%\twocolumn[
+%  \begin{@twocolumnfalse}
+%    \maketitle
+%    \begin{abstract}
+%    \end{abstract}
+%    \vspace{2em}
+%  \end{@twocolumnfalse}
+%]
+
+\section{Introduction}\label{sec:intro}
+
+The parcel model represents an idealised scenario of a 0-dimensional air parcel rising adiabatically with a constant vertical velocity. 
+Because of its simplicity, the parcel approach provides computationally efficient testbed for cloud microphysics schemes.\\
+
+Representation of microphysical and chemical processes in the parcel model is done using the particle-based scheme from \emph{libcloudph++}.
+The particle-based scheme (aka Lagrangian scheme) allows to track the properties of both 
+  aerosol particles and cloud droplets throughout the entire simulation.
+The processes resolved by the particle-based scheme cover:
+  (i) condensational growth of aerosols and cloud droplets,
+  (ii) collisions,
+  (iii) sedimentation\footnote{Should be switched off when used in 0-dimensional setting},
+  (iv) aqueous phase chemical reactions.
+All the processes can be easily switched on/off by the user.
+
+The \emph{libcloudph++} is a library of algorithms for representing cloud microphysics in numerical models.
+The introduction to the \emph{libcloudph++} containing description of the particle-based scheme used in the parcel model, 
+  complete description of the programming interface of the library and a performance analysis
+  is available online at \cite{Arabas_et_al_2015}.\\
+
+\section{Solved equations}\label{sec:eqs}
+
+The particle-based microphysics scheme used within the parcel model expects dry air density $\rho_d$ as one of the input arguments.
+To evaluate $\rho_d$, the profile of pressure within the parcel model is predicted by integrating the hydrostatic equation
+\begin{equation}
+	\frac{dp}{dz} = -\rho g,
+	\label{hydro}
+\end{equation}
+\noindent{where p - pressure, z - vertical displacement, $\rho$ - density of air, g - gravitational acceleration.}
+The user can choose between three methods for integrating (\ref{hydro}):
+
+\begin{itemize}
+  \item{ {\bf assuming constant profile of $\rho$}
+  
+  As a result, at a given time level $n$ the pressure used to predict $\rho_d$ is defined as 
+  \begin{equation*}
+    p^n = p^0 - \rho g z^n .
+  \end{equation*}
+  } 
+
+  \item{ {\bf assuming piecewise constant profile of  $\rho$}
+
+  As a result, at a given time level $n$ the pressure used to predict $\rho_d$ is defined as
+  \begin{equation*}
+    p^n = p^{n-1} - \rho^{n-1} g z^n .
+  \end{equation*}
+  } 
+
+  \item{ {\bf assuming constant potential temperature, $\theta^0$, and constant water vapour mixing ratio, $r_v^0$}
+
+  As a result at a given time level $n$ the pressure used to predict $\rho_d$ is defined as
+  \begin{equation*}
+    p^n = p_{1000} \left( (\frac{p^0}{p_{1000}})^{\frac{R_d}{c_{pd}}} - \frac{R_d g (z^n - z^0)}{c_{pd} \theta^{0} R(r_v^0)} \right) ^ {\frac{c_{pd}}{R_d}} ,
+  \end{equation*}
+  \noindent
+  where $p_{1000}$ stands for pressure equal 1000 $hPa$ that comes from the definition of potential temperature, 
+        $R(r_v^0)$ is the gas constant for moist air and
+        $c_{pd}$ is the specific heat at constant pressure for dry air.
+  }
+\end{itemize}
+\noindent
+All three methods use the same function to retrieve dry air density from pressure
+\begin{equation}
+  \rho_{d}(p, \theta, r_v) = \cfrac{p - p_v(p, r_v)}{ R_d \theta (\frac{p}{p_{1000}})^{\frac{R_d}{c_{pd}}}},
+\end{equation}
+\noindent
+where $p_v(p, r_v)$ represents partial pressure of water vapour.
+
+When assuming constant or piecewise-constant density profiles, 
+  the dry air density at a given timelevel $n$ 
+  is calculated as $\rho_d(p^n, \theta^n, r_v^n)$. 
+The pressure outputted by the parcel model is the same as the one used to calculate dry air density for the microphysics scheme.
+For the latter method, the dry air density at a given timelevel $n$ is calculated as $\rho_d(p^n, \theta^0, r_v^0)$.
+The pressure outputted by the parcel model is then calculated as $ \rho_d  (R_d + r_v R_v)  T$, 
+  where $R_v$ is the gas constant for water vapor.
+The latter method follows the procedure used in the 2-dimensional kinematic model \emph{icicle}, 
+  described in \citep{Arabas_et_al_2015} and was added to the parcel model to allow better comparison 
+  between the two setups.
+
+The derivation of source terms of heat and moisture due to microphysical processes 
+  is available in Appendix A of \citep{Arabas_et_al_2015}.
+
+
+\section{Initial condition}
+
+The initial lognormal monomodal size distribution of of dry aerosol is assumed. 
+The parametres of the size distribution can be specified by the user.
+The initial condition must be below supersaturation.
+If chemical reactions are enabled, the model assumes that the initial aerosol is ammonium bisulfate aerosol.
+The initial mass of chemical compounds is then calculated using the initial dry radius from initial 
+  dry aerosol size distribution and assumed dry particle density of 1.8 $g/cm^3$.
+
+\section{Arguments}
+
+\subsection{initial condition}
+
+\begin{itemize}
+
+  \item \textbf{T\_0} : float (default = 300);\\ initial temperature [K]
+  \item \textbf{p\_0} : float (default = 101300);\\ initial pressure [Pa]
+  \item \textbf{r\_0} : float (default = 0.022);\\ initial water vapour mass mixing ratio [kg/kg]
+  \item \textbf{w} : float (default = 1);\\ Updraft velocity [m/s]
+  \item \textbf{kappa} : float (default = 0.5);\\ $\kappa$ hygroscopicity parameter (see \citep{Petters_et_al_2007} for more details)
+  \item \textbf{mean\_r} : float (default = 0.04e-6);\\ lognormal distribution mode radius [m]
+  \item \textbf{gstdev} : float (default = 1.4);\\ lognormal distribution geometric standard deviation [1]
+  \item \textbf{n\_tot} : float (default = 60e6);\\ lognormal distribution total concentration in standard conditions 
+                               (T=20C, p=1013.25 hPa, r=0) [m\textsuperscript{-3}]
+  \item{TODO - mole fractions of trace gases}
+
+\end{itemize}
+
+\subsection{simulation parameters}
+
+\begin{itemize}
+
+  \item \textbf{dt} : float (default = 0.1); \\ timestep [s]
+  \item \textbf{z\_max} : float (default = 200); \\ maximum vertical displacement [m]
+  \item \textbf{sd\_conc} : int (default = 64); \\ number of super-droplets used by the particle-based microphysics scheme
+  \item \textbf{pprof} : string (default = "pprof\_piecewise\_const\_rhod"); \\ 
+                method to calculate pressure profile used to calculate 
+                dry air density that is used by the super-droplet scheme, see discussion in sec. (\ref{sec:eqs}). 
+                Valid options are: "pprof\_const\_th\_rv", "pprof\_const\_rhod", "pprof\_piecewise\_const\_rhod"
+  \item TODO - open/closed chem system
+\end{itemize}
+
+\subsection{output parametres}
+
+\begin{itemize}
+  \item \textbf{outfile} : string (default = "test.nc"); \\ output netCDF file name
+  \item \textbf{outfreq} : int (default = 100); \\ output interval (in number of time steps)
+  \item \textbf{out\_bin} : jason string (default =\\ '\{"radii": \{"rght": 0.0001, "moms": [0], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09\}\}');\\
+
+    \vspace{-.9em}
+    It is a dictionary of dictionaries defining spectrum diagnostics.
+    First key defines the name of created variable. The following dictionary defines spectrum characteristics:\\
+      \indent $\cdot$\ "rght", "left" - right and left edge of the spectrum (in meters)\\
+      \indent $\cdot$\ "moms" - list of numbers, specifying moments of the spectrum\\
+      \indent $\cdot$\ "drwt" - choice between  ("dry") for dry aerosol spectrum and ("wet") for wet particles\\
+      \indent $\cdot$\ "nbin" - number of bins\\
+      \indent $\cdot$\ "lnli" - linear ("lin") or logaritmical ("log") spacing between between bins\\
+ 
+    \vspace{-.9em}
+    For example string: \\ 
+  
+    \vspace{-.9em}
+    '\{"radii": \{"rght": 0.0001,  "moms": [0],          "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09\},\\ 
+       "cloud": \{"rght": 2.5e-05, "moms": [0, 1, 2, 3], "drwt": "wet", "nbin": 49, "lnli": "lin", "left": 5e-07\}\}'\\ 
+ 
+    \vspace{-.9em}
+    calculates five output spectra:
+      0-th spectrum moment for 26 bins spaced logaritmically between 0 and $10^{-4}$ m for dry radius for variable radii and 
+      0, 1, 2 and 3-rd moments for 49 bins spaced linearly between $0.5\cdot10^{-6}$ and $25\cdot10^{-6}$ m for wet radius for variable cloud.
+
+    TODO - chem output
+
+\end{itemize}
+
+\section{Output}
+
+The parcel model uses NetCDF file format\footnote{see unidata.ucar.edu/software/netcdf/ for details} for output.
+The content of the output file can be be viewed in terminal by using the \prog{ncdump} command.
+Output variables describing ambient conditions in the parcel are:
+
+\begin{itemize}
+  \item \textbf{t} - time [s],
+  \item \textbf{z} - vertical displacement [m],
+  \item \textbf{p} - pressure [Pa],
+  \item \textbf{r\_v} - water vapour mixing ratio [kg/kg],
+  \item \textbf{RH} - relative humidity [1],
+  \item \textbf{RH\_{max}} - maximum relative humidity reached during simulation [1],
+  \item \textbf{T} - temperature [K],
+  \item \textbf{th\_d} - dry potential temperature [K],
+  \item TODO - chem trace gases
+\end{itemize}
+
+\noindent
+Output variables describing size distribution of particles from microphysics scheme depend 
+  on the user-defined "out\_bin" parameter.
+For example, for the default setting of "out\_bin" parameter there are two output variables 
+  describing placing and spacing of size distribution bins:
+
+\begin{itemize}
+  \item \textbf{radii\_r\_wet} - left bin edge of spectrum histogram [m],
+  \item \textbf{radii\_dr\_wet} - distance between the edges [m]
+\end{itemize}
+
+and one output variable containing the chosen  moment of size distribution:
+\begin{itemize}
+  \item \textbf{radii\_m0} - 0th moment of spectrum.
+\end{itemize}
+
+\section{Installation}
+
+The parcel model requires the \emph{libcloudph++} library to be installed. 
+The \emph{libcloudph++} library can be obtained from the project github repository 
+  at \url{https://github.com/igfuw/libcloudphxx}.
+The library dependencies and installation guidelines are available there in a Readme file.
+
+The parcel model is available online at the project repository at \url{https://github.com/igfuw/parcel}.
+The installation guidelines are available there in a Readme file.
+The parcel model is written in Python 2.7 and was not tested in Python 3.0 or latter.
+
+\section{Usage examples}
+
+The parcel model is shipped with a set of tests designed for checking the particle-based microphysics scheme
+  from the \emph{libcloudph++} library.
+The tests may serve as usage examples for the parcel model and \emph{libcloudph++} library.
+The tests are located in the {\bf unit\_test} and {\bf long\_test} folders.
+The tests use the pytest python package for test automation and can be run by typing  \prog{py.test unit\_test} 
+  from terminal.
+Example output plots generated by the tests are saved to the plots$\backslash$outputs folder.
+
+\subsection{bash}
+
+\noindent
+To run the model using default parameters please type in terminal:
+
+\vspace{0.35cm}
+  \prog{ python parcel.py}
+\vspace{0.35cm}
+
+\noindent
+Arguments to parcel model options can be passed via command line. For example:
+
+\vspace{0.35cm}
+ \prog{python parcel.py \texttt{--}outfile 'test2.nc' \texttt{--}p\_0 100000 \texttt{--}T\_0 280 \texttt{--}r\_v0 0.025}
+\vspace{0.35cm}
+
+\subsection{gdl/idl}
+
+The following example shows how to use the parcel model from the IDL (or its free counterpart GDL)
+   programming languages. 
+It takes advantage of the command line interface of the parcel model
+  and executes the simulation via the \prog{spawn} command.
+It then plots the size distribution of particles at different timelevels, see fig TODO.
+
+% first column
+\begin{minipage}[t]{0.95\textwidth}
+\codegdl{lst/plot.pro}{listing00}{listing01}
+\end{minipage}
+%second column
+\begin{minipage}[t]{0.3\textwidth}
+\end{minipage}
+
+\subsection{python}
+
+% first column
+\begin{minipage}[t]{0.65\textwidth}
+\codepyt{lst/plot.py}{listing00}{listing01}
+\end{minipage}
+%second column
+\begin{minipage}[t]{0.3\textwidth}
+\end{minipage}
+
+\appendix
+
+\section*{Acknowledgements}
+\footnotesize
+
+\bibliography{doc}
+
+\end{document}
