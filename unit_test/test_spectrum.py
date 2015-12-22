@@ -19,10 +19,10 @@ def data(request):
     outfile = "test_spectrum.nc"
 
     # running parcel model for open / closed chem system  ...
-    parcel(dt = .5, sd_conc = 1024, outfreq = 40,  outfile=outfile, out_bin = \
-            '{"linwradii": {"rght": 0.0001, "left": 1e-09, "drwt": "wet", "lnli": "lin", "nbin": 26, "moms": [0, 1, 3]}, \
+    parcel(dt = .5, sd_conc = 1024, outfreq = 40,  outfile=outfile, chem_dsl = True, out_bin = \
+            '{"linwradii": {"rght": 0.0001,  "left": 1e-09, "drwt": "wet", "lnli": "lin", "nbin": 26, "moms": [0, 1, 3]}, \
               "lindradii": {"rght": 1e-06,  "left": 1e-09, "drwt": "dry", "lnli": "lin", "nbin": 26, "moms": [0, 1, 3]}, \
-              "wradii":    {"rght": 0.0001, "left": 1e-09, "drwt": "wet", "lnli": "log", "nbin": 26, "moms": [0, 1, 3]}, \
+              "wradii":    {"rght": 0.0001,  "left": 1e-09, "drwt": "wet", "lnli": "log", "nbin": 26, "moms": [0, 1, 3]}, \
               "dradii":    {"rght": 1e-06,  "left": 1e-09, "drwt": "dry", "lnli": "log", "nbin": 26, "moms": [0, 1, 3]}}'\
           )
 
@@ -67,7 +67,7 @@ def test_spectrum_diff(data, var, eps_d = 1e-15):
 @pytest.mark.parametrize("mom, eps", [("wradii_m0",    1e-15), ("dradii_m0",    1e-15), 
                                       ("lindradii_m0", 1e-15), ("linwradii_m0", 1e-15),
                                       ("wradii_m1",    7e-4),  ("dradii_m1",    5e-15), 
-                                      ("lindradii_m1", 4e-15), ("linwradii_m1", 2e-6),
+                                      ("lindradii_m1", 4e-15), ("linwradii_m1", 5e-6),
                                       ("wradii_m3",    1.6e-3),("dradii_m3",    2e-14), 
                                       ("lindradii_m3", 2e-14), ("linwradii_m3", 5e-6)])
 
