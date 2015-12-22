@@ -16,6 +16,7 @@ from chemical_plot import plot_chem
 from kreidenweis import plot_fig1
 from kreidenweis import plot_fig2
 from kreidenweis import plot_fig3
+from kreidenweis import plot_fig4
 from chem_conditions import parcel_dict
 
 @pytest.fixture(scope="module")
@@ -84,4 +85,10 @@ def test_chem_fig3(data):
     size distribution plot for S6
     """
     plot_fig3(data, output_folder="plots/outputs", output_title='/Kreidenweis_fig3')
+
+def test_chem_fig4(data):
+    """
+    gas vol conc. plots
+    """
+    plot_fig4(data, output_folder="plots/outputs", output_title='/Kreidenweis_fig4')
 
