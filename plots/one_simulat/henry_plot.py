@@ -12,7 +12,7 @@ import subprocess
 
 from parcel import parcel
 from libcloudphxx import common as cm
-from functions import *
+import functions as fn
 
 def plot_henry(data, chem_sys, output_folder):
     import matplotlib
@@ -65,15 +65,15 @@ def plot_henry(data, chem_sys, output_folder):
 
     for i in range(6):
         mixr_g = data.variables[chem[i]+"_g"][:]
-        plots[i].plot(henry_teor(chem[i], p, T, vol, mixr_g, rhod), t, "r.-", label="Henry(T)")
-        plots[i].plot(henry_teor_2(chem[i], p, T, vol, mixr_g, rhod), t, "g.-", label="Henry")
+        plots[i].plot(fn.henry_teor(chem[i], p, T, vol, mixr_g, rhod), t, "r.-", label="Henry(T)")
+        plots[i].plot(fn.henry_teor_2(chem[i], p, T, vol, mixr_g, rhod), t, "g.-", label="Henry")
         plots[i].plot(data.variables[chem[i]+"_a"][:], t, "b.-", label="in drop")
         plots[i].legend(loc='upper left')
 
     plots[6].plot(data.variables["SO2_g"][:], t)
     plots[7].plot(p / 100, t)
     plots[8].plot(data.variables["r_v"][:] * 1000, t)
-    plots[9].plot(mix_ratio_to_mole_frac(data.variables["SO2_g"][:], p, cm.M_SO2, T, rhod) * 1e9, t)
+    plots[9].plot(fn.mix_ratio_to_mole_frac(data.variables["SO2_g"][:], p, cm.M_SO2, T, rhod) * 1e9, t)
     plots[10].plot(lwc, t)
     plots[11].plot(T, t)
 
@@ -90,12 +90,12 @@ def main():
     th_0      = T_init * (cm.p_1000 / p_init)**(cm.R_d / cm.c_pd)
     rhod_init = cm.rhod(p_init, th_0, r_init)
 
-    SO2_g_init  = mole_frac_to_mix_ratio(200e-12, p_init, cm.M_SO2,  T_init, rhod_init)
-    O3_g_init   = mole_frac_to_mix_ratio(50e-9,   p_init, cm.M_O3,   T_init, rhod_init)
-    H2O2_g_init = mole_frac_to_mix_ratio(500e-12, p_init, cm.M_H2O2, T_init, rhod_init)
-    CO2_g_init  = mole_frac_to_mix_ratio(360e-6,  p_init, cm.M_CO2,  T_init, rhod_init)
-    NH3_g_init  = mole_frac_to_mix_ratio(100e-12, p_init, cm.M_NH3,  T_init, rhod_init)
-    HNO3_g_init = mole_frac_to_mix_ratio(100e-12, p_init, cm.M_HNO3, T_init, rhod_init)
+    SO2_g_init  = fn.mole_frac_to_mix_ratio(200e-12, p_init, cm.M_SO2,  T_init, rhod_init)
+    O3_g_init   = fn.mole_frac_to_mix_ratio(50e-9,   p_init, cm.M_O3,   T_init, rhod_init)
+    H2O2_g_init = fn.mole_frac_to_mix_ratio(500e-12, p_init, cm.M_H2O2, T_init, rhod_init)
+    CO2_g_init  = fn.mole_frac_to_mix_ratio(360e-6,  p_init, cm.M_CO2,  T_init, rhod_init)
+    NH3_g_init  = fn.mole_frac_to_mix_ratio(100e-12, p_init, cm.M_NH3,  T_init, rhod_init)
+    HNO3_g_init = fn.mole_frac_to_mix_ratio(100e-12, p_init, cm.M_HNO3, T_init, rhod_init)
 
     outfreq     = 50
     z_max       = 50.
@@ -106,8 +106,8 @@ def main():
     # run parcel model for open chem system  and only for dissolving chem species into droplets
     parcel(dt = dt, z_max = z_max, outfreq = outfreq, wait=wait,\
             T_0 = T_init, p_0 = p_init, r_0 = r_init,\
-            SO2_g_0 = SO2_g_init, O3_g_0 = O3_g_init, H2O2_g_0 = H2O2_g_init,\
-            CO2_g_0 = CO2_g_init, NH3_g_0 = NH3_g_init, HNO3_g_0 = HNO3_g_init,\
+            SO2_g = SO2_g_init, O3_g  = O3_g_init,  H2O2_g = H2O2_g_init,\
+            CO2_g = CO2_g_init, NH3_g = NH3_g_init, HNO3_g = HNO3_g_init,\
             chem_sys = 'open',   outfile = outfile,\
             chem_dsl = True, chem_dsc = False, chem_rct = False,\
             out_bin = \

@@ -26,13 +26,12 @@ def data(request):
     dt          = .06
     w           = 1.
     outfreq     = int(z_max / dt / 100)
-    sd_conc     = 2048.
+    sd_conc     = 2048
     
     # turn on chemistry
     chem_dsl = True
     chem_dsc = True
     chem_rct = True
-    chem_spn = 10
 
     # define output for moments and chemistry
     out_bin_chem = '{"plt_rw":   {"rght": 1, "left": 0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\
@@ -49,26 +48,23 @@ def data(request):
 
     # running parcel model for open / closed / off chem system
     parcel(dt = dt, z_max = z_max, w = w, outfreq = outfreq,\
-            SO2_g_0 = SO2_g_init, O3_g_0 = O3_g_init, H2O2_g_0 = H2O2_g_init,\
-            CO2_g_0 = CO2_g_init, NH3_g_0 = NH3_g_init, HNO3_g_0 = HNO3_g_init,\
+            SO2_g = SO2_g_init,  O3_g = O3_g_init,  H2O2_g = H2O2_g_init,\
+            CO2_g = CO2_g_init, NH3_g = NH3_g_init, HNO3_g = HNO3_g_init,\
             chem_sys = 'open',   outfile="test_plot_chem_open.nc",\
             sd_conc = sd_conc,\
-            chem_dsl = chem_dsl, chem_dsc = chem_dsc, chem_rct = chem_rct, chem_spn = chem_spn, \
+            chem_dsl = chem_dsl, chem_dsc = chem_dsc, chem_rct = chem_rct, \
             out_bin = out_bin_chem)
 
     parcel(dt = dt, z_max = z_max, w = w, outfreq = outfreq,\
-           SO2_g_0 = SO2_g_init, O3_g_0 = O3_g_init, H2O2_g_0 = H2O2_g_init,\
-           CO2_g_0 = CO2_g_init, NH3_g_0 = NH3_g_init, HNO3_g_0 = HNO3_g_init,\
+           SO2_g = SO2_g_init,  O3_g = O3_g_init,  H2O2_g = H2O2_g_init,\
+           CO2_g = CO2_g_init, NH3_g = NH3_g_init, HNO3_g = HNO3_g_init,\
            chem_sys = 'closed', outfile="test_plot_chem_closed.nc",\
            sd_conc = sd_conc,\
-           chem_dsl = chem_dsl, chem_dsc = chem_dsc, chem_rct = chem_rct, chem_spn = chem_spn, \
+           chem_dsl = chem_dsl, chem_dsc = chem_dsc, chem_rct = chem_rct, \
            out_bin = out_bin_chem)
 
     parcel(dt = dt, z_max = z_max, w = w, outfreq = outfreq, outfile="test_plot_chem_off.nc",\
-           SO2_g_0=0, O3_g_0=0, H2O2_g_0=0, out_bin = out_bin, sd_conc = sd_conc)
-
-    # TODO - why do I have to repeat this import here?
-    from scipy.io import netcdf
+           SO2_g=0, O3_g=0, H2O2_g=0, out_bin = out_bin, sd_conc = sd_conc)
 
     data = {'open'   : netcdf.netcdf_file("test_plot_chem_open.nc",   "r"),\
             'closed' : netcdf.netcdf_file("test_plot_chem_closed.nc", "r"),\

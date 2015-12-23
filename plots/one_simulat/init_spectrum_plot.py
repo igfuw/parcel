@@ -17,7 +17,7 @@ import ast
 
 from parcel import parcel
 from chem_conditions import parcel_dict
-from functions import *
+import functions as fn
 
 def plot_init_spectrum(data, outfolder):
     """
@@ -50,7 +50,7 @@ def plot_init_spectrum(data, outfolder):
     radii = np.logspace(-3, 1, 100) * 1e-6
     theor = np.empty(radii.shape)
     for it in range(radii.shape[0]):
-        theor[it] = log10_size_of_lnr(n_tot, mean_r, math.log(radii[it], 10), gstdev)
+        theor[it] = fn.log10_size_of_lnr(n_tot, mean_r, math.log(radii[it], 10), gstdev)
 
     g = Gnuplot.Gnuplot()
     g('set term svg dynamic enhanced')

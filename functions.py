@@ -82,11 +82,6 @@ def dissoc_teor(chem, T):
     K        = getattr(cm, "K_"  +chem)
     dKR      = getattr(cm, "dKR_"+chem)
 
-    print "K =        ", K 
-    print "dKR =      ", dKR
-    print "exp(...) = ", np.exp(dKR * (1./T - 1./298)) 
-    print "K(T) =     ", K * np.exp(dKR * (1./T - 1./298)) 
-
     return K * np.exp(dKR * (1./T - 1./298))
 
 def log10_size_of_lnr(n_tot, mean_r, lnr, gstdev):

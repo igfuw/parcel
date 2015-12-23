@@ -9,7 +9,6 @@ import math
 import subprocess
 import pytest
 import copy
-import pprint 
 
 from parcel import parcel
 from libcloudphxx import common as cm
@@ -26,8 +25,6 @@ def data(request):
     p_dict['outfile']  = "test_chem_closed_dsl.nc"
     p_dict['chem_dsl'] = True
 
-    pprint.pprint(p_dict)
-
     # run parcel
     parcel(**p_dict)
 
@@ -43,7 +40,7 @@ def data(request):
 
 @pytest.mark.parametrize("chem", ["SO2", "O3", "H2O2", "CO2", "NH3", "HNO3"])
 def test_moles_const_dsl(data, chem, eps = {"SO2": 3e-14, "O3": 2e-14,  "H2O2": 2e-14,\
-                                            "CO2": 9e-15, "NH3": 2e-14, "HNO3": 2e-14}):
+                                            "CO2": 3e-14, "NH3": 3e-14, "HNO3": 2e-14}):
     """
     Checking if the total number of moles in closed chemical system 
     with only dissolving chem species into droplets, remains constant

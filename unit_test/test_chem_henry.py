@@ -13,7 +13,7 @@ import pytest
 from parcel import parcel
 from libcloudphxx import common as cm
 from henry_plot import plot_henry
-from functions import *
+import functions as fn
 
 @pytest.fixture(scope="module")  
 def data(request):
@@ -28,12 +28,12 @@ def data(request):
     rhod_init = cm.rhod(p_init, th_0, r_init)
 
     # init cond for trace gases
-    SO2_g_init  = mole_frac_to_mix_ratio(200e-12, p_init, cm.M_SO2,  T_init, rhod_init)
-    O3_g_init   = mole_frac_to_mix_ratio(50e-9,   p_init, cm.M_O3,   T_init, rhod_init)
-    H2O2_g_init = mole_frac_to_mix_ratio(500e-12, p_init, cm.M_H2O2, T_init, rhod_init)
-    CO2_g_init  = mole_frac_to_mix_ratio(360e-6,  p_init, cm.M_CO2,  T_init, rhod_init)
-    NH3_g_init  = mole_frac_to_mix_ratio(100e-12, p_init, cm.M_NH3,  T_init, rhod_init)
-    HNO3_g_init = mole_frac_to_mix_ratio(100e-12, p_init, cm.M_HNO3, T_init, rhod_init)
+    SO2_g_init  = fn.mole_frac_to_mix_ratio(200e-12, p_init, cm.M_SO2,  T_init, rhod_init)
+    O3_g_init   = fn.mole_frac_to_mix_ratio(50e-9,   p_init, cm.M_O3,   T_init, rhod_init)
+    H2O2_g_init = fn.mole_frac_to_mix_ratio(500e-12, p_init, cm.M_H2O2, T_init, rhod_init)
+    CO2_g_init  = fn.mole_frac_to_mix_ratio(360e-6,  p_init, cm.M_CO2,  T_init, rhod_init)
+    NH3_g_init  = fn.mole_frac_to_mix_ratio(100e-12, p_init, cm.M_NH3,  T_init, rhod_init)
+    HNO3_g_init = fn.mole_frac_to_mix_ratio(100e-12, p_init, cm.M_HNO3, T_init, rhod_init)
 
     # aerosol size distribution
     mean_r = .08e-6 / 2
@@ -69,11 +69,11 @@ def data(request):
         for files in data.keys():
             subprocess.call(["rm", "test_chem_dsl_"+files+".nc"])
 
-    #request.addfinalizer(removing_files)
+    request.addfinalizer(removing_files)
     return data
 
 @pytest.mark.parametrize("chem", ["SO2", "O3", "H2O2", "CO2", "HNO3", "NH3"])
-def test_henry_checker(data, chem, eps = {"SO2": 5e-8, "O3":4e-8, "H2O2": 8e-8, "CO2": 4e-8, "NH3": 6e-8, "HNO3":2e-7}):
+def test_henry_checker(data, chem, eps = {"SO2": 5e-8, "O3":4e-8, "H2O2": 2e-7, "CO2": 4e-8, "NH3": 6e-8, "HNO3":2e-7}):
     """                              
     Checking if dissolving chemical compounds into cloud droplets follows Henrys law
     http://www.henrys-law.org/
@@ -96,7 +96,7 @@ def test_henry_checker(data, chem, eps = {"SO2": 5e-8, "O3":4e-8, "H2O2": 8e-8, 
     rhod   = data_open.variables["rhod"][-1]
 
     # dissolved mass according to Henry's law
-    henry_aq  = henry_teor(chem, p, T, vol, mixr_g, rhod)
+    henry_aq  = fn.henry_teor(chem, p, T, vol, mixr_g, rhod)
     # mass in droplets
     chem_tmp  = data_open.variables["chem_"+chem+"_a"][-1]
 

@@ -3,6 +3,7 @@ import sys
 sys.path.insert(0, "../../")
 sys.path.insert(0, "../")
 sys.path.insert(0, "./")
+
 from scipy.io import netcdf
 import numpy as np
 import pytest
@@ -56,16 +57,21 @@ def plot_spectrum(data, outfolder):
         g.plot(plot_rw, plot_rd)
 
 def main():
-    # running parcel
+
     outfile = "test_spectrum.nc"
-    parcel(dt = .5, sd_conc = 1024, outfreq = 40,  outfile=outfile,\
-          out_bin = ["wradii:1e-9/1e-4/26/log/wet/0", "dradii:1e-9/1e-6/26/log/dry/0"])
+    out_bin = '{"wradii": {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 26, "moms": [0]},\
+                "dradii": {"rght": 1e-6, "left": 1e-9, "drwt": "dry", "lnli": "log", "nbin": 26, "moms": [0]}}'
+
+    # run parcel run!
+    parcel(dt = .5, sd_conc = 1024, outfreq = 40,  outfile = outfile, out_bin = out_bin)
+
     data = netcdf.netcdf_file(outfile, "r")
-    # doing plotting 
+
+    # plotting 
     plot_spectrum(data, outfolder="../outputs/")
+
     # cleanup
     subprocess.call(["rm", outfile])
-
 
 if __name__ == '__main__':
     main()

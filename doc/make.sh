@@ -1,13 +1,10 @@
 #!/bin/bash
 
 ### listings
-echo "import pygments.formatters as f; print f.LatexFormatter().get_style_defs()" | python > lst/pygments.tex
+echo "import pygments.formatters as f; print f.LatexFormatter().get_style_defs()" | python > pygments.tex
 
-### LaTeX
-pdflatex parcel-doc.tex
-
-
-#pygmentize -o lst/choice.cpp.tex               ../libmpdataxx/tests/unit/concurrent_1d/test_concurrent_1d.cpp
+pygmentize -l python -o lst/plot.py.tex  examples/plot.py
+pygmentize -l idl    -o lst/plot.pro.tex examples/plot.pro
 
 ### figures
 #rsvg-convert -f pdf -o img/example_1.pdf     ../libmpdataxx/build/tests/paper_example_1/out.svg
@@ -20,4 +17,9 @@ pdflatex parcel-doc.tex
 #  rm img/example_2_${opt}.pdf
 #done;
 
+### LaTeX
+pdflatex doc.tex
+bibtex doc.aux
+pdflatex doc.tex
+pdflatex doc.tex
 
