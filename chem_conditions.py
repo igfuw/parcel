@@ -54,6 +54,9 @@ outfreq = int(z_max / dt / 30)
 sd_conc = 4
 outfile = "TODO.nc"
 
+sstp_cond = 1
+sstp_chem = 1
+
 # output moments for the chemistry quicklook plot (the same for all tests)
 out_bin = '{"plt_rw":   {"rght": 1,    "left":    0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\
             "plt_rd":   {"rght": 1,    "left":    0, "drwt": "dry", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\
@@ -65,6 +68,7 @@ out_bin = '{"plt_rw":   {"rght": 1,    "left":    0, "drwt": "wet", "lnli": "lin
 
 # saving parcel options as a dictionary
 parcel_dict = {'dt': dt, 'z_max': z_max, 'outfreq': outfreq, 'w': w,\
+               'sstp_cond': sstp_cond, 'sstp_chem': sstp_chem,\
                'T_0': T_init, 'p_0': p_init, 'r_0': r_init,\
                'SO2_g': SO2_g_init, 'O3_g':  O3_g_init, 'H2O2_g': H2O2_g_init,\
                'CO2_g': CO2_g_init, 'NH3_g': NH3_g_init,'HNO3_g': HNO3_g_init,\

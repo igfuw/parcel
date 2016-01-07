@@ -10,6 +10,8 @@ import subprocess
 import pytest
 import copy
 
+import pprint as pp
+
 from parcel import parcel
 from libcloudphxx import common as cm
 from chemical_plot import plot_chem
@@ -35,6 +37,8 @@ def data(request):
                                "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI",\
                                "CO2_a",  "HCO3_a", "CO3_a",\
                                "NH3_a",  "NH4_a",  "HNO3_a", "NO3_a"]}}'
+
+    pp.pprint(p_dict)
 
     # run parcel
     parcel(**p_dict)

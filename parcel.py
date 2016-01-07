@@ -109,6 +109,7 @@ def _micro_step(micro, state, info, opts, it, fout):
     libopts.chem_dsl = opts["chem_dsl"]
     libopts.chem_dsc = opts["chem_dsc"]
     libopts.chem_rct = opts["chem_rct"]
+    libopts.sstp_chem = opts["sstp_chem"]
 
   # get trace gases
   ambient_chem = {}
@@ -240,7 +241,7 @@ def _p_hydro_const_th_rv(z_lev, p_0, th_std, r_v, z_0=0.):
   # hydrostatic pressure assuming constatnt theta and r_v
   return common.p_hydro(z_lev, th_std, r_v, z_0, p_0)
  
-def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, 
+def parcel(dt=1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, 
   outfile="test.nc", 
   pprof="pprof_piecewise_const_rhod",
   outfreq=100, sd_conc=64, kappa=.5,
@@ -250,7 +251,8 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   chem_sys = 'open',
   chem_dsl = False, chem_dsc = False, chem_rct = False, 
   chem_rho = 1.8e3,
-  sstp_cond = 1,
+  sstp_cond = 10,
+  sstp_chem = 10,
   wait = 0
 ):
   """
