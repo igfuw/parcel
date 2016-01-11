@@ -253,7 +253,8 @@ def parcel(dt=1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   chem_rho = 1.8e3,
   sstp_cond = 10,
   sstp_chem = 10,
-  wait = 0
+  wait = 0,
+  down = False
 ):
   """
   Args:
@@ -402,6 +403,61 @@ def parcel(dt=1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
         print str(round(it / (nt * 1.) * 100, 2)) + " %"
         rec = it/outfreq
         _output(fout, opts, micro, state, rec, spectra)
+
+    t_max = state["t"]
+    if down == True: 
+      # timestepping down
+      for it in range(nt+2,2*nt):
+        # diagnostics
+        # the reasons to use analytic solution:
+        # - independent of dt
+        # - same as in 2D kinematic model
+        state["z"] -= w * dt
+        state["t"] = it * dt
+
+        # pressure
+        if pprof == "pprof_const_th_rv":
+          # as in icicle model
+          p_hydro = _p_hydro_const_th_rv(state["z"], p_0, th_0, r_0)
+        elif pprof == "pprof_const_rhod":
+          # as in Grabowski and Wang 2009
+          rho = 1.13 # kg/m3  1.13 
+          state["p"] = _p_hydro_const_rho(state["z"], p_0, rho) 
+
+        elif pprof == "pprof_piecewise_const_rhod":
+          # as in Grabowski and Wang 2009 but calculating pressure
+          # for rho piecewise constant per each time step
+          state["p"] = _p_hydro_const_rho(-1 * w*dt, state["p"], state["rhod"][0])
+
+        else: assert(False)
+
+        # dry air density
+        if pprof == "pprof_const_th_rv":
+          state["rhod"][0] = common.rhod(p_hydro, th_0, r_0)
+          state["p"] = common.p(
+            state["rhod"][0],
+            state["r_v"][0],
+            common.T(state["th_d"][0], state["rhod"][0])
+          )
+
+        else:
+          state["rhod"][0] = common.rhod(
+            state["p"], 
+            common.th_dry2std(state["th_d"][0], state["r_v"][0]), 
+            state["r_v"][0]
+          )
+
+        # microphysics
+        _micro_step(micro, state, info, opts, it, fout)
+ 
+        # TODO: only if user wants to stop @ RH_max
+        #if (state["RH"] < info["RH_max"]): break
+ 
+        # output
+        if (it % outfreq == 0):
+          print str(round(it / (nt * 1.) * 100, 2)) + " %"
+          rec = it/outfreq
+          _output(fout, opts, micro, state, rec, spectra)
 
     _save_attrs(fout, info)
     _save_attrs(fout, opts)

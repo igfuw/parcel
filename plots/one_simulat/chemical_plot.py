@@ -30,10 +30,11 @@ def plot_chem(data, output_folder = '', output_title = ''):
         f_out_chem["closed"] = data["closed"]
 
     style = {
-      "open"   : "b.-",
-      "closed" : "g.-",
-      "off"    : "r.-"
+      "open"   : "b.",
+      "closed" : "g.",
+      "off"    : "r."
     }
+    #spn_idx = 30
     spn_idx = 0
 
     #-----------------------------------------------------------------------
@@ -56,15 +57,20 @@ def plot_chem(data, output_folder = '', output_title = ''):
     plots[7].set_xlabel('m1_dry um/kg dry air ')
     plots[8].set_xlabel('mass cont ug/kg dry air')
 
-    plots[7].set_xlim([0.05, 0.06])
-    plots[7].set_xticks([0.05, 0.052, 0.054, 0.056, 0.058, 0.06])
-
+    #plots[7].set_xlim([0.022, 0.0265])
+    #plots[7].set_xticks([0.022, 0.024, 0.026])
+    plots[7].set_xlim([0.022, 0.032])
+    plots[7].set_xticks([0.022, 0.024, 0.026, 0.028, 0.030, 0.032])
 
     for ax in plots:
       ax.set_ylabel('t [s]')
 
     for i, f in data.iteritems():
       t = f.variables["t"][spn_idx:]
+
+      print t
+
+      print np.squeeze(f.variables["plt_rd_m1"][spn_idx:]) / np.squeeze(f.variables["plt_rd_m0"][spn_idx:]) * 1e6
 
       plots[0].plot(f.variables["p"][spn_idx:] / 100.   , t, style[i], label=i)
       plots[0].legend(loc='upper right')

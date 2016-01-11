@@ -32,7 +32,7 @@ O3_g_init   = fn.mole_frac_to_mix_ratio(50e-9,   p_init, cm.M_O3,   T_init, rhod
 H2O2_g_init = fn.mole_frac_to_mix_ratio(500e-12, p_init, cm.M_H2O2, T_init, rhod_init)
 CO2_g_init  = fn.mole_frac_to_mix_ratio(360e-6,  p_init, cm.M_CO2,  T_init, rhod_init)
 NH3_g_init  = fn.mole_frac_to_mix_ratio(100e-12, p_init, cm.M_NH3,  T_init, rhod_init)
-HNO3_g_init = fn.mole_frac_to_mix_ratio(100e-12, p_init, cm.M_HNO3, T_init, rhod_init)
+HNO3_g_init = 0. #fn.mole_frac_to_mix_ratio(100e-12, p_init, cm.M_HNO3, T_init, rhod_init)
 
 # aerosol size distribution
 mean_r = .04e-6
@@ -48,14 +48,14 @@ chem_rho = 1.8e3
 
 # output
 z_max   = 1400
-dt      = .1
+dt      = 1
 w       = .5
 outfreq = int(z_max / dt / 30) 
 sd_conc = 4
 outfile = "TODO.nc"
 
-sstp_cond = 1
-sstp_chem = 1
+sstp_cond = 10
+sstp_chem = 10
 
 # output moments for the chemistry quicklook plot (the same for all tests)
 out_bin = '{"plt_rw":   {"rght": 1,    "left":    0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\

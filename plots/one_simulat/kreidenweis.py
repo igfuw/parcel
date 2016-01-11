@@ -167,11 +167,11 @@ def plot_fig3(data, output_folder = '', output_title = ''):
     edge1 = .08
     edge2 = .125
 
-    g('set arrow from ' + str(edge1) + ',' + str(mass1) + 'to ' + str(edge1) + ',' + str(ymin) + 'nohead lw 2')
-    g('set arrow from ' + str(edge2) + ',' + str(mass2) + 'to ' + str(edge2) + ',' + str(ymin) + 'nohead lw 2')
+    #g('set arrow from ' + str(edge1) + ',' + str(mass1) + 'to ' + str(edge1) + ',' + str(ymin) + 'nohead lw 2')
+    #g('set arrow from ' + str(edge2) + ',' + str(mass2) + 'to ' + str(edge2) + ',' + str(ymin) + 'nohead lw 2')
  
-    plot_ini = Gnuplot.PlotItems.Data(rd * 2 * 1e6, s6_ini * 1e9, with_="steps lw 1 lt 3", title="ini")
-    plot_end = Gnuplot.PlotItems.Data(rd * 2 * 1e6, s6_end * 1e9, with_="steps lw 2 lt 8", title="end")
+    plot_ini = Gnuplot.PlotItems.Data(rd * 2 * 1e6, s6_ini * 1e9, with_="steps lw 3 lt 1", title="ini")
+    plot_end = Gnuplot.PlotItems.Data(rd * 2 * 1e6, s6_end * 1e9, with_="steps lw 3 lt 2", title="end")
 
     g.plot(plot_ini, plot_end)
 
