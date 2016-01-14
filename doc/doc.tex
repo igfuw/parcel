@@ -75,10 +75,10 @@
 
 % title page content
 \usepackage{authblk}
-\author[1]{Anna Zimniak}
-\author[1]{Anna Jaruga}
-\affil[1]{Institute of Geophysics, Faculty of Physics, University of Warsaw, Poland}
-\title{parcel model documentation}
+\author{Anna Zimniak}
+\author{Anna Jaruga}
+\affil{Institute of Geophysics, Faculty of Physics, University of Warsaw, Poland}
+\title{Parcel model documentation}
 
 \begin{document}
 
@@ -99,7 +99,7 @@
 The parcel model represents an idealised scenario of a 0-dimensional air parcel rising adiabatically with a~constant vertical velocity. 
 Because of its simplicity, the parcel approach provides computationally efficient testbed for cloud microphysics schemes.\\
 
-Representation of microphysical and chemical processes in the parcel model is done using the particle-based scheme from \emph{libcloudph++}.
+Representation of microphysical and chemical processes in the parcel model is done using the particle-based scheme.
 The particle-based scheme (aka Lagrangian scheme) allows to track the properties of both 
   aerosol particles and cloud droplets throughout the entire simulation.
 The processes resolved by the particle-based scheme cover:
@@ -109,7 +109,7 @@ The processes resolved by the particle-based scheme cover:
   (iv) aqueous phase chemical reactions.
 All the processes can be easily switched on/off by the user.
 
-The \emph{libcloudph++} is a library of algorithms for representing cloud microphysics in numerical models.
+We are using the particle-based scheme from the \emph{libcloudph++} library. This is a library of algorithms for representing cloud microphysics in numerical models.
 The introduction to the \emph{libcloudph++} containing description of the particle-based scheme used in the parcel model, 
   complete description of the programming interface of the library and a performance analysis
   is available online at \cite{Arabas_et_al_2015}.\\
@@ -123,13 +123,13 @@ To evaluate $\rho_d$, the profile of pressure within the parcel model is predict
 	\label{hydro}
 \end{equation}
 \noindent{where p - pressure, z - vertical displacement, $\rho$ - density of air, g - gravitational acceleration.}
-A method used in the parcel model to integrate (\ref{hydro}) is to assume piecewise constant profile of $\rho$. 
+A method used in the parcel model to integrate eq.~\ref{hydro} is to assume a piecewise constant profile of $\rho$. 
 As a result, at a given time level $n$ the pressure used to predict $\rho_d$ is defined as
   \begin{equation*}
     p^n = p^{n-1} - \rho^{n-1} g z^n .
   \end{equation*}
 \noindent
-The method uses following function to retrieve dry air density from pressure:
+The method uses following function to retrieve dry air density from the pressure:
 \begin{equation}
   \rho_{d}(p, \theta, r_v) = \cfrac{p - p_v(p, r_v)}{ R_d \theta (\frac{p}{p_{1000}})^{\frac{R_d}{c_{pd}}}},
   \label{rho}
@@ -146,14 +146,14 @@ The derivation of source terms of heat and moisture due to microphysical process
 
 \section{Initial condition}
 
-The initial thermodynamic condition must be below supersaturation, which means
+The initial thermodynamic condition must be set below supersaturation, i.e.
 \begin{equation}
 	r_0 < \epsilon \frac{e_s(T_0)}{p_0 - e_s(T_0)},
 \end{equation}
 \noindent
 where $r_0$ is initial water vapour mass mixing ratio, $e_s(T_0)$ is water vapour saturation pressure at initial temperature $T_0$, $p_0$ is initial pressure and $\epsilon = 0.622$.
 
-The initial lognormal monomodal size distribution of of dry aerosol is assumed:
+The initial lognormal monomodal size distribution of dry aerosol is assumed:
 \begin{equation}
         n(r) = \frac{n_{tot}}{r\sqrt{2\pi}ln(\sigma_g)}exp(-\frac{(ln(r)-ln(\overline{r}))^2}{2ln^2(\sigma_g)})
         \label{lognormalny}
@@ -169,7 +169,7 @@ The initial mass of chemical compounds is then calculated using the initial dry 
 
 \section{Arguments}
 
-The parcel model takes following arguments, which can be divided into 4 groups:
+The arguments of the parcel model are divided into 4 groups:
 
 \subsection{thermodynamic variables}
 
@@ -211,8 +211,8 @@ The parcel model takes following arguments, which can be divided into 4 groups:
 \subsection{output parametres}\label{sec:output}
 
 \begin{itemize}
-  \item \textbf{outfile} : string (default = "test.nc"); \\ output netCDF file name
-  \item \textbf{outfreq} : int (default = 100); \\ output interval (in number of time steps)
+  \item \textbf{outfile} : string (default = "test.nc"); \\ output file name; the output file is in netCDF format
+  \item \textbf{outfreq} : int (default = 100); \\ output frequency (time gap between outputted points in number of time steps)
   \item \textbf{out\_bin} : jason string (default =\\ '\{"radii": \{"rght": 0.0001, "moms": [0], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09\}\}');\\
 
     \vspace{-.9em}
@@ -225,10 +225,10 @@ The parcel model takes following arguments, which can be divided into 4 groups:
       \indent $\cdot$\ "lnli" - linear ("lin") or logaritmical ("log") spacing between between bins\\
  
     \vspace{-.9em}
-    For example, user can define two variables - "radii" and "cloud" : \\ 
+    For example, user can define two variables - "A" and "B" : \\ 
   
 $$
-\mbox{"radii"}: \left\{ \begin{array}{ll}
+\mbox{"A"}: \left\{ \begin{array}{ll}
 \mbox{"rght": 0.0001}  & \textrm{}\\
 \mbox{"moms": [0]}  & \textrm{}\\
 \mbox{"drwt": "wet"} & \textrm{}\\
@@ -239,7 +239,7 @@ $$
 $$
 
 $$
-\mbox{"cloud"}: \left\{ \begin{array}{ll}
+\mbox{"B"}: \left\{ \begin{array}{ll}
 \mbox{"rght": 2.5e-05} & \textrm{}\\
 \mbox{"moms": [0, 1, 2, 3] } & \textrm{}\\
 \mbox{"drwt": "wet"} & \textrm{}\\
@@ -251,8 +251,8 @@ $$
  
 \vspace{0.35cm}
    It will generate five output spectra:
-      0-th spectrum moment for 26 bins spaced logaritmically between $10^{-9}$ and $10^{-4}$ m for wet radius for variable 'radii' and 
-      0, 1, 2 and 3-rd moments for 49 bins spaced linearly between $5\cdot10^{-7}$ and $2.5\cdot10^{-5}$ m for wet radius for variable 'cloud'.
+      0-th spectrum moment for 26 bins spaced logaritmically between $10^{-9}$ and $10^{-4}$ m for wet radius for variable 'A' and 
+      0, 1, 2 and 3-rd moments for 49 bins spaced linearly between $5\cdot10^{-7}$ and $2.5\cdot10^{-5}$ m for wet radius for variable 'B'.
 
     TODO - chem output
 
@@ -262,18 +262,22 @@ $$
 
 The parcel model uses NetCDF file format\footnote{see unidata.ucar.edu/software/netcdf/ for details} for output.
 The content of the output file can be be viewed in terminal by using the \prog{ncdump} command.
-Output variables describing ambient conditions in the parcel are:
+Output variables describing time-dependent ambient conditions in the parcel are:
 
 \begin{itemize}
   \item \textbf{t} - time [s],
-  \item \textbf{z} - vertical displacement [m],
+  \item \textbf{z} - height above the starting point[m],
   \item \textbf{p} - pressure [Pa],
   \item \textbf{r\_v} - water vapour mixing ratio [kg/kg],
   \item \textbf{RH} - relative humidity [1],
-  \item \textbf{RH\_{max}} - maximum relative humidity reached during simulation [1],
   \item \textbf{T} - temperature [K],
   \item \textbf{th\_d} - dry potential temperature [K],
-  \item TODO - chem trace gases
+  \item TODO - chem trace gases.
+
+There is also one value for the entire simulation:
+
+\item \textbf{RH\_{max}} - maximum relative humidity reached during the simulation [1].
+
 \end{itemize}
 
 \noindent
@@ -283,11 +287,11 @@ For example, for the default setting of "out\_bin" parameter there are two outpu
   describing placing and spacing of size distribution bins:
 
 \begin{itemize}
-  \item \textbf{radii\_r\_wet} - left bin edge of spectrum histogram [m],
-  \item \textbf{radii\_dr\_wet} - distance between the edges [m]
+  \item \textbf{radii\_r\_wet} - left edges of the bins of the spectrum histogram [m],
+  \item \textbf{radii\_dr\_wet} - bins width [m]
 \end{itemize}
 
-and one output variable containing the chosen  moment of size distribution:
+and one output variable containing the time-dependent chosen moment of size distribution:
 \begin{itemize}
   \item \textbf{radii\_m0} - 0th moment of spectrum.
 \end{itemize}
@@ -310,8 +314,8 @@ The parcel model is shipped with a set of tests designed for checking the partic
 The tests may serve as usage examples for the parcel model and \emph{libcloudph++} library.
 The tests are located in the {\bf unit\_test} and {\bf long\_test} folders.
 The tests use the pytest python package for test automation and can be run by typing  \prog{py.test unit\_test} 
-  from terminal.
-Example output plots generated by the tests are saved to the plots$\backslash$outputs folder.
+  from a terminal.
+Example output plots generated by the tests are saved in the plots$\backslash$outputs folder.
 
 \subsection{bash}
 
@@ -332,7 +336,7 @@ Any arguments to parcel model options can be passed via command line. For exampl
 \noindent
 will generate an output file 'test2.nc', which contains results of the simulation with inital pressure 1000~hPa, initial temperature 280 K, initial water vapor mixing ratio 25 g/kg and two spectrum variables - 'radii' and 'cloud' (the same as described in sec. \ref{sec:output}). Other arguments will be default.
 
-\vspace{0.35cm}
+\newpage
 
 \subsection{gdl/idl}
 
@@ -350,6 +354,7 @@ It then plots the size distribution of particles at different timelevels.
 \begin{minipage}[t]{0.3\textwidth}
 \end{minipage}
 
+\newpage
 \subsection{python}
 
 The following example shows how to use the parcel model from python programming language and plot vertical profiles for pressure, temperature and relative humidity from netCDF file. 
