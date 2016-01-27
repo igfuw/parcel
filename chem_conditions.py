@@ -32,7 +32,7 @@ O3_g_init   = fn.mole_frac_to_mix_ratio(50e-9,   p_init, cm.M_O3,   T_init, rhod
 H2O2_g_init = fn.mole_frac_to_mix_ratio(500e-12, p_init, cm.M_H2O2, T_init, rhod_init)
 CO2_g_init  = fn.mole_frac_to_mix_ratio(360e-6,  p_init, cm.M_CO2,  T_init, rhod_init)
 NH3_g_init  = fn.mole_frac_to_mix_ratio(100e-12, p_init, cm.M_NH3,  T_init, rhod_init)
-HNO3_g_init = 0. #fn.mole_frac_to_mix_ratio(100e-12, p_init, cm.M_HNO3, T_init, rhod_init)
+HNO3_g_init = fn.mole_frac_to_mix_ratio(100e-12, p_init, cm.M_HNO3, T_init, rhod_init)
 
 # aerosol size distribution
 mean_r = .04e-6
@@ -54,8 +54,8 @@ outfreq = int(z_max / dt / 30)
 sd_conc = 4
 outfile = "TODO.nc"
 
+#substeps for condensation and chemistry
 sstp_cond = 10
-sstp_chem = 10
 
 # output moments for the chemistry quicklook plot (the same for all tests)
 out_bin = '{"plt_rw":   {"rght": 1,    "left":    0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\
@@ -68,7 +68,7 @@ out_bin = '{"plt_rw":   {"rght": 1,    "left":    0, "drwt": "wet", "lnli": "lin
 
 # saving parcel options as a dictionary
 parcel_dict = {'dt': dt, 'z_max': z_max, 'outfreq': outfreq, 'w': w,\
-               'sstp_cond': sstp_cond, 'sstp_chem': sstp_chem,\
+               'sstp_cond': sstp_cond,\
                'T_0': T_init, 'p_0': p_init, 'r_0': r_init,\
                'SO2_g': SO2_g_init, 'O3_g':  O3_g_init, 'H2O2_g': H2O2_g_init,\
                'CO2_g': CO2_g_init, 'NH3_g': NH3_g_init,'HNO3_g': HNO3_g_init,\

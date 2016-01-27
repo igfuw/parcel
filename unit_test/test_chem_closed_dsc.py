@@ -206,7 +206,7 @@ def test_S6_dissoc(data, eps_HSO4=2e-5, eps_SO4 = 2e-9):
  
 @pytest.mark.parametrize("chem", ["SO2", "O3", "H2O2", "CO2", "NH3", "HNO3"])
 def test_moles_const_dsl_dsc(data, chem, eps =\
-                                {"SO2": 4e-13, "O3":3e-14, "H2O2": 2e-14, "CO2": 2e-14, "NH3": 2e-12, "HNO3":5e-13}):
+                                {"SO2": 4e-13, "O3":3e-14, "H2O2": 2e-14, "CO2": 2e-14, "NH3": 2e-12, "HNO3":7e-13}):
      """
      Checking if the total number of moles in closed chemical system 
      with dissolving chem species into droplets and dissocoation remains constant
