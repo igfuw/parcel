@@ -19,6 +19,8 @@ from kreidenweis import plot_fig2
 from kreidenweis import plot_fig3
 from chem_conditions import parcel_dict
 
+import functions as fn
+
 @pytest.fixture(scope="module")
 def data(request):
 
@@ -32,23 +34,23 @@ def data(request):
     p_dict['chem_dsc'] = True
     p_dict['chem_rct'] = True
 
-    p_dict['sd_conc']  = 1025
+    p_dict['sd_conc']  = 512 #1025
     p_dict['outfreq']  = int(p_dict['z_max'] / p_dict['dt'] / 100) * 4
 
     p_dict['out_bin']  = '{\
-                  "chem"  : {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "log", "nbin": 100, "moms": ["H"]},\
-                  "chemd" : {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 100, "moms": ["S_VI"]},\
-                  "radii" : {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "log", "nbin": 100, "moms": [3]},\
-                   "specd": {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 100, "moms": [0, 1, 3]},\
-                  "plt_rw": {"rght": 1,    "left": 0,     "drwt": "wet", "lnli": "lin", "nbin": 1,   "moms": [0, 1, 3]},\
-                  "plt_rd": {"rght": 1,    "left": 0,     "drwt": "dry", "lnli": "lin", "nbin": 1,   "moms": [0, 1, 3]},\
-                  "plt_ch": {"rght": 1,    "left": 0,     "drwt": "dry", "lnli": "lin", "nbin": 1,\
-                             "moms": ["O3_a",   "H2O2_a", "H", "OH",\
-                                      "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI",\
-                                      "CO2_a",  "HCO3_a", "CO3_a",\
-                                      "NH3_a",  "NH4_a",  "HNO3_a", "NO3_a"]}}'
+        "chem"  : {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "log", "nbin": 100, "moms": ["H"]},\
+        "chemd" : {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 100, "moms": ["S_VI", "H2O2_a", "O3_a"]},\
+        "radii" : {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "log", "nbin": 100, "moms": [3]},\
+        "specd" : {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 100, "moms": [0, 1, 3]},\
+        "plt_rw": {"rght": 1,    "left": 0,     "drwt": "wet", "lnli": "lin", "nbin": 1,   "moms": [0, 1, 3]},\
+        "plt_rd": {"rght": 1,    "left": 0,     "drwt": "dry", "lnli": "lin", "nbin": 1,   "moms": [0, 1, 3]},\
+        "plt_ch": {"rght": 1,    "left": 0,     "drwt": "dry", "lnli": "lin", "nbin": 1,\
+                   "moms": ["O3_a",   "H2O2_a", "H",\
+                            "SO2_a",  "S_VI",\
+                            "CO2_a",\
+                            "NH3_a",  "HNO3_a"]}}'
 
-    pp.pprint(p_dict)
+    #pp.pprint(p_dict)
 
     # run parcel
     parcel(**p_dict)
@@ -63,12 +65,12 @@ def data(request):
     #request.addfinalizer(removing_files)
     return data
 
-def test_chem_plot(data):
-    """
-    quicklook for chemistry
-    """
-    data_to_plot = {'closed' : data}
-    plot_chem(data_to_plot, output_folder="plots/outputs", output_title='/test_chem_kreidenwies_')
+#def test_chem_plot(data):
+#    """
+#    quicklook for chemistry
+#    """
+#    data_to_plot = {'closed' : data}
+#    plot_chem(data_to_plot, output_folder="plots/outputs", output_title='/test_chem_kreidenwies_')
 
 def test_chem_fig1(data):
     """
@@ -87,4 +89,60 @@ def test_chem_fig3(data):
     size distribution plot for S6
     """
     plot_fig3(data, output_folder="plots/outputs", output_title='/Kreidenweis_fig3')
+
+def test_chem_sulfate_formation(data):
+    """
+    sulfate formation vs water-weighted average pH
+
+    sulfate formed from H2O2 vs sulfate formed from O3
+    """
+
+    p = data.variables["p"][-1]
+    T = data.variables["T"][-1]
+    rhod = data.variables["rhod"][-1]
+
+    # water weighted average pH at the end of the simulation
+    r3     = data.variables["radii_m3"][-1,:]
+    n_H    = data.variables["chem_H"][-1,:] / cm.M_H
+
+    nom = 0
+
+    for it, val in enumerate(r3):
+        if val > 0:
+            nom += (n_H[it] / (4./3 * math.pi * val * 1e3)) * val
+            den  = np.sum(r3[:])                      # to liters
+
+    pH  = -1 * np.log10(nom / den)
+
+    print " "
+    print " "
+    print "water weighted average pH = ", pH, " vs 4.82-4.85 from size resolved models "
+
+    s6_ini = data.variables["chemd_S_VI"][0, :]
+    s6_end = data.variables["chemd_S_VI"][-1, :]
+
+    sulf_ppt = fn.mix_ratio_to_mole_frac((np.sum(s6_end) - np.sum(s6_ini)), p, cm.M_H2SO4, T, rhod) * 1e12
+   
+    print " "
+    print "sulfate formation (ppt) = ", sulf_ppt, " vs 170-180 from size resolved models"
+
+    ini_O3   = data.variables["O3_g"][0] / cm.M_O3 + \
+               data.variables["chemd_O3_a"][0, :].sum() / cm.M_O3
+
+    ini_H2O2 = data.variables["H2O2_g"][0] / cm.M_H2O2 + \
+               data.variables["chemd_H2O2_a"][0, :].sum() / cm.M_H2O2
+
+
+    end_O3   = data.variables["O3_g"][-1] / cm.M_O3 + \
+               data.variables["chemd_O3_a"][-1, :].sum() / cm.M_O3
+
+    end_H2O2 = data.variables["H2O2_g"][-1] / cm.M_H2O2 + \
+               data.variables["chemd_H2O2_a"][-1, :].sum() / cm.M_H2O2
+
+    sulf_ppt_H2O2 = fn.mix_ratio_to_mole_frac((np.sum(ini_H2O2) - np.sum(end_H2O2)) * cm.M_H2SO4, p, cm.M_H2SO4, T, rhod) * 1e12
+    sulf_ppt_O3   = fn.mix_ratio_to_mole_frac((np.sum(ini_O3) - np.sum(end_O3)) * cm.M_H2SO4, p, cm.M_H2SO4, T, rhod) * 1e12
+
+    print " "
+    print "sulfate formation from H2O2 (ppt) = ", sulf_ppt_H2O2, " vs 85-105 from size resolved models"
+    print "sulfate formation from O3 (ppt)   = ", sulf_ppt_O3, " vs 70-85 from size resolved models"
 

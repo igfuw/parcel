@@ -33,7 +33,7 @@ def data(request):
     p_dict['out_bin']  = p_dict['out_bin'][:-1] + \
         ', "chem"  : {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 1,\
                       "moms": ["SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI",\
-                               "CO2_a",  "HCO3_a", "CO3_a", "NH3_a",  "NH4_a",  "HNO3_a", "NO3_a"]}}'
+                               "CO2_a",  "HCO3_a", "CO3_a", "NH3_a",  "NH4_a",  "HNO3_a", "NO3_a", "O3_a", "H2O2_a"]}}'
  
     # run parcel
     parcel(**p_dict)
@@ -50,7 +50,7 @@ def data(request):
 
 @pytest.mark.parametrize("chem", ["SO2", "CO2", "NH3", "HNO3"])
 def test_moles_const_dsl_dsc_rct(data, chem, eps =\
-                                             {"SO2": 3e-8, "CO2": 2e-14, "NH3": 3e-12, "HNO3":2e-12}):
+                                             {"SO2": 1e-8, "CO2": 2e-14, "NH3": 3e-12, "HNO3":2e-12}):
                                          #TODO why so big?
      """
      Checking if the total number of moles in closed chemical system 
@@ -134,15 +134,10 @@ def test_moles_const_dsl_dsc_rct(data, chem, eps =\
      # do the checking
      assert np.isclose(end, ini, atol=0, rtol=eps[chem]), chem + " : " + str((ini-end)/ini)
 
-def test_H2SO4(data, eps = 3.5e-5):
+def test_H2SO4(data, eps = 2e-16):
     """
     Check if the number of dissociated H2SO4 ions is equal to the total number of H2SO4 moles.
     (The library assumes that all H2SO4 dissociates)    
-
-    In libcloudpxx after chemical reactions there is no dissociation step. Therefore, the number
-    of HSO4- and SO4-- ions is not the same as the number of H2SO4 moles.
-    TODO? 
-    
     """
 
     # read the data
@@ -155,6 +150,39 @@ def test_H2SO4(data, eps = 3.5e-5):
 
     # do the checking
     assert np.isclose(n_H2SO4, n_S6_ions, atol=0, rtol=eps), str((n_H2SO4 - n_S6_ions) / n_H2SO4)
+
+
+def test_H2SO4_vs_O3_H2O2(data, eps = 2e-11):
+    """
+    Check if the increase in S6 moles is equal to the decrease of H2O2 and O3 moles
+
+    """
+
+    ini_O3   = data.variables["O3_g"][0] / cm.M_O3 + \
+               data.variables["chem_O3_a"][0, :].sum() / cm.M_O3
+
+    ini_H2O2 = data.variables["H2O2_g"][0] / cm.M_H2O2 + \
+               data.variables["chem_H2O2_a"][0, :].sum() / cm.M_H2O2
+
+    ini_S6   = data.variables["chem_S_VI"][0, :].sum() / cm.M_H2SO4
+
+
+    end_O3   = data.variables["O3_g"][-1] / cm.M_O3 + \
+               data.variables["chem_O3_a"][-1, :].sum() / cm.M_O3
+
+    end_H2O2 = data.variables["H2O2_g"][-1] / cm.M_H2O2 + \
+               data.variables["chem_H2O2_a"][-1, :].sum() / cm.M_H2O2
+
+    end_S6   = data.variables["chem_S_VI"][-1, :].sum() / cm.M_H2SO4
+
+    # change on O3 and H2O2 moles
+    dn_gas = (ini_O3 - end_O3) + (ini_H2O2 - end_H2O2)  
+
+    # change in S6 moles
+    dn_s6 = end_S6 - ini_S6
+
+    # do the checking
+    assert np.isclose(dn_gas, dn_s6, atol=0, rtol=eps), str((dn_s6 - dn_gas) / dn_gas)
 
 def test_chem_plot(data):
     """

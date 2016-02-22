@@ -68,10 +68,6 @@ def plot_chem(data, output_folder = '', output_title = ''):
     for i, f in data.iteritems():
       t = f.variables["t"][spn_idx:]
 
-      print t
-
-      print np.squeeze(f.variables["plt_rd_m1"][spn_idx:]) / np.squeeze(f.variables["plt_rd_m0"][spn_idx:]) * 1e6
-
       plots[0].plot(f.variables["p"][spn_idx:] / 100.   , t, style[i], label=i)
       plots[0].legend(loc='upper right')
       plots[1].plot(f.variables["T"][spn_idx:]          , t, style[i])

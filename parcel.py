@@ -41,15 +41,6 @@ _Chem_a_id = {
   "HNO3_a" : lgrngn.chem_species_t.HNO3, 
   "NH3_a"  : lgrngn.chem_species_t.NH3,
   "H"      : lgrngn.chem_species_t.H,
-  "OH"     : lgrngn.chem_species_t.OH,
-  "HCO3_a" : lgrngn.chem_species_t.HCO3,
-  "CO3_a"  : lgrngn.chem_species_t.CO3,
-  "NO3_a"  : lgrngn.chem_species_t.NO3,
-  "NH4_a"  : lgrngn.chem_species_t.NH4,
-  "HSO3_a" : lgrngn.chem_species_t.HSO3,
-  "SO3_a"  : lgrngn.chem_species_t.SO3,
-  "HSO4_a" : lgrngn.chem_species_t.HSO4,
-  "SO4_a"  : lgrngn.chem_species_t.SO4,
   "S_VI"   : lgrngn.chem_species_t.S_VI
 }
 
@@ -80,6 +71,7 @@ def _micro_init(opts, state, info):
   opts_init.chem_switch = False
   if opts["chem_dsl"] or opts["chem_dsc"] or opts["chem_rct"]: 
     opts_init.chem_switch = True
+    opts_init.sstp_chem = opts["sstp_chem"]
  
   # initialisation
   micro = lgrngn.factory(lgrngn.backend_t.serial, opts_init)
@@ -164,7 +156,7 @@ def _output_bins(fout, t, micro, opts, spectra):
           # calculate chemistry
           micro.diag_chem(_Chem_a_id[vm])
           fout.variables[dim+'_'+vm][t, bin] = np.frombuffer(micro.outbuf())
-          
+
 def _output_init(micro, opts, spectra):
   # file & dimensions
   fout = netcdf.netcdf_file(opts["outfile"], 'w')
@@ -212,8 +204,8 @@ def _output_init(micro, opts, spectra):
       units[id_str] = "gas mixing ratio [kg / kg dry air]"
       units[id_str.replace('_g', '_a')] = "kg of chem species dissolved in cloud droplets (kg of dry air)^-1"
 
-    for id_str in ["HSO3_a", "SO3_a", "HCO3_a", "CO3_a", "NH4_a", "NO3_a"]:
-      units[id_str] = "kg of ions in cloud droplets (kg of dry air)^-1"
+  #  for id_str in ["HSO3_a", "SO3_a", "HCO3_a", "CO3_a", "NH4_a", "NO3_a"]:
+  #    units[id_str] = "kg of ions in cloud droplets (kg of dry air)^-1"
 
   for var_name, unit in units.iteritems():
     fout.createVariable(var_name, 'd', ('t',))
@@ -252,6 +244,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   chem_dsl = False, chem_dsc = False, chem_rct = False, 
   chem_rho = 1.8e3,
   sstp_cond = 1,
+  sstp_chem = 1,
   wait = 0,
   down = False
 ):
@@ -285,10 +278,10 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
                                   will output the total mass of H2SO4  and NH4 ions in each sizedistribution bin
                                   
                                   Valid "moms" for chemistry are: 
-                                    "O3_a",  "H2O2_a", "H", "OH", 
-                                    "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI",
-                                    "CO2_a",  "HCO3_a", "CO3_a",
-                                    "NH3_a",  "NH4_a",  "HNO3_a", "NO3_a"
+                                    "O3_a",  "H2O2_a", "H", 
+                                    "SO2_a",  "S_VI",
+                                    "CO2_a",  
+                                    "NH3_a", "HNO3_a",
 
     SO2_g    (Optional[float]):   initial SO2  gas mixing ratio [kg / kg dry air]
     O3_g     (Optional[float]):   initial O3   gas mixing ratio [kg / kg dry air]
@@ -336,16 +329,16 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
            "parcel_Git_revision" : parcel_version }
 
   micro = _micro_init(opts, state, info)
+
   with _output_init(micro, opts, spectra) as fout:
     # adding chem state vars
     if micro.opts_init.chem_switch:
-      state.update({ "SO2_a" : 0.,"O3_a" : 0.,"H2O2_a" : 0., "HSO3_a" : 0, "SO3_a" : 0})
-      state.update({ "CO2_a" : 0.,"NH3_a" : 0.,"HNO3_a" : 0.})
-      state.update({ "HCO3_a" : 0.,"CO3_a": 0.,"NO3_a" : 0.})
+      state.update({ "SO2_a" : 0.,"O3_a" : 0.,"H2O2_a" : 0.,})
+      state.update({ "CO2_a" : 0.,"HNO3_a" : 0.})
 
       micro.diag_all() # selecting all particles
-      micro.diag_chem(_Chem_a_id["NH4_a"])
-      state.update({"NH4_a": np.frombuffer(micro.outbuf())[0]})
+      micro.diag_chem(_Chem_a_id["NH3_a"])
+      state.update({"NH3_a": np.frombuffer(micro.outbuf())[0]})
 
     # t=0 : init & save
     _output(fout, opts, micro, state, 0, spectra)

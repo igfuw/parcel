@@ -25,7 +25,7 @@ def plot_fig1(data, output_folder = '', output_title = ''):
 
     # plot settings
     plt.figure(1)
-    plt.rcParams.update({'font.size': 20})
+    plt.rcParams.update({'font.size': 8})
     plots = []
     for i in range(3):
       plots.append(plt.subplot(1,3,i+1))
@@ -35,8 +35,8 @@ def plot_fig1(data, output_folder = '', output_title = ''):
       ax.set_ylim([0, 2400])
       ax.set_yticks([0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400])
 
-    plt.tight_layout()
-    spn_idx = 4
+    #plt.tight_layout()
+    spn_idx = 0#4
 
     # read in y-axis (time)
     t   = data.variables["t"][spn_idx:] - data.variables["t"][spn_idx]
@@ -44,8 +44,8 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     # calculate lwc
     plots[0].set_xlabel('lwc g/kg dry air')
     plots[0].grid()
-    plots[0].set_xlim([0., 2.5])
-    plots[0].set_xticks([0., 0.5, 1, 1.5, 2, 2.5])
+    #plots[0].set_xlim([0., 2.5])
+    #plots[0].set_xticks([0., 0.5, 1, 1.5, 2, 2.5])
     plots[0].plot(np.sum(data.variables["radii_m3"][spn_idx:], axis=1) * 4. / 3 * math.pi * 998.2 * 1e3, t, "b.-")
 
     # calculate SO2 gas volume concentration
@@ -53,22 +53,26 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     T    = data.variables["T"][spn_idx:]
     rhod = data.variables["rhod"][spn_idx:]
 
-    plots[1].set_xlabel('SO2 conc (ppb) - TODO aq')
     plots[1].grid()
     plots[1].set_xlabel('gas vol.conc SO2 [ppb]')
     plots[1].set_xticks([0., 0.05, 0.1, 0.15, 0.2])
     plots[1].set_xticklabels(['0', '0.05', '0.1', '0.15', '0.2'])
     plots[1].set_xlim([0., 0.2])
     tmp1 = fn.mix_ratio_to_mole_frac(data.variables["SO2_g"][spn_idx:], p, cm.M_SO2,     T, rhod)
-    tmp2 = fn.mix_ratio_to_mole_frac(data.variables["SO2_a"][spn_idx:], p, cm.M_SO2_H2O, T, rhod)
+    tmp2 = fn.mix_ratio_to_mole_frac(\
+      np.squeeze(data.variables["plt_ch_SO2_a"][spn_idx:]),\
+       p, cm.M_SO2_H2O, T, rhod)
+    #tmp2 = fn.mix_ratio_to_mole_frac(data.variables["SO2_a"][spn_idx:], p, cm.M_SO2_H2O, T, rhod)
     plots[1].plot((tmp1 + tmp2) * 1e9, t, "g.-")
+    plots[1].plot((tmp2) * 1e9, t, "r.-")
+    plots[1].plot((tmp1) * 1e9, t, "b.-")
 
     # calculate average pH
     # (weighted with volume of cloud droplets)
     plots[2].set_xlabel('average pH')
     plots[2].grid()
-    plots[2].set_xlim([3.8, 5])
-    plots[2].set_xticks([3.8, 4, 4.2, 4.4, 4.6, 4.8, 5])
+    #plots[2].set_xlim([3.8, 5])
+    #plots[2].set_xticks([3.8, 4, 4.2, 4.4, 4.6, 4.8, 5])
  
     r3     = data.variables["radii_m3"][spn_idx:]
     n_H    = data.variables["chem_H"][spn_idx:] / cm.M_H
