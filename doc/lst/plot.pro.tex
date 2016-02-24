@@ -1,0 +1,34 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PY{c+cSingleline}{;listing00}
+\PY{k}{pro} test 
+\PY{c+cSingleline}{  ; specifying parameters}
+  gstdev \PY{o}{=} \PY{l+m}{1}.\PY{l+m}{5}
+  outfile \PY{o}{=} \PYZsq{}idltest.nc\PYZsq{}
+
+\PY{c+cSingleline}{  ; executing the simulation}
+  \PY{n+nb}{spawn}, [ \PYZdl{}
+    \PYZsq{}python\PYZsq{}, \PYZsq{}parcel.py\PYZsq{}, \PYZsq{}\PY{o}{\PYZhy{}\PYZhy{}}outfile\PYZsq{}, outfile, \PYZsq{}\PY{o}{\PYZhy{}\PYZhy{}}gstdev\PYZsq{}, \PY{n+nb}{string}(gstdev) \PYZdl{}
+  ], \PY{o}{/}noshell
+
+\PY{c+cSingleline}{  ; opening the output file}
+  nc \PY{o}{=} \PY{n+nb}{ncdf\PYZus{}open}(outfile, \PY{o}{/}nowrite)
+
+\PY{c+cSingleline}{  ; plotting initial and final wet spectra}
+  \PY{n+nb}{ncdf\PYZus{}diminq}, nc, \PY{n+nb}{ncdf\PYZus{}dimid}(nc, \PYZsq{}radii\PYZsq{}), ignore, nr
+  \PY{n+nb}{ncdf\PYZus{}diminq}, nc, \PY{n+nb}{ncdf\PYZus{}dimid}(nc, \PYZsq{}t\PYZsq{}    ), ignore, nt
+
+  !P.MULTI\PY{o}{=}[\PY{l+m}{0},\PY{l+m}{2},\PY{l+m}{1}]
+  \PY{n+nb}{ncdf\PYZus{}varget}, nc, \PYZsq{}radii\PYZus{}dr\PYZsq{}, radii\PYZus{}dr
+  \PY{n+nb}{ncdf\PYZus{}varget}, nc, \PYZsq{}radii\PYZus{}rl\PYZsq{}, radii\PYZus{}rl
+ 
+  \PY{k}{foreach} it, [\PY{l+m}{0}, nt\PY{o}{\PYZhy{}}\PY{l+m}{1}] \PY{k}{do} \PY{k}{begin}
+    \PY{n+nb}{ncdf\PYZus{}varget}, nc, \PYZsq{}radii\PYZus{}m0\PYZsq{}, radii\PYZus{}m0, count\PY{o}{=}[nr, \PY{l+m}{1}], offset\PY{o}{=}[\PY{l+m}{0}, it]
+    \PY{n+nb}{plot},                                \PYZdl{}
+      xtitle\PY{o}{=}\PYZsq{}particle wet radius [um]\PYZsq{}, \PYZdl{}
+      ytitle\PY{o}{=}\PYZsq{}[mg\PY{o}{\PYZhy{}}\PY{l+m}{1} um\PY{o}{\PYZhy{}}\PY{l+m}{1}]\PYZsq{},              \PYZdl{}
+      psym\PY{o}{=}10, \PY{o}{/}xlog, \PY{o}{/}ylog,             \PYZdl{}
+      (radii\PYZus{}rl\PY{o}{+}radii\PYZus{}dr\PY{o}{/}\PY{l+m}{2})\PY{o}{*}1e6, (radii\PYZus{}m0\PY{o}{/}1e3)\PY{o}{/}(radii\PYZus{}dr\PY{o}{*}1e6)
+  \PY{k}{endforeach}
+\PY{k}{end}
+\PY{c+cSingleline}{;listing01}
+\end{Verbatim}
