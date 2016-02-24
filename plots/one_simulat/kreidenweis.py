@@ -58,14 +58,13 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     plots[1].set_xticks([0., 0.05, 0.1, 0.15, 0.2])
     plots[1].set_xticklabels(['0', '0.05', '0.1', '0.15', '0.2'])
     plots[1].set_xlim([0., 0.2])
-    tmp1 = fn.mix_ratio_to_mole_frac(data.variables["SO2_g"][spn_idx:], p, cm.M_SO2,     T, rhod)
+    tmp1 = fn.mix_ratio_to_mole_frac(data.variables["SO2_g"][spn_idx:], p, cm.M_SO2, T, rhod)
     tmp2 = fn.mix_ratio_to_mole_frac(\
-      np.squeeze(data.variables["plt_ch_SO2_a"][spn_idx:]),\
-       p, cm.M_SO2_H2O, T, rhod)
+      np.squeeze(data.variables["plt_ch_SO2_a"][spn_idx:]), p, cm.M_SO2_H2O, T, rhod)
     #tmp2 = fn.mix_ratio_to_mole_frac(data.variables["SO2_a"][spn_idx:], p, cm.M_SO2_H2O, T, rhod)
     plots[1].plot((tmp1 + tmp2) * 1e9, t, "g.-")
-    plots[1].plot((tmp2) * 1e9, t, "r.-")
-    plots[1].plot((tmp1) * 1e9, t, "b.-")
+    #plots[1].plot((tmp2) * 1e9, t, "r.-")
+    #plots[1].plot((tmp1) * 1e9, t, "b.-")
 
     # calculate average pH
     # (weighted with volume of cloud droplets)
@@ -202,10 +201,7 @@ def main():
                   "plt_rw": {"rght": 1,    "left": 0,     "drwt": "wet", "lnli": "lin", "nbin": 1,   "moms": [0, 1, 3]},\
                   "plt_rd": {"rght": 1,    "left": 0,     "drwt": "dry", "lnli": "lin", "nbin": 1,   "moms": [0, 1, 3]},\
                   "plt_ch": {"rght": 1,    "left": 0,     "drwt": "dry", "lnli": "lin", "nbin": 1,\
-                             "moms": ["O3_a",   "H2O2_a", "H", "OH",\
-                                      "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI",\
-                                      "CO2_a",  "HCO3_a", "CO3_a",\
-                                      "NH3_a",  "NH4_a",  "HNO3_a", "NO3_a"]}}'
+                             "moms": ["O3_a", "H2O2_a", "H", "OH", "SO2_a", "S_VI", "CO2_a", "NH3_a", "HNO3_a"]}}'
 
     # run parcel
     parcel(**p_dict)

@@ -62,10 +62,8 @@ sstp_chem = 1
 out_bin = '{"plt_rw":   {"rght": 1,    "left":    0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\
             "plt_rd":   {"rght": 1,    "left":    0, "drwt": "dry", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\
             "plt_ch":   {"rght": 1,    "left":    0, "drwt": "dry", "lnli": "lin", "nbin": 1,\
-                         "moms": ["O3_a",   "H2O2_a", "H", "OH",\
-                                 "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI",\
-                                 "CO2_a",  "HCO3_a", "CO3_a",\
-                                 "NH3_a",  "NH4_a",  "HNO3_a", "NO3_a"]}}'
+                         "moms": ["O3_a", "H2O2_a", "H", "SO2_a", "S_VI",\
+                                 "CO2_a", "NH3_a", "HNO3_a"]}}'
 
 # saving parcel options as a dictionary
 parcel_dict = {'dt': dt, 'z_max': z_max, 'outfreq': outfreq, 'w': w,\
