@@ -102,10 +102,11 @@ def main():
     outfile     = "test_chem_dsl.nc"
     dt          = 0.1
     wait        = 1000
+    sd_conc     = 1
 
     # run parcel model for open chem system  and only for dissolving chem species into droplets
     parcel(dt = dt, z_max = z_max, outfreq = outfreq, wait=wait,\
-            T_0 = T_init, p_0 = p_init, r_0 = r_init,\
+            T_0 = T_init, p_0 = p_init, r_0 = r_init, sd_conc=sd_conc\
             SO2_g = SO2_g_init, O3_g  = O3_g_init,  H2O2_g = H2O2_g_init,\
             CO2_g = CO2_g_init, NH3_g = NH3_g_init, HNO3_g = HNO3_g_init,\
             chem_sys = 'open',   outfile = outfile,\
@@ -113,7 +114,7 @@ def main():
             out_bin = \
             '{"radii": {"rght": 1, "left": 0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 3]},\
               "chem" : {"rght": 1, "left": 0, "drwt": "wet", "lnli": "lin", "nbin": 1,\
-                  "moms": ["O3_a", "H2O2_a", "SO2_a", "CO2_a", "NH3_a", "HNO3_a"]}}')
+                  "moms": ["O3_a", "H2O2_a", "SO2_a", "CO2_a", "NH3_a", "HNO3_a", "H"]}}')
 
     data = netcdf.netcdf_file(outfile,"r")
 

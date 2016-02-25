@@ -27,15 +27,36 @@ def rhod_calc(T, p, rv):
     th_0 = T * (cm.p_1000 / p)**(cm.R_d / cm.c_pd)
     return cm.rhod(p, th_0, rv)
 
-def henry_teor(chem, p, T, vol, mixr_g, rhod):
+def henry_teor(chem, p, T, vol, mixr_g, rhod, conc_H):
     """ 
     calculate theoretical mass of chemical species dissolved into cloud droplets - Henry law 
     (per kg of dry air)
     """
-    # correction to Henry constant due to temperature
+    # molar mass of chemical species dissolved in water
+    if chem in ["O3", "H2O2"]:
+        K1 = 0
+        K2 = 0
+    elif chem == "SO2":
+        K1 = getattr(cm, "K_SO2")
+        K2 = getattr(cm, "K_HSO3")
+    elif chem == "CO2":
+        K1 = getattr(cm, "K_CO2")
+        K2 = getattr(cm, "K_HCO3")
+    elif chem == "NH3":
+        dKR= getattr(cm, "dKR_"+chem)
+        K1 = getattr(cm, "K_NH3") * np.exp(dKR * (1./T - 1./298))
+        K2 = 0
+    elif chem == "HNO3":
+        dKR= getattr(cm, "dKR_"+chem)
+        K1 = getattr(cm, "K_HNO3") * np.exp(dKR * (1./T - 1./298))
+        K2 = 0
+    else:
+        assert False
+
+    # correction to Henry constant due to temperature and pH
     H       = getattr(cm, "H_"  +chem)
     dHR     = getattr(cm, "dHR_"+chem)
-    henry_T = H * np.exp(dHR * (1./T - 1./298))
+    henry_T = H * np.exp(dHR * (1./T - 1./298)) * (1. + K1/conc_H + K1*K2/conc_H/conc_H)
 
     # molar mass of chemical species dissolved in water
     if chem in ["SO2", "CO2", "NH3"]:
@@ -98,7 +119,7 @@ def diag_n_OH(V, conc_H):
     """
     return cm.K_H2O * V / conc_H
 
-def diag_n_NH3_H2O():
+def diag_n_NH3_H2O(m_N3, T, conc_H):
     """
     calculate the number of NH3*H2O moles
     """
@@ -175,4 +196,4 @@ def diag_n_SO4(m_S6, T, conc_H):
     """
     calculate the number of SO4-- moles
     """
-    return m_S6 / cm.M_H2SO4 * dissoc_teor("HSO4", T) / (conc_H + dissoc_teor("HSO4", T)
+    return m_S6 / cm.M_H2SO4 * dissoc_teor("HSO4", T) / (conc_H + dissoc_teor("HSO4", T))
