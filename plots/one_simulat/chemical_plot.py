@@ -56,8 +56,8 @@ def plot_chem(data, output_folder = '', output_title = ''):
 
     t = data.variables["t"][spn_idx:]
 
-    plots[0].plot(data.variables["p"][spn_idx:] / 100.   , t, style, label=i)
-    plots[0].legend(loc='upper right')
+    plots[0].plot(data.variables["p"][spn_idx:] / 100.   , t, style)
+    #plots[0].legend(loc='upper right')
     plots[1].plot(data.variables["T"][spn_idx:]          , t, style)
     plots[2].plot(
       data.variables["RH"][spn_idx:]                     , t, style, 
@@ -105,7 +105,7 @@ def plot_chem(data, output_folder = '', output_title = ''):
     n_h2o2a = data.variables["H2O2_a"][spn_idx:] / cm.M_H2O2
 
     plots[0].plot(n_o3g, t, style)
-    plots[0].legend(loc='upper right')
+    #plots[0].legend(loc='upper right')
     plots[1].plot(n_o3a, t, style)
     plots[2].plot(n_o3g + n_o3a - n_o3g[0] - n_o3a[0], t, style)
     plots[3].plot(n_h2o2g, t, style)

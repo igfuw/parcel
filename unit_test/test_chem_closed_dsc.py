@@ -102,7 +102,7 @@ def test_is_electroneutral(data, eps = 1e-6):
 @pytest.mark.parametrize("ion", ["SO2", "HSO3", "CO2", "HCO3", "NH3", "HNO3"])
 def test_dissoc_constants(data, ion, eps =\
                                 {"SO2": 2e-16, "HSO3": 2e-16,\
-                                 "CO2": 2e-16, "HCO3": 2e-16, "NH3":  3e-16, "HNO3":2e-16}):
+                                 "CO2": 2e-16, "HCO3": 3e-16, "NH3":  3e-16, "HNO3":4e-16}):
 
      """
      Check if the mass of chemical compounds agrees with the dissociation constants
@@ -149,7 +149,7 @@ def test_dissoc_constants(data, ion, eps =\
        check_ions(fn.diag_n_NH4(m_N3, T, conc_H), cm.K_H2O / conc_H * V, fn.diag_n_NH3_H2O(m_N3, T, conc_H), V, fn.dissoc_teor(ion, T),  eps[ion])
      else: assert False
 
-def test_S6_dissoc(data, eps_HSO4=1e-20, eps_SO4 = 2e-16):
+def test_S6_dissoc(data, eps_HSO4=4e-16, eps_SO4 = 3e-16):
     """
     Check dissociation of H2SO4 
 
@@ -182,7 +182,7 @@ def test_S6_dissoc(data, eps_HSO4=1e-20, eps_SO4 = 2e-16):
  
 @pytest.mark.parametrize("chem", ["SO2", "O3", "H2O2", "CO2", "NH3", "HNO3"])
 def test_moles_const_dsl_dsc(data, chem, eps =\
-                                {"SO2": 5e-15, "O3":3e-14, "H2O2": 5e-15, "CO2": 3e-15, "NH3": 3e-15, "HNO3":3e-16}):
+                                {"SO2": 2e-14, "O3":3e-14, "H2O2": 5e-15, "CO2": 8e-15, "NH3": 3e-15, "HNO3":2e-15}):
      """
      Checking if the total number of moles in closed chemical system 
      with dissolving chem species into droplets and dissocoation remains constant
