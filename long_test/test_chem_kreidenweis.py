@@ -37,20 +37,13 @@ def data(request):
     p_dict['sd_conc']  = 512 #1025
     p_dict['outfreq']  = int(p_dict['z_max'] / p_dict['dt'] / 100) * 4
 
-    p_dict['out_bin']  = '{\
-        "chem"  : {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "log", "nbin": 100, "moms": ["H"]},\
-        "chemd" : {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 100, "moms": ["S_VI", "H2O2_a", "O3_a"]},\
-        "radii" : {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "log", "nbin": 100, "moms": [3]},\
-        "specd" : {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 100, "moms": [0, 1, 3]},\
-        "plt_rw": {"rght": 1,    "left": 0,     "drwt": "wet", "lnli": "lin", "nbin": 1,   "moms": [0, 1, 3]},\
-        "plt_rd": {"rght": 1,    "left": 0,     "drwt": "dry", "lnli": "lin", "nbin": 1,   "moms": [0, 1, 3]},\
-        "plt_ch": {"rght": 1,    "left": 0,     "drwt": "dry", "lnli": "lin", "nbin": 1,\
-                   "moms": ["O3_a",   "H2O2_a", "H",\
-                            "SO2_a",  "S_VI",\
-                            "CO2_a",\
-                            "NH3_a",  "HNO3_a"]}}'
+    p_dict['out_bin']  =  p_dict['out_bin'][:-1] + \
+      ', "chem"  : {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "log", "nbin": 100, "moms": ["H"]},\
+         "chemd" : {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 100, "moms": ["S_VI", "H2O2_a", "O3_a"]},\
+         "radii" : {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "log", "nbin": 100, "moms": [3]},\
+         "specd" : {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 100, "moms": [0, 1, 3]}}'
 
-    #pp.pprint(p_dict)
+    pp.pprint(p_dict)
 
     # run parcel
     parcel(**p_dict)
@@ -65,12 +58,11 @@ def data(request):
     #request.addfinalizer(removing_files)
     return data
 
-#def test_chem_plot(data):
-#    """
-#    quicklook for chemistry
-#    """
-#    data_to_plot = {'closed' : data}
-#    plot_chem(data_to_plot, output_folder="plots/outputs", output_title='/test_chem_kreidenwies_')
+def test_chem_plot(data):
+    """
+    quicklook for chemistry
+    """
+    plot_chem(data, output_folder="plots/outputs", output_title='/test_chem_kreidenwies_')
 
 def test_chem_fig1(data):
     """

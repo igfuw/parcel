@@ -32,67 +32,43 @@ def henry_teor(chem, p, T, vol, mixr_g, rhod, conc_H):
     calculate theoretical mass of chemical species dissolved into cloud droplets - Henry law 
     (per kg of dry air)
     """
-    # molar mass of chemical species dissolved in water
+    # read in the molar mass of chemical species dissolved in water ...
+    if chem in ["SO2", "CO2", "NH3"]:
+        M_aq = getattr(cm, "M_"+chem+"_H2O")
+    else:
+        M_aq = getattr(cm, "M_"+chem)
+
+    # ... and the molar mass of chem species in gas phase
+    M_g = getattr(cm, "M_"+chem)
+
+    # calculate the correction due to dissociation
     if chem in ["O3", "H2O2"]:
-        K1 = 0
-        K2 = 0
+        pH_corr = 1  # do nothing for those that don't dissociate
     elif chem == "SO2":
-        K1 = getattr(cm, "K_SO2")
-        K2 = getattr(cm, "K_HSO3")
+        K1 = getattr(cm, "K_SO2") * np.exp(getattr(cm, "dKR_SO2")  * (1./T - 1./298))
+        K2 = getattr(cm, "K_HSO3")* np.exp(getattr(cm, "dKR_HSO3") * (1./T - 1./298)) 
+        pH_corr = 1. + K1 / conc_H + K1 * K2 / conc_H / conc_H
     elif chem == "CO2":
-        K1 = getattr(cm, "K_CO2")
-        K2 = getattr(cm, "K_HCO3")
-    elif chem == "NH3":
-        dKR= getattr(cm, "dKR_"+chem)
-        K1 = getattr(cm, "K_NH3") * np.exp(dKR * (1./T - 1./298))
-        K2 = 0
+        K1   = getattr(cm, "K_CO2") * np.exp(getattr(cm, "dKR_CO2") * (1./T - 1./298))
+        K2   = getattr(cm, "K_HCO3")* np.exp(getattr(cm, "dKR_HCO3") * (1./T - 1./298))
+        pH_corr = 1. + K1 / conc_H + K1 * K2 / conc_H / conc_H
     elif chem == "HNO3":
-        dKR= getattr(cm, "dKR_"+chem)
-        K1 = getattr(cm, "K_HNO3") * np.exp(dKR * (1./T - 1./298))
-        K2 = 0
+        K = getattr(cm, "K_HNO3") * np.exp(getattr(cm, "dKR_"+chem) * (1./T - 1./298))
+        pH_corr = 1. + K / conc_H
+    elif chem == "NH3":
+        K = getattr(cm, "K_NH3") * np.exp(getattr(cm, "dKR_"+chem) * (1./T - 1./298))
+        pH_corr = 1 + K / getattr(cm, "K_H2O") * conc_H
     else:
         assert False
 
     # correction to Henry constant due to temperature and pH
     H       = getattr(cm, "H_"  +chem)
     dHR     = getattr(cm, "dHR_"+chem)
-    henry_T = H * np.exp(dHR * (1./T - 1./298)) * (1. + K1/conc_H + K1*K2/conc_H/conc_H)
-
-    # molar mass of chemical species dissolved in water
-    if chem in ["SO2", "CO2", "NH3"]:
-        M_aq = getattr(cm, "M_"+chem+"_H2O")
-    else:
-        M_aq = getattr(cm, "M_"+chem)
-
-    # molar mass of chem species in gas phase
-    M_g = getattr(cm, "M_"+chem)
-
-    partial_prs = mix_ratio_to_mole_frac(mixr_g, p, M_g, T, rhod) * p
+    henry_T = H * np.exp(dHR * (1./T - 1./298)) * pH_corr
 
     # dissolved  = partial prsessure * Henry_const * molar mass * drop volume
+    partial_prs = mix_ratio_to_mole_frac(mixr_g, p, M_g, T, rhod) * p
     return partial_prs * henry_T * M_aq * vol
-
-def henry_teor_2(chem, p, T, vol, mixr_g, rhod):
-    """ 
-    calculate theoretical mass of chemical species dissolved into cloud droplets - 
-    Henry law without temperature correction
-    (per kg of dry air)
-    """
-    H = getattr(cm, "H_"  +chem)
-
-    # molar mass of chemical species dissolved in water
-    if chem in ["SO2", "CO2", "NH3"]:
-        M_aq = getattr(cm, "M_"+chem+"_H2O")
-    else:
-        M_aq = getattr(cm, "M_"+chem)
-
-    # molar mass of chem species in gas phase
-    M_g = getattr(cm, "M_"+chem)
-
-    partial_prs = mix_ratio_to_mole_frac(mixr_g, p, M_g, T, rhod) * p
-
-    # dissolved  = partial prsessure * Henry_const * molar mass * drop volume
-    return partial_prs * H * M_aq * vol
 
 def dissoc_teor(chem, T):
     """ 

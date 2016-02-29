@@ -69,6 +69,5 @@ def test_chem_plot(data):
     """
     quicklook for chemistry
     """
-    data_to_plot = {'closed' : data}
-    plot_chem(data_to_plot, output_folder="plots/outputs", output_title="/test_chem_closed_dsl_")
+    plot_chem(data, output_folder="plots/outputs", output_title="/test_chem_closed_dsl_")
 

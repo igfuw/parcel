@@ -90,14 +90,6 @@ def _micro_step(micro, state, info, opts, it, fout):
 
   # chemical options
   if micro.opts_init.chem_switch:
-
-    # open/closed chem system
-    if opts['chem_sys'] == 'closed':
-      libopts.chem_sys_cls = True
-    elif opts['chem_sys'] == 'open':
-      libopts.chem_sys_cls = False
-    else: assert False
- 
     # chem processes: dissolving, dissociation, reactions
     libopts.chem_dsl = opts["chem_dsl"]
     libopts.chem_dsc = opts["chem_dsc"]
@@ -240,7 +232,6 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
   out_bin = '{"radii": {"rght": 0.0001, "moms": [0], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09}}',
   SO2_g = 0., O3_g = 0., H2O2_g = 0., CO2_g = 0., HNO3_g = 0., NH3_g = 0.,
-  chem_sys = 'open',
   chem_dsl = False, chem_dsc = False, chem_rct = False, 
   chem_rho = 1.8e3,
   sstp_cond = 1,
@@ -289,9 +280,6 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
     CO2_g    (Optional[float]):   initial CO2  gas mixing ratio [kg / kg dry air]
     NH3_g     (Optional[float]):  initial NH3  gas mixing ratio [kg / kg dry air]
     HNO3_g   (Optional[float]):   initial HNO3 gas mixing ratio [kg / kg dry air]
-    chem_sys (Optional[string]):  accepted values: 'open', 'closed'
-                                  (in open/closed system gas volume concentration in the air doesn't/does change 
-                                   due to chemical reactions)
     chem_dsl (Optional[bool]):    on/off for dissolving chem species into droplets
     chem_dsc (Optional[bool]):    on/off for dissociation of chem species in droplets
     chem_rct (Optional[bool]):    on/off for oxidation of S_IV to S_VI
@@ -474,9 +462,6 @@ def _arguments_checking(opts, spectra):
     raise Exception("vertical velocity should be larger than 0")
   if opts["kappa"] <= 0: 
     raise Exception("kappa hygroscopicity parameter should be larger than 0 ")
-  if opts["chem_sys"] not in ["open", "closed"]:
-    raise Exception("Expected >>chem_sys<< options are: 'open', 'closed'.")
-  
   for name, dct in spectra.iteritems():
     # TODO: check if name is valid netCDF identifier 
     # (http://www.unidata.ucar.edu/software/thredds/current/netcdf-java/CDM/Identifiers.html)

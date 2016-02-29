@@ -23,17 +23,8 @@ def plot_chem(data, output_folder = '', output_title = ''):
     matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
     import matplotlib.pyplot as plt
 
-    f_out_chem = {}
-    if "open" in data.iterkeys():
-        f_out_chem["open"] = data["open"]
-    if "closed" in data.iterkeys():
-        f_out_chem["closed"] = data["closed"]
+    style = "b."     
 
-    style = {
-      "open"   : "b.",
-      "closed" : "g.",
-      "off"    : "r."
-    }
     #spn_idx = 30
     spn_idx = 0
 
@@ -57,33 +48,32 @@ def plot_chem(data, output_folder = '', output_title = ''):
     plots[7].set_xlabel('m1_dry um/kg dry air ')
     plots[8].set_xlabel('mass cont ug/kg dry air')
 
-    plots[7].set_xlim([0.02, 0.04])
-    plots[7].set_xticks([0.02, 0.025, 0.03, 0.035, 0.04])
+    #plots[7].set_xlim([0.02, 0.04])
+    #plots[7].set_xticks([0.02, 0.025, 0.03, 0.035, 0.04])
 
     for ax in plots:
       ax.set_ylabel('t [s]')
 
-    for i, f in data.iteritems():
-      t = f.variables["t"][spn_idx:]
+    t = data.variables["t"][spn_idx:]
 
-      plots[0].plot(f.variables["p"][spn_idx:] / 100.   , t, style[i], label=i)
-      plots[0].legend(loc='upper right')
-      plots[1].plot(f.variables["T"][spn_idx:]          , t, style[i])
-      plots[2].plot(
-	f.variables["RH"][spn_idx:]                     , t, style[i], 
-	[f.variables["RH"][spn_idx:].max()] * t.shape[0], t, style[i]
-      )
-      plots[3].plot(np.squeeze(f.variables["plt_rw_m0"][spn_idx:]), t, style[i])
-      plots[4].plot(\
-          np.squeeze(f.variables["plt_rw_m1"][spn_idx:]) / np.squeeze(f.variables["plt_rw_m0"][spn_idx:]) * 1e6, t, style[i])
-      plots[5].plot(\
-          np.squeeze(f.variables["plt_rw_m3"][spn_idx:]) * 4. / 3 * math.pi * 998.2 * 1e3, t, style[i])
+    plots[0].plot(data.variables["p"][spn_idx:] / 100.   , t, style, label=i)
+    plots[0].legend(loc='upper right')
+    plots[1].plot(data.variables["T"][spn_idx:]          , t, style)
+    plots[2].plot(
+      data.variables["RH"][spn_idx:]                     , t, style, 
+      [data.variables["RH"][spn_idx:].max()] * t.shape[0], t, style
+    )
+    plots[3].plot(np.squeeze(data.variables["plt_rw_m0"][spn_idx:]), t, style)
+    plots[4].plot(\
+        np.squeeze(data.variables["plt_rw_m1"][spn_idx:]) / np.squeeze(data.variables["plt_rw_m0"][spn_idx:]) * 1e6, t, style)
+    plots[5].plot(\
+        np.squeeze(data.variables["plt_rw_m3"][spn_idx:]) * 4. / 3 * math.pi * 998.2 * 1e3, t, style)
  
-      plots[6].plot(np.squeeze(f.variables["plt_rd_m0"][spn_idx:]), t, style[i])
-      plots[7].plot(\
-          np.squeeze(f.variables["plt_rd_m1"][spn_idx:]) / np.squeeze(f.variables["plt_rd_m0"][spn_idx:]) * 1e6, t, style[i])
-      plots[8].plot(\
-          np.squeeze(f.variables["plt_rd_m3"][spn_idx:]) * 4./ 3 * math.pi * getattr(f, 'chem_rho')  * 1e9, t, style[i])
+    plots[6].plot(np.squeeze(data.variables["plt_rd_m0"][spn_idx:]), t, style)
+    plots[7].plot(\
+        np.squeeze(data.variables["plt_rd_m1"][spn_idx:]) / np.squeeze(data.variables["plt_rd_m0"][spn_idx:]) * 1e6, t, style)
+    plots[8].plot(\
+        np.squeeze(data.variables["plt_rd_m3"][spn_idx:]) * 4./ 3 * math.pi * getattr(data, 'chem_rho')  * 1e9, t, style)
 
     plt.savefig(output_folder + output_title + "stat.pdf")
 
@@ -107,21 +97,20 @@ def plot_chem(data, output_folder = '', output_title = ''):
     for ax in plots:
       ax.set_ylabel('t [s]')
 
-    for i, f in f_out_chem.iteritems():
-      t = f.variables["t"][spn_idx:]
+    t = data.variables["t"][spn_idx:]
 
-      n_o3g   = f.variables["O3_g"][spn_idx:] / cm.M_O3
-      n_o3a   = f.variables["O3_a"][spn_idx:] / cm.M_O3
-      n_h2o2g = f.variables["H2O2_g"][spn_idx:] / cm.M_H2O2
-      n_h2o2a = f.variables["H2O2_a"][spn_idx:] / cm.M_H2O2
+    n_o3g   = data.variables["O3_g"][spn_idx:] / cm.M_O3
+    n_o3a   = data.variables["O3_a"][spn_idx:] / cm.M_O3
+    n_h2o2g = data.variables["H2O2_g"][spn_idx:] / cm.M_H2O2
+    n_h2o2a = data.variables["H2O2_a"][spn_idx:] / cm.M_H2O2
 
-      plots[0].plot(n_o3g, t, style[i])
-      plots[0].legend(loc='upper right')
-      plots[1].plot(n_o3a, t, style[i])
-      plots[2].plot(n_o3g + n_o3a - n_o3g[0] - n_o3a[0], t, style[i])
-      plots[3].plot(n_h2o2g, t, style[i])
-      plots[4].plot(n_h2o2a, t, style[i])
-      plots[5].plot(n_h2o2g + n_h2o2a - n_h2o2g[0] - n_h2o2a[0], t, style[i])
+    plots[0].plot(n_o3g, t, style)
+    plots[0].legend(loc='upper right')
+    plots[1].plot(n_o3a, t, style)
+    plots[2].plot(n_o3g + n_o3a - n_o3g[0] - n_o3a[0], t, style)
+    plots[3].plot(n_h2o2g, t, style)
+    plots[4].plot(n_h2o2a, t, style)
+    plots[5].plot(n_h2o2g + n_h2o2a - n_h2o2g[0] - n_h2o2a[0], t, style)
 
     plt.savefig(output_folder + output_title + "O3_H2O2.pdf")
 
@@ -143,15 +132,14 @@ def plot_chem(data, output_folder = '', output_title = ''):
     for ax in plots:
       ax.set_ylabel('t [s]')
 
-    for i, f in f_out_chem.iteritems():
-      t   = f.variables["t"][spn_idx:]
-      n_H = np.squeeze(f.variables["plt_ch_H"][spn_idx:]) / cm.M_H
-      vol = np.squeeze(f.variables["plt_rw_m3"][spn_idx:]) * 4/3. * math.pi
-      pH  = -1 * np.log10(n_H / vol / 1e3)
+    t   = data.variables["t"][spn_idx:]
+    n_H = np.squeeze(data.variables["plt_ch_H"][spn_idx:]) / cm.M_H
+    vol = np.squeeze(data.variables["plt_rw_m3"][spn_idx:]) * 4/3. * math.pi
+    pH  = -1 * np.log10(n_H / vol / 1e3)
                                     # litres
-      plots[0].plot(pH,                                                        t, style[i])
-      plots[1].plot(np.squeeze(f.variables["plt_ch_H"][spn_idx:])  / cm.M_H  , t, style[i])
-      plots[2].plot(cm.K_H2O / np.squeeze(f.variables["plt_ch_H"][spn_idx:]) * vol , t, style[i])
+    plots[0].plot(pH,                                                        t, style)
+    plots[1].plot(np.squeeze(data.variables["plt_ch_H"][spn_idx:])  / cm.M_H  , t, style)
+    plots[2].plot(cm.K_H2O / np.squeeze(data.variables["plt_ch_H"][spn_idx:]) * vol , t, style)
 
     plt.tight_layout()
     plt.savefig(output_folder + output_title + "pH.pdf")
@@ -172,15 +160,14 @@ def plot_chem(data, output_folder = '', output_title = ''):
     for ax in plots:
       ax.set_ylabel('t [s]')
 
-    for i, f in f_out_chem.iteritems():
-      t    = f.variables["t"][spn_idx:]
-      n_nh3g = f.variables["NH3_g"][spn_idx:] / cm.M_NH3
-      n_N3 = np.squeeze(f.variables["plt_ch_NH3_a"][spn_idx:]) / cm.M_NH3_H2O
+    t    = data.variables["t"][spn_idx:]
+    n_nh3g = data.variables["NH3_g"][spn_idx:] / cm.M_NH3
+    n_N3 = np.squeeze(data.variables["plt_ch_NH3_a"][spn_idx:]) / cm.M_NH3_H2O
 
-      plots[0].plot(n_nh3g, t, style[i])
-      plots[1].plot(n_N3, t, style[i])
+    plots[0].plot(n_nh3g, t, style)
+    plots[1].plot(n_N3, t, style)
       
-      plots[2].plot(n_nh3g + n_N3 - n_nh3g[0] - n_N3[0], t, style[i])
+    plots[2].plot(n_nh3g + n_N3 - n_nh3g[0] - n_N3[0], t, style)
 
     plt.tight_layout()
     plt.savefig(output_folder + output_title  + "NH3.pdf")
@@ -201,14 +188,13 @@ def plot_chem(data, output_folder = '', output_title = ''):
     for ax in plots:
       ax.set_ylabel('t [s]')
 
-    for i, f in f_out_chem.iteritems():
-      t   = f.variables["t"][spn_idx:]
-      n_hno3g = f.variables["HNO3_g"][spn_idx:] / cm.M_HNO3
-      n_N5 = np.squeeze(f.variables["plt_ch_HNO3_a"][spn_idx:]) / cm.M_HNO3
+    t   = data.variables["t"][spn_idx:]
+    n_hno3g = data.variables["HNO3_g"][spn_idx:] / cm.M_HNO3
+    n_N5 = np.squeeze(data.variables["plt_ch_HNO3_a"][spn_idx:]) / cm.M_HNO3
  
-      plots[0].plot(n_hno3g, t, style[i])
-      plots[1].plot(n_N5,    t, style[i])
-      plots[2].plot(n_hno3g + n_N5 - n_hno3g[0] - n_N5[0], t, style[i])
+    plots[0].plot(n_hno3g, t, style)
+    plots[1].plot(n_N5,    t, style)
+    plots[2].plot(n_hno3g + n_N5 - n_hno3g[0] - n_N5[0], t, style)
 
     plt.savefig(output_folder + output_title  + "HNO3.pdf")
  
@@ -228,14 +214,13 @@ def plot_chem(data, output_folder = '', output_title = ''):
     for ax in plots:
       ax.set_ylabel('t [s]')
 
-    for i, f in f_out_chem.iteritems():
-      t   = f.variables["t"][spn_idx:]
-      n_co2g = f.variables["CO2_g"][spn_idx:] / cm.M_CO2
-      n_C4 = np.squeeze(f.variables["plt_ch_CO2_a"][spn_idx:]) / cm.M_CO2_H2O
+    t   = data.variables["t"][spn_idx:]
+    n_co2g = data.variables["CO2_g"][spn_idx:] / cm.M_CO2
+    n_C4 = np.squeeze(data.variables["plt_ch_CO2_a"][spn_idx:]) / cm.M_CO2_H2O
  
-      plots[0].plot(n_co2g, t, style[i])
-      plots[1].plot(n_C4, t, style[i])
-      plots[2].plot(n_co2g + n_C4 - n_co2g[0] - n_C4[0],  t, style[i])
+    plots[0].plot(n_co2g, t, style)
+    plots[1].plot(n_C4, t, style)
+    plots[2].plot(n_co2g + n_C4 - n_co2g[0] - n_C4[0],  t, style)
 
     plt.savefig(output_folder + output_title + "CO2.pdf")
  
@@ -263,21 +248,20 @@ def plot_chem(data, output_folder = '', output_title = ''):
     for ax in plots:
       ax.set_ylabel('t [s]')
 
-    for i, f in f_out_chem.iteritems():
-      t    = f.variables["t"][spn_idx:]
-      p    = f.variables["p"][spn_idx:]
-      T    = f.variables["T"][spn_idx:]
-      rhod = f.variables["rhod"][spn_idx:]
+    t    = data.variables["t"][spn_idx:]
+    p    = data.variables["p"][spn_idx:]
+    T    = data.variables["T"][spn_idx:]
+    rhod = data.variables["rhod"][spn_idx:]
   
-      n_so2g = f.variables["SO2_g"][spn_idx:] / cm.M_SO2
-      n_S4 = np.squeeze(f.variables["plt_ch_SO2_a"][spn_idx:]) / cm.M_SO2_H2O
-      n_S6 = np.squeeze(f.variables["plt_ch_S_VI"][spn_idx:])  / cm.M_H2SO4
+    n_so2g = data.variables["SO2_g"][spn_idx:] / cm.M_SO2
+    n_S4 = np.squeeze(data.variables["plt_ch_SO2_a"][spn_idx:]) / cm.M_SO2_H2O
+    n_S6 = np.squeeze(data.variables["plt_ch_S_VI"][spn_idx:])  / cm.M_H2SO4
 
-      plots[0].plot(n_so2g, t, style[i])
-      plots[1].plot(n_S4, t, style[i])
-      plots[2].plot(fn.mix_ratio_to_mole_frac(f.variables["SO2_g"][:], p, cm.M_SO2, T, rhod) * 1e9, t)
-      plots[3].plot(n_S6, t, style[i])
-      plots[4].plot(n_so2g + n_S4 + n_S6 - n_so2g[0] - n_S4[0] - n_S6[0],  t, style[i])
+    plots[0].plot(n_so2g, t, style)
+    plots[1].plot(n_S4, t, style)
+    plots[2].plot(fn.mix_ratio_to_mole_frac(data.variables["SO2_g"][:], p, cm.M_SO2, T, rhod) * 1e9, t)
+    plots[3].plot(n_S6, t, style)
+    plots[4].plot(n_so2g + n_S4 + n_S6 - n_so2g[0] - n_S4[0] - n_S6[0],  t, style)
 
     plt.savefig(output_folder + output_title + "SO2.pdf")
     #-----------------------------------------------------------------------
@@ -321,40 +305,22 @@ def main():
     out_bin      = '{"plt_rw": {"rght": 1, "left": 0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\
                      "plt_rd": {"rght": 1, "left": 0, "drwt": "dry", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]}}'
 
-    # running parcel model for open / closed / off chem system
-    parcel(dt = dt, z_max = z_max, w = w, outfreq = outfreq,\
-            T_0 = T_init, p_0 = p_init, r_0 = r_init,\
-            SO2_g = SO2_g_init, O3_g  = O3_g_init,  H2O2_g = H2O2_g_init,\
-            CO2_g = CO2_g_init, NH3_g = NH3_g_init, HNO3_g = HNO3_g_init,\
-            chem_sys = 'open',   outfile="test_plot_chem_open.nc",\
-            sd_conc = sd_conc,\
-            chem_dsl = chem_dsl, chem_dsc = chem_dsc, chem_rct = chem_rct, \
-            out_bin = out_bin_chem)
-
+    # run parcel model
     parcel(dt = dt, z_max = z_max, w = w, outfreq = outfreq,\
            T_0 = T_init, p_0 = p_init, r_0 = r_init,\
            SO2_g = SO2_g_init, O3_g  = O3_g_init,  H2O2_g = H2O2_g_init,\
            CO2_g = CO2_g_init, NH3_g = NH3_g_init, HNO3_g = HNO3_g_init,\
-           chem_sys = 'closed', outfile="test_plot_chem_closed.nc",\
+           outfile="test_plot_chem_closed.nc",\
            sd_conc = sd_conc,\
            chem_dsl = chem_dsl, chem_dsc = chem_dsc, chem_rct = chem_rct, \
            out_bin = out_bin_chem)
 
-    parcel(dt = dt, z_max = z_max, w = w, outfreq = outfreq, outfile="test_plot_chem_off.nc",\
-           T_0 = T_init, p_0 = p_init, r_0 = r_init,\
-           SO2_g = 0, O3_g = 0, H2O2_g = 0, out_bin = out_bin, sd_conc = sd_conc)
-
-    # TODO - why do I have to import again
-    from scipy.io import netcdf
-    data = {'open'   : netcdf.netcdf_file("test_plot_chem_open.nc",   "r"),\
-            'closed' : netcdf.netcdf_file("test_plot_chem_closed.nc", "r"),\
-            'off'    : netcdf.netcdf_file("test_plot_chem_off.nc",    "r")}
+    data = netcdf.netcdf_file("test_plot_chem.nc", "r")
 
     plot_chem(data, output_folder = "../outputs", output_title = "/test_plot_chem_")
 
-    for name, netcdf in data.iteritems():
-        netcdf.close()
-        subprocess.call(["rm", "test_plot_chem_" + name + ".nc"])
+    netcdf.close()
+    subprocess.call(["rm", "test_plot_chem.nc"])
 
 if __name__ == '__main__':
     main()
