@@ -101,8 +101,8 @@ def test_is_electroneutral(data, eps = 1e-6):
          
 @pytest.mark.parametrize("ion", ["SO2", "HSO3", "CO2", "HCO3", "NH3", "HNO3"])
 def test_dissoc_constants(data, ion, eps =\
-                                {"SO2": 2e-16, "HSO3": 2e-16,\
-                                 "CO2": 2e-16, "HCO3": 3e-16, "NH3":  3e-16, "HNO3":4e-16}):
+                                {"SO2": 2e-16, "HSO3": 5e-16,\
+                                 "CO2": 2e-16, "HCO3": 5e-16, "NH3":  3e-16, "HNO3":4e-16}):
 
      """
      Check if the mass of chemical compounds agrees with the dissociation constants
