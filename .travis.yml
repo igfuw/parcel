@@ -1,6 +1,6 @@
 language: cpp
 os: 
-    - linux
+#    - linux
     - osx
 compiler:
     - gcc
@@ -11,23 +11,23 @@ matrix:
           compiler: gcc
 
 before_install:
-  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo add-apt-repository "deb http://us.archive.ubuntu.com/ubuntu/ trusty main universe multiverse restricted"; fi
-  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then export apt_get_install="apt-get install -t trusty --no-install-recommends -y"; fi
-  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo apt-get update; fi
+#  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo add-apt-repository "deb http://us.archive.ubuntu.com/ubuntu/ trusty main universe multiverse restricted"; fi
+#  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then export apt_get_install="apt-get install -t trusty --no-install-recommends -y"; fi
+#  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo apt-get update; fi
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then brew update; fi
 
 install:
-  - if [[ $TRAVIS_OS_NAME == 'linux' && $CXX == 'clang++' ]]; then sudo $apt_get_install clang; fi
-  - if [[ $TRAVIS_OS_NAME == 'linux' && $CXX == 'g++'     ]]; then sudo $apt_get_install g++  ; fi
-  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo $apt_get_install libblitz0-dev cmake libboost-python-dev python-numpy python-scipy libthrust-dev python-pytest; fi
-  - if [[ $TRAVIS_OS_NAME == 'linux' && $CXX == 'g++'     ]]; then sudo $apt_get_install nvidia-cuda-toolkit; fi
-  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo apt-get install --no-install-recommends gnuplot-nox python-gnuplot python-tk python-matplotlib; fi 
+#  - if [[ $TRAVIS_OS_NAME == 'linux' && $CXX == 'clang++' ]]; then sudo $apt_get_install clang; fi
+#  - if [[ $TRAVIS_OS_NAME == 'linux' && $CXX == 'g++'     ]]; then sudo $apt_get_install g++  ; fi
+#  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo $apt_get_install libblitz0-dev cmake libboost-python-dev python-numpy python-scipy libthrust-dev python-pytest; fi
+#  - if [[ $TRAVIS_OS_NAME == 'linux' && $CXX == 'g++'     ]]; then sudo $apt_get_install nvidia-cuda-toolkit; fi
+#  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo apt-get install --no-install-recommends gnuplot-nox python-gnuplot python-tk python-matplotlib; fi 
 
-  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then git clone --depth=1 https://github.com/boostorg/odeint.git; fi # get boost odeint > 1.58
-  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo rm -f /usr/include/boost/numeric/odeint.hpp; fi
-  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo rm -rf /usr/include/boost/numeric/odeint; fi
-  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo ln -s `pwd`/odeint/include/boost/numeric/odeint.hpp /usr/include/boost/numeric/odeint.hpp; fi
-  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo ln -s `pwd`/odeint/include/boost/numeric/odeint  /usr/include/boost/numeric/; fi
+#  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then git clone --depth=1 https://github.com/boostorg/odeint.git; fi # get boost odeint > 1.58
+#  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo rm -f /usr/include/boost/numeric/odeint.hpp; fi
+#  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo rm -rf /usr/include/boost/numeric/odeint; fi
+#  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo ln -s `pwd`/odeint/include/boost/numeric/odeint.hpp /usr/include/boost/numeric/odeint.hpp; fi
+#  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then sudo ln -s `pwd`/odeint/include/boost/numeric/odeint  /usr/include/boost/numeric/; fi
 
   #- if [[ $TRAVIS_OS_NAME == 'osx' ]]; then which gfortran; fi
   #- if [[ $TRAVIS_OS_NAME == 'osx' ]]; then brew install gcc; fi
@@ -46,30 +46,34 @@ install:
 script:
 
   # install libcloudphxx in Release mode
-  - cd ..
-  - git clone --depth=1 git://github.com/igfuw/libcloudphxx.git
-  - cd libcloudphxx
-  - mkdir build
-  - cd build
-  - cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release ..
-  - make
-  - sudo make install
-  - cd ../..
+#  - cd ..
+#  - git clone --depth=1 git://github.com/igfuw/libcloudphxx.git
+#  - cd libcloudphxx
+#  - mkdir build
+#  - cd build
+#  - cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release ..
+#  - make
+#  - sudo make install
+#  - cd ../..
 
   # run parcel tests using Release mode of libcloudphxx
-  - cd parcel
-  - mkdir plots/outputs/
-  - py.test unit_test/
-  - py.test long_test/
+#  - cd parcel
+#  - mkdir plots/outputs/
+#  - py.test unit_test/
+#  - py.test long_test/
 
   # install libcloudphxx in Debug mode
-  - cd ..
-  - cd libcloudphxx/build
-  - cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Debug ..
-  - make
-  - sudo make install
-  - cd ../..
+#  - cd ..
+#  - cd libcloudphxx/build
+#  - cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Debug ..
+#  - make
+#  - sudo make install
+#  - cd ../..
 
   # run parcel unit tests using Debug mode of libcloudphxx
-  - cd parcel
-  - py.test unit_test/
+#  - cd parcel
+#  - py.test unit_test/
+
+
+  # testuje
+  python tescik.py
