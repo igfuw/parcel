@@ -9,7 +9,7 @@ import parcel as pc
 #checking if chemistry is indeed switched on/off 
 def test_chem_off():
   outfile_on = "test_on.nc"
-  pc.parcel(outfile=outfile_on, chem_sys = 'open', chem_dsl = True, chem_dsc = False, chem_rct = False,
+  pc.parcel(outfile=outfile_on, chem_dsl = True, chem_dsc = False, chem_rct = False,
             SO2_g = 200e-12, O3_g = 50e-9, H2O2_g = 500e-12, 
             CO2_g = 360e-6,  NH3_g = 100e-12, HNO3_g = 100e-12
            )

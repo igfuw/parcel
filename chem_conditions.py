@@ -43,7 +43,6 @@ n_tot  = 566.e6 * rho_stp / rho_init
 chem_dsl = False
 chem_dsc = False
 chem_rct = False
-chem_sys = 'closed'
 chem_rho = 1.8e3
 
 # output
@@ -54,21 +53,24 @@ outfreq = int(z_max / dt / 30)
 sd_conc = 4
 outfile = "TODO.nc"
 
+#substeps for condensation and chemistry
+sstp_cond = 1
+sstp_chem = 1
+
 # output moments for the chemistry quicklook plot (the same for all tests)
 out_bin = '{"plt_rw":   {"rght": 1,    "left":    0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\
             "plt_rd":   {"rght": 1,    "left":    0, "drwt": "dry", "lnli": "lin", "nbin": 1, "moms": [0, 1, 3]},\
             "plt_ch":   {"rght": 1,    "left":    0, "drwt": "dry", "lnli": "lin", "nbin": 1,\
-                         "moms": ["O3_a",   "H2O2_a", "H", "OH",\
-                                 "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI",\
-                                 "CO2_a",  "HCO3_a", "CO3_a",\
-                                 "NH3_a",  "NH4_a",  "HNO3_a", "NO3_a"]}}'
+                         "moms": ["O3_a", "H2O2_a", "H", "SO2_a", "S_VI",\
+                                 "CO2_a", "NH3_a", "HNO3_a"]}}'
 
 # saving parcel options as a dictionary
 parcel_dict = {'dt': dt, 'z_max': z_max, 'outfreq': outfreq, 'w': w,\
+               'sstp_cond': sstp_cond, 'sstp_chem': sstp_chem,\
                'T_0': T_init, 'p_0': p_init, 'r_0': r_init,\
                'SO2_g': SO2_g_init, 'O3_g':  O3_g_init, 'H2O2_g': H2O2_g_init,\
                'CO2_g': CO2_g_init, 'NH3_g': NH3_g_init,'HNO3_g': HNO3_g_init,\
-               'chem_sys': chem_sys, 'chem_rho': chem_rho, 'outfile': outfile,\
+               'chem_rho': chem_rho, 'outfile': outfile,\
                'chem_dsl': chem_dsl, 'chem_dsc': chem_dsc, 'chem_rct': chem_rct,\
                'n_tot': n_tot, 'mean_r': mean_r, 'gstdev': gstdev,\
                'sd_conc': sd_conc, 'out_bin': out_bin}
