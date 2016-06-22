@@ -133,7 +133,7 @@ def _output_bins(fout, t, micro, opts, spectra):
 	  fout.variables[dim+"_r_dry"][bin],
 	  fout.variables[dim+"_r_dry"][bin] + fout.variables[dim+"_dr_dry"][bin]
 	)
-      else: assert False
+      else: raise Exception("drwt should be wet or dry")
 
       for vm in dct["moms"]:
         if type(vm) == int:
@@ -142,7 +142,7 @@ def _output_bins(fout, t, micro, opts, spectra):
             micro.diag_wet_mom(vm)
           elif dct["drwt"] == 'dry':
             micro.diag_dry_mom(vm)
-          else: assert False
+          else: raise Exception("drwt should be wet or dry")
           fout.variables[dim+'_m'+str(vm)][t, bin] = np.frombuffer(micro.outbuf())
         else:
           # calculate chemistry
@@ -176,7 +176,7 @@ def _output_init(micro, opts, spectra):
       dr = (dct["rght"] - dct["left"]) / dct["nbin"]
       fout.variables[name+'_r_'+dct["drwt"]][:] = dct["left"] + np.arange(dct["nbin"]) * dr
       fout.variables[name+'_dr_'+dct["drwt"]][:] = dr
-    else: assert False
+    else: raise Exception("lnli should be log or lin")
 
     for vm in dct["moms"]:
       if (vm in _Chem_a_id):
@@ -354,7 +354,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
         # for rho piecewise constant per each time step
         state["p"] = _p_hydro_const_rho(w*dt, state["p"], state["rhod"][0])
 
-      else: assert(False)
+      else: raise Exception("pprof should be pprof_const_th_rv, pprof_const_rhod, or pprof_piecewise_const_rhod") 
 
       # dry air density
       if pprof == "pprof_const_th_rv":
@@ -409,7 +409,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
           # for rho piecewise constant per each time step
           state["p"] = _p_hydro_const_rho(-1 * w*dt, state["p"], state["rhod"][0])
 
-        else: assert(False)
+        else: raise Exception("pprof should be pprof_const_th_rv, pprof_const_rhod, or pprof_piecewise_const_rhod")
 
         # dry air density
         if pprof == "pprof_const_th_rv":
