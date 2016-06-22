@@ -15,6 +15,8 @@ from libcloudphxx import common as cm
 from chemical_plot import plot_chem
 from chem_conditions import parcel_dict
 
+import pprint as pp
+
 @pytest.fixture(scope="module")
 def data(request):
 
@@ -24,6 +26,8 @@ def data(request):
     # modify options from chem_conditions
     p_dict['outfile']  = "test_chem_closed_dsl.nc"
     p_dict['chem_dsl'] = True
+
+    pp.pprint(p_dict)
 
     # run parcel
     parcel(**p_dict)
@@ -35,7 +39,7 @@ def data(request):
     def removing_files():
         subprocess.call(["rm", p_dict['outfile']])
 
-    request.addfinalizer(removing_files)
+    #request.addfinalizer(removing_files)
     return data
 
 @pytest.mark.parametrize("chem", ["SO2", "O3", "H2O2", "CO2", "NH3", "HNO3"])
@@ -65,6 +69,5 @@ def test_chem_plot(data):
     """
     quicklook for chemistry
     """
-    data_to_plot = {'closed' : data}
-    plot_chem(data_to_plot, output_folder="plots/outputs", output_title="/test_chem_closed_dsl_")
+    plot_chem(data, output_folder="plots/outputs", output_title="/test_chem_closed_dsl_")
 
