@@ -59,7 +59,7 @@ def henry_teor(chem, p, T, vol, mixr_g, rhod, conc_H):
         K = getattr(cm, "K_NH3") * np.exp(getattr(cm, "dKR_"+chem) * (1./T - 1./298))
         pH_corr = 1 + K / getattr(cm, "K_H2O") * conc_H
     else:
-        assert False
+        raise Exception("chem should be O3, H2O2, SO3, CO2, HNO3, or NH3")
 
     # correction to Henry constant due to temperature and pH
     H       = getattr(cm, "H_"  +chem)
