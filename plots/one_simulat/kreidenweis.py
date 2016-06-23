@@ -204,7 +204,7 @@ def main():
                              "moms": ["O3_a", "H2O2_a", "H", "OH", "SO2_a", "S_VI", "CO2_a", "NH3_a", "HNO3_a"]}}'
 
     # run parcel
-    #parcel(**p_dict)
+    parcel(**p_dict)
 
     # simulation results
     data = netcdf.netcdf_file(p_dict['outfile'],   "r")
@@ -213,7 +213,6 @@ def main():
     plot_fig1(data, output_folder = "../outputs", output_title = "/Kreidenweis_fig1")
     plot_fig2(data, output_folder = "../outputs", output_title = "/Kreidenweis_fig2")
     plot_fig3(data, output_folder = "../outputs", output_title = "/Kreidenweis_fig3")
-    plot_fig4(data, output_folder = "../outputs", output_title = "/Kreidenweis_fig4")
 
     # cleanup
     subprocess.call(["rm", p_dict['outfile']])
