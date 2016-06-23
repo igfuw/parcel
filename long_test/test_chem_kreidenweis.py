@@ -83,12 +83,6 @@ def test_chem_fig3(data):
     """
     plot_fig3(data, output_folder="plots/outputs", output_title='/Kreidenweis_fig3')
 
-def test_chem_fig4(data):
-    """
-    gas vol conc. plots
-    """
-    plot_fig4(data, output_folder="plots/outputs", output_title='/Kreidenweis_fig4')
-
 def test_chem_sulfate_formation(data):
     """
     sulfate formation vs water-weighted average pH

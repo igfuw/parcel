@@ -178,56 +178,6 @@ def plot_fig3(data, output_folder = '', output_title = ''):
 
     g.plot(plot_ini, plot_end)
 
-def plot_fig4(data, output_folder = '', output_title = ''):
-
-    import matplotlib
-    matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
-    import matplotlib.pyplot as plt
-
-    # plot settings
-    plt.figure(1, figsize=(18,14))
-    plt.rcParams.update({'font.size': 12})
-    plots = []
-    for i in range(6):
-      plots.append(plt.subplot(2,3,i+1))
-                             #(rows, columns, number)
-    for ax in plots:
-      ax.set_ylabel('t [s]')
-      ax.set_ylim([0, 2400])
-      ax.set_yticks([0, 400, 800, 1200, 1600, 2000, 2400])
-
-    #plt.tight_layout()
-    spn_idx = 4
-
-    # read in y-axis (time)
-    t   = data.variables["t"][spn_idx:] - data.variables["t"][spn_idx]
-
-    # calculate SO2 gas volume concentration
-    p    = data.variables["p"][spn_idx:]
-    T    = data.variables["T"][spn_idx:]
-    rhod = data.variables["rhod"][spn_idx:]
-
- 
-    chem_dict = {"SO2" : {"it": 0, "unit": "[ppb]", "scale": 1e9, "lim": [0.06, 0.2],   "Mg": cm.M_SO2,  "Ma": cm.M_SO2_H2O},\
-                 "O3"  : {"it": 1, "unit": "[ppb]", "scale": 1e9, "lim": [50., 50.1],   "Mg": cm.M_O3,   "Ma": cm.M_O3},\
-                 "H2O2": {"it": 2, "unit": "[ppb]", "scale": 1e9, "lim": [0.45, 0.5],   "Mg": cm.M_H2O2, "Ma": cm.M_H2O2},\
-                 "CO2" : {"it": 3, "unit": "[ppm]", "scale": 1e6, "lim": [360., 361.2], "Mg": cm.M_CO2,  "Ma": cm.M_CO2_H2O},\
-                 "NH3" : {"it": 4, "unit": "[ppb]", "scale": 1e9, "lim": [0., 0.1],     "Mg": cm.M_NH3,  "Ma": cm.M_NH3_H2O},\
-                 "HNO3": {"it": 5, "unit": "[ppb]", "scale": 1e9, "lim": [0., 0.1],     "Mg": cm.M_HNO3, "Ma": cm.M_HNO3}}
-
-    for key, val in chem_dict.iteritems():
-
-        plots[val["it"]].grid()
-        plots[val["it"]].set_xlabel('gas + aq vol.conc' + key + val["unit"])
-        #plots[1].set_xticks([0., 0.05, 0.1, 0.15, 0.2])
-        #plots[1].set_xticklabels(['0', '0.05', '0.1', '0.15', '0.2'])
-        plots[val["it"]].set_xlim(val["lim"])
-        tmp1 = fn.mix_ratio_to_mole_frac(data.variables[key + "_g"][spn_idx:], p, val["Mg"], T, rhod)
-        tmp2 = fn.mix_ratio_to_mole_frac(data.variables[key + "_a"][spn_idx:], p, val["Ma"], T, rhod)
-        plots[val["it"]].plot((tmp1 + tmp2) * val["scale"], t, "g.-")
-
-    plt.savefig(output_folder + output_title + ".pdf")
-
 def main():
 
     # copy options from chem_conditions ...
