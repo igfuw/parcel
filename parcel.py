@@ -2,8 +2,8 @@
 
 # TEMP TODO TEMP TODO !!!
 import sys
-sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
-sys.path.insert(0, "../../../libcloudphxx/build/bindings/python/")
+#sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
+#sys.path.insert(0, "../../../libcloudphxx/build/bindings/python/")
 # TEMP TODO TEMP TODO !!!
 
 from argparse import ArgumentParser, RawTextHelpFormatter
@@ -41,15 +41,6 @@ _Chem_a_id = {
   "HNO3_a" : lgrngn.chem_species_t.HNO3, 
   "NH3_a"  : lgrngn.chem_species_t.NH3,
   "H"      : lgrngn.chem_species_t.H,
-  "OH"     : lgrngn.chem_species_t.OH,
-  "HCO3_a" : lgrngn.chem_species_t.HCO3,
-  "CO3_a"  : lgrngn.chem_species_t.CO3,
-  "NO3_a"  : lgrngn.chem_species_t.NO3,
-  "NH4_a"  : lgrngn.chem_species_t.NH4,
-  "HSO3_a" : lgrngn.chem_species_t.HSO3,
-  "SO3_a"  : lgrngn.chem_species_t.SO3,
-  "HSO4_a" : lgrngn.chem_species_t.HSO4,
-  "SO4_a"  : lgrngn.chem_species_t.SO4,
   "S_VI"   : lgrngn.chem_species_t.S_VI
 }
 
@@ -71,15 +62,17 @@ def _micro_init(opts, state, info):
     setattr(opts_init, opt, opts[opt])
   opts_init.n_sd_max    = opts_init.sd_conc
   opts_init.dry_distros = {opts["kappa"]:lognormal}
-  
+
   # switch off sedimentation and collisions
   opts_init.sedi_switch = False
   opts_init.coal_switch = False
   
   # switching on chemistry if either dissolving, dissociation or reactions are chosen
   opts_init.chem_switch = False
-  if opts["chem_dsl"] or opts["chem_dsc"] or opts["chem_rct"]: opts_init.chem_switch = True
-
+  if opts["chem_dsl"] or opts["chem_dsc"] or opts["chem_rct"]: 
+    opts_init.chem_switch = True
+    opts_init.sstp_chem = opts["sstp_chem"]
+ 
   # initialisation
   micro = lgrngn.factory(lgrngn.backend_t.serial, opts_init)
   ambient_chem = {}
@@ -97,14 +90,6 @@ def _micro_step(micro, state, info, opts, it, fout):
 
   # chemical options
   if micro.opts_init.chem_switch:
-
-    # open/closed chem system
-    if opts['chem_sys'] == 'closed':
-      libopts.chem_sys_cls = True
-    elif opts['chem_sys'] == 'open':
-      libopts.chem_sys_cls = False
-    else: assert False
- 
     # chem processes: dissolving, dissociation, reactions
     libopts.chem_dsl = opts["chem_dsl"]
     libopts.chem_dsc = opts["chem_dsc"]
@@ -163,7 +148,7 @@ def _output_bins(fout, t, micro, opts, spectra):
           # calculate chemistry
           micro.diag_chem(_Chem_a_id[vm])
           fout.variables[dim+'_'+vm][t, bin] = np.frombuffer(micro.outbuf())
-          
+
 def _output_init(micro, opts, spectra):
   # file & dimensions
   fout = netcdf.netcdf_file(opts["outfile"], 'w')
@@ -211,8 +196,8 @@ def _output_init(micro, opts, spectra):
       units[id_str] = "gas mixing ratio [kg / kg dry air]"
       units[id_str.replace('_g', '_a')] = "kg of chem species dissolved in cloud droplets (kg of dry air)^-1"
 
-    for id_str in ["HSO3_a", "SO3_a", "HCO3_a", "CO3_a", "NH4_a", "NO3_a"]:
-      units[id_str] = "kg of ions in cloud droplets (kg of dry air)^-1"
+  #  for id_str in ["HSO3_a", "SO3_a", "HCO3_a", "CO3_a", "NH4_a", "NO3_a"]:
+  #    units[id_str] = "kg of ions in cloud droplets (kg of dry air)^-1"
 
   for var_name, unit in units.iteritems():
     fout.createVariable(var_name, 'd', ('t',))
@@ -247,11 +232,12 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
   out_bin = '{"radii": {"rght": 0.0001, "moms": [0], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09}}',
   SO2_g = 0., O3_g = 0., H2O2_g = 0., CO2_g = 0., HNO3_g = 0., NH3_g = 0.,
-  chem_sys = 'open',
   chem_dsl = False, chem_dsc = False, chem_rct = False, 
   chem_rho = 1.8e3,
   sstp_cond = 1,
-  wait = 0
+  sstp_chem = 1,
+  wait = 0,
+  down = False
 ):
   """
   Args:
@@ -283,10 +269,10 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
                                   will output the total mass of H2SO4  and NH4 ions in each sizedistribution bin
                                   
                                   Valid "moms" for chemistry are: 
-                                    "O3_a",  "H2O2_a", "H", "OH", 
-                                    "SO2_a",  "HSO3_a", "SO3_a", "HSO4_a", "SO4_a",  "S_VI",
-                                    "CO2_a",  "HCO3_a", "CO3_a",
-                                    "NH3_a",  "NH4_a",  "HNO3_a", "NO3_a"
+                                    "O3_a",  "H2O2_a", "H", 
+                                    "SO2_a",  "S_VI",
+                                    "CO2_a",  
+                                    "NH3_a", "HNO3_a",
 
     SO2_g    (Optional[float]):   initial SO2  gas mixing ratio [kg / kg dry air]
     O3_g     (Optional[float]):   initial O3   gas mixing ratio [kg / kg dry air]
@@ -294,9 +280,6 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
     CO2_g    (Optional[float]):   initial CO2  gas mixing ratio [kg / kg dry air]
     NH3_g     (Optional[float]):  initial NH3  gas mixing ratio [kg / kg dry air]
     HNO3_g   (Optional[float]):   initial HNO3 gas mixing ratio [kg / kg dry air]
-    chem_sys (Optional[string]):  accepted values: 'open', 'closed'
-                                  (in open/closed system gas volume concentration in the air doesn't/does change 
-                                   due to chemical reactions)
     chem_dsl (Optional[bool]):    on/off for dissolving chem species into droplets
     chem_dsc (Optional[bool]):    on/off for dissociation of chem species in droplets
     chem_rct (Optional[bool]):    on/off for oxidation of S_IV to S_VI
@@ -334,16 +317,16 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
            "parcel_Git_revision" : parcel_version }
 
   micro = _micro_init(opts, state, info)
+
   with _output_init(micro, opts, spectra) as fout:
     # adding chem state vars
     if micro.opts_init.chem_switch:
-      state.update({ "SO2_a" : 0.,"O3_a" : 0.,"H2O2_a" : 0., "HSO3_a" : 0, "SO3_a" : 0})
-      state.update({ "CO2_a" : 0.,"NH3_a" : 0.,"HNO3_a" : 0.})
-      state.update({ "HCO3_a" : 0.,"CO3_a": 0.,"NO3_a" : 0.})
+      state.update({ "SO2_a" : 0.,"O3_a" : 0.,"H2O2_a" : 0.,})
+      state.update({ "CO2_a" : 0.,"HNO3_a" : 0.})
 
       micro.diag_all() # selecting all particles
-      micro.diag_chem(_Chem_a_id["NH4_a"])
-      state.update({"NH4_a": np.frombuffer(micro.outbuf())[0]})
+      micro.diag_chem(_Chem_a_id["NH3_a"])
+      state.update({"NH3_a": np.frombuffer(micro.outbuf())[0]})
 
     # t=0 : init & save
     _output(fout, opts, micro, state, 0, spectra)
@@ -401,6 +384,61 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
         rec = it/outfreq
         _output(fout, opts, micro, state, rec, spectra)
 
+    t_max = state["t"]
+    if down == True: 
+      # timestepping down
+      for it in range(nt+2,2*nt):
+        # diagnostics
+        # the reasons to use analytic solution:
+        # - independent of dt
+        # - same as in 2D kinematic model
+        state["z"] -= w * dt
+        state["t"] = it * dt
+
+        # pressure
+        if pprof == "pprof_const_th_rv":
+          # as in icicle model
+          p_hydro = _p_hydro_const_th_rv(state["z"], p_0, th_0, r_0)
+        elif pprof == "pprof_const_rhod":
+          # as in Grabowski and Wang 2009
+          rho = 1.13 # kg/m3  1.13 
+          state["p"] = _p_hydro_const_rho(state["z"], p_0, rho) 
+
+        elif pprof == "pprof_piecewise_const_rhod":
+          # as in Grabowski and Wang 2009 but calculating pressure
+          # for rho piecewise constant per each time step
+          state["p"] = _p_hydro_const_rho(-1 * w*dt, state["p"], state["rhod"][0])
+
+        else: assert(False)
+
+        # dry air density
+        if pprof == "pprof_const_th_rv":
+          state["rhod"][0] = common.rhod(p_hydro, th_0, r_0)
+          state["p"] = common.p(
+            state["rhod"][0],
+            state["r_v"][0],
+            common.T(state["th_d"][0], state["rhod"][0])
+          )
+
+        else:
+          state["rhod"][0] = common.rhod(
+            state["p"], 
+            common.th_dry2std(state["th_d"][0], state["r_v"][0]), 
+            state["r_v"][0]
+          )
+
+        # microphysics
+        _micro_step(micro, state, info, opts, it, fout)
+ 
+        # TODO: only if user wants to stop @ RH_max
+        #if (state["RH"] < info["RH_max"]): break
+ 
+        # output
+        if (it % outfreq == 0):
+          print str(round(it / (nt * 1.) * 100, 2)) + " %"
+          rec = it/outfreq
+          _output(fout, opts, micro, state, rec, spectra)
+
     _save_attrs(fout, info)
     _save_attrs(fout, opts)
 
@@ -424,9 +462,6 @@ def _arguments_checking(opts, spectra):
     raise Exception("vertical velocity should be larger than 0")
   if opts["kappa"] <= 0: 
     raise Exception("kappa hygroscopicity parameter should be larger than 0 ")
-  if opts["chem_sys"] not in ["open", "closed"]:
-    raise Exception("Expected >>chem_sys<< options are: 'open', 'closed'.")
-  
   for name, dct in spectra.iteritems():
     # TODO: check if name is valid netCDF identifier 
     # (http://www.unidata.ucar.edu/software/thredds/current/netcdf-java/CDM/Identifiers.html)

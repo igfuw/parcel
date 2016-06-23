@@ -18,7 +18,7 @@ def data(request):
     """
     outfile = "test_spectrum.nc"
 
-    # running parcel model for open / closed chem system  ...
+    # running parcel model  ...
     parcel(dt = .5, sd_conc = 1024, outfreq = 40,  outfile=outfile, chem_dsl = True, out_bin = \
             '{"linwradii": {"rght": 0.0001,  "left": 1e-09, "drwt": "wet", "lnli": "lin", "nbin": 26, "moms": [0, 1, 3]}, \
               "lindradii": {"rght": 1e-06,  "left": 1e-09, "drwt": "dry", "lnli": "lin", "nbin": 26, "moms": [0, 1, 3]}, \
