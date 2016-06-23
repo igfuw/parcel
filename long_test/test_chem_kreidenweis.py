@@ -17,7 +17,6 @@ from chemical_plot import plot_chem
 from kreidenweis import plot_fig1
 from kreidenweis import plot_fig2
 from kreidenweis import plot_fig3
-from kreidenweis import plot_fig4
 from chem_conditions import parcel_dict
 
 import functions as fn
