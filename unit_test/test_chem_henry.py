@@ -58,7 +58,7 @@ def data(request):
           out_bin = \
             '{"radii": {"rght": 1.0, "left": 0.0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 3]},\
               "chem" : {"rght": 1.0, "left": 0.0, "drwt": "wet", "lnli": "lin", "nbin": 1,\
-                "moms": ["O3_a", "H2O2_a", "SO2_a", "CO2_a", "NH3_a", "HNO3_a", "H"]}}')
+               "moms": ["O3_a", "H2O2_a", "SO2_a", "CO2_a", "NH3_a", "HNO3_a", "H"]}}')
 
     data = netcdf.netcdf_file("test_chem_henry.nc", "r")
 
