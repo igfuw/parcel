@@ -18,7 +18,7 @@ import functions as fn
 @pytest.fixture(scope="module")  
 def data(request):
     # initial condition
-    RH_init = .99999
+    RH_init = .999999
     T_init  = 300.
     p_init  = 100000.
     r_init  = cm.eps * RH_init * cm.p_vs(T_init) / (p_init - RH_init * cm.p_vs(T_init))
@@ -41,64 +41,59 @@ def data(request):
     n_tot  = 566.e6
 
     # output
-    sd_conc     = 8
-    outfreq     = 20
-    z_max       = 30.
-    outfile     = "test_chem_dsl_"
+    sd_conc     = 1
+    outfreq     = 50
+    z_max       = 300.
+    outfile     = "test_chem_henry.nc"
     dt          = 0.1
-    wait        = 500
+    wait        = 100
 
-    for chem_sys in ["open", "closed"]:
-        parcel(dt = dt, z_max = z_max, outfreq = outfreq, wait=wait,\
-                T_0 = T_init, p_0 = p_init, r_0 = r_init,\
-                SO2_g = SO2_g_init, O3_g  = O3_g_init,  H2O2_g = H2O2_g_init,\
-                CO2_g = CO2_g_init, NH3_g = NH3_g_init, HNO3_g = HNO3_g_init,\
-                chem_sys = chem_sys,   outfile = outfile + chem_sys +".nc",\
-                chem_dsl = True, chem_dsc = False, chem_rct = False,\
-                mean_r = mean_r, gstdev = gstdev, n_tot = n_tot, sd_conc = sd_conc,\
-                out_bin = \
-                '{"radii": {"rght": 1.0, "left": 0.0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 3]},\
-                  "chem" : {"rght": 1.0, "left": 0.0, "drwt": "wet", "lnli": "lin", "nbin": 1,\
-                      "moms": ["O3_a", "H2O2_a", "SO2_a", "CO2_a", "NH3_a", "HNO3_a"]}}')
+    parcel(dt = dt, z_max = z_max, outfreq = outfreq, wait=wait,\
+          T_0 = T_init, p_0 = p_init, r_0 = r_init,\
+          SO2_g = SO2_g_init, O3_g  = O3_g_init,  H2O2_g = H2O2_g_init,\
+          CO2_g = CO2_g_init, NH3_g = NH3_g_init, HNO3_g = HNO3_g_init,\
+          outfile = outfile,\
+          chem_dsl = True, chem_dsc = True, chem_rct = False,\
+          mean_r = mean_r, gstdev = gstdev, n_tot = n_tot, sd_conc = sd_conc,\
+          out_bin = \
+            '{"radii": {"rght": 1.0, "left": 0.0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 3]},\
+              "chem" : {"rght": 1.0, "left": 0.0, "drwt": "wet", "lnli": "lin", "nbin": 1,\
+               "moms": ["O3_a", "H2O2_a", "SO2_a", "CO2_a", "NH3_a", "HNO3_a", "H"]}}')
 
-    data = {"open":   netcdf.netcdf_file("test_chem_dsl_open.nc",   "r"),\
-            "closed": netcdf.netcdf_file("test_chem_dsl_closed.nc", "r")}
+    data = netcdf.netcdf_file("test_chem_henry.nc", "r")
 
     # removing all netcdf files after all tests                                      
     def removing_files():
-        for files in data.keys():
-            subprocess.call(["rm", "test_chem_dsl_"+files+".nc"])
+        subprocess.call(["rm", "test_chem_henry.nc"])
 
     request.addfinalizer(removing_files)
     return data
 
 @pytest.mark.parametrize("chem", ["SO2", "O3", "H2O2", "CO2", "HNO3", "NH3"])
-def test_henry_checker(data, chem, eps = {"SO2": 5e-8, "O3":4e-8, "H2O2": 2e-7, "CO2": 4e-8, "NH3": 6e-8, "HNO3":2e-7}):
+def test_henry_checker(data, chem, eps = {"SO2": 5e-8, "O3":4e-8, "H2O2": 2e-6, "CO2": 4e-8, "NH3": 3e-7, "HNO3":2e-6}):
     """                              
     Checking if dissolving chemical compounds into cloud droplets follows Henrys law
     http://www.henrys-law.org/
 
-    libcloudph++ takes into account the affect of temperature on Henry constant and 
-    the effects of mass transfer into droplets
+    libcloudph++ takes into account the effect of temperature and pH on Henry constant 
+    and the effects of mass transfer into droplets
 
     Due o the latter effect, to compare with the teoretical values there is first the "wait" period
     with verical velocity set to zero. During this time the droplets may adjust to equilibrum
     and may be then compared with the teoretical values.
 
-    Comparison is done for the open sysem only.
     """
-    data_open = data["open"]
-
-    vol    = data_open.variables["radii_m3"][-1] * 4/3. * math.pi
-    T      = data_open.variables["T"][-1]
-    p      = data_open.variables["p"][-1]
-    mixr_g = data_open.variables[chem+"_g"][-1]
-    rhod   = data_open.variables["rhod"][-1]
+    vol    = data.variables["radii_m3"][-1] * 4/3. * math.pi
+    conc_H = data.variables["chem_H"][-1, 0] / cm.M_H / vol
+    T      = data.variables["T"][-1]
+    p      = data.variables["p"][-1]
+    mixr_g = data.variables[chem+"_g"][-1]
+    rhod   = data.variables["rhod"][-1]
 
     # dissolved mass according to Henry's law
-    henry_aq  = fn.henry_teor(chem, p, T, vol, mixr_g, rhod)
+    henry_aq  = fn.henry_teor(chem, p, T, vol, mixr_g, rhod, conc_H)
     # mass in droplets
-    chem_tmp  = data_open.variables["chem_"+chem+"_a"][-1]
+    chem_tmp  = data.variables["chem_"+chem+"_a"][-1]
 
     assert np.isclose(chem_tmp, henry_aq, atol=0, rtol=eps[chem]), chem + " : " + str((chem_tmp - henry_aq)/chem_tmp) 
 
@@ -106,5 +101,4 @@ def test_henry_plot(data):
     """
     plot mass of dissolved chem species compared with theory
     """
-    for chem_sys in ["open", "closed"]:
-        plot_henry(data[chem_sys], chem_sys, output_folder = "plots/outputs/")
+    plot_henry(data, output_folder = "plots/outputs/")

@@ -33,4 +33,5 @@ def test_cmdline(tmpdir, arg):
   subprocess.check_call(list_arg)
 
   # comparing if the output is the same
+  # this test might fail if libcloudph++ was compiled with -Ofast flag (should work with -O3)
   subprocess.check_call(["diff", file, str(tmpdir.join("test_pyt.nc"))])
