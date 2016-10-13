@@ -48,7 +48,7 @@ def data(request):
     return data
 
 @pytest.mark.parametrize("chem", ["CO2", "NH3", "HNO3"])
-def test_moles_const_dsl_dsc_rct(data, chem, eps = {"CO2": 2e-14, "NH3": 3e-15, "HNO3":4e-15}):
+def test_moles_const_dsl_dsc_rct(data, chem, eps = {"CO2": 2e-14, "NH3": 3.4e-15, "HNO3":4e-15}):
      """
      Checking if the total number of moles in closed chemical system 
      with dissocoation and chemical reactions remains constant
