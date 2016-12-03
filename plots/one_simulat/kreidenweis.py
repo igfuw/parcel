@@ -25,28 +25,33 @@ def plot_fig1(data, output_folder = '', output_title = ''):
 
     # plot settings
     plt.figure(1)
-    plt.rcParams.update({'font.size': 8})
+    plt.figure(figsize=(28,13))
+    #plt.tight_layout(pad=4, w_pad=4, h_pad=4)
+    plt.rcParams.update({'font.size': 30})
     plots = []
     for i in range(3):
       plots.append(plt.subplot(1,3,i+1))
                              #(rows, columns, number)
     for ax in plots:
-      ax.set_ylabel('t [s]')
       ax.set_ylim([0, 2400])
       ax.set_yticks([0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400])
+      ax.tick_params(axis='x', pad=15)
+      ax.tick_params(axis='y', pad=15)
 
     #plt.tight_layout()
     spn_idx = 0#4
 
     # read in y-axis (time)
     t   = data.variables["t"][spn_idx:] - data.variables["t"][spn_idx]
+    tb  = 200 # time at cloud base #TODO check exactly with RH calculations 
 
     # calculate lwc
-    plots[0].set_xlabel('lwc g/kg dry air')
+    plots[0].set_xlabel('LWC [g/kg]')
+    plots[0].set_ylabel('time above cloud base [s]')
     plots[0].grid()
     #plots[0].set_xlim([0., 2.5])
     #plots[0].set_xticks([0., 0.5, 1, 1.5, 2, 2.5])
-    plots[0].plot(np.sum(data.variables["radii_m3"][spn_idx:], axis=1) * 4. / 3 * math.pi * 998.2 * 1e3, t, "b.-")
+    plots[0].plot(np.sum(data.variables["radii_m3"][spn_idx:], axis=1) * 4. / 3 * math.pi * 998.2 * 1e3, t-tb,"b.-",ms=15,lw=4.)
 
     # calculate SO2 gas volume concentration
     p    = data.variables["p"][spn_idx:]
@@ -54,7 +59,7 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     rhod = data.variables["rhod"][spn_idx:]
 
     plots[1].grid()
-    plots[1].set_xlabel('gas vol.conc SO2 [ppb]')
+    plots[1].set_xlabel('$\mathrm{SO_2}$ conc. [ppb]') #gas volume concentration
     plots[1].set_xticks([0., 0.05, 0.1, 0.15, 0.2])
     plots[1].set_xticklabels(['0', '0.05', '0.1', '0.15', '0.2'])
     plots[1].set_xlim([0., 0.2])
@@ -62,7 +67,7 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     tmp2 = fn.mix_ratio_to_mole_frac(\
       np.squeeze(data.variables["plt_ch_SO2_a"][spn_idx:]), p, cm.M_SO2_H2O, T, rhod)
     #tmp2 = fn.mix_ratio_to_mole_frac(data.variables["SO2_a"][spn_idx:], p, cm.M_SO2_H2O, T, rhod)
-    plots[1].plot((tmp1 + tmp2) * 1e9, t, "g.-")
+    plots[1].plot((tmp1 + tmp2) * 1e9, t-tb, "b.-", ms=15, lw=4.)
     #plots[1].plot((tmp2) * 1e9, t, "r.-")
     #plots[1].plot((tmp1) * 1e9, t, "b.-")
 
@@ -84,7 +89,9 @@ def plot_fig1(data, output_folder = '', output_title = ''):
         den[time] = np.sum(r3[time,:])                                 # to liters
 
     pH  = -1 * np.log10(nom / den)
-    plots[2].plot(pH, t, "b.-")
+    plots[2].set_xlim([3.6, 5])
+    plots[2].set_xticks([3.8, 4.0, 4.2, 4.4, 4.6, 4.8, 5])
+    plots[2].plot(pH, t-tb, "b.-",ms=15, lw=4.)
 
     plt.savefig(output_folder + output_title + ".pdf")
 
@@ -145,10 +152,10 @@ def plot_fig3(data, output_folder = '', output_title = ''):
     d_log_rd = math.log(rd[2], 10) - math.log(rd[1], 10)
 
     g = Gnuplot.Gnuplot()# persist=1)
-    g('set term svg dynamic enhanced')
+    g('set term svg dynamic enhanced font "Verdana, 14"')
 
     ymin = .01
-    ymax = 10
+    ymax = 20
     xmin = 0.01
     xmax = 1
 
@@ -156,7 +163,7 @@ def plot_fig3(data, output_folder = '', output_title = ''):
     g('set output "' + output_folder + output_title + '.svg"')
     g('set logscale xy')
     g('set xlabel "particle diameter [μm]" ')
-    g('set ylabel "dS(VI)/dlog_{10}(D) [μg /m^3 log_{10}(size interval)]"')
+    g('set ylabel "dS(VI)/dlog_{10}(D) [μg /m^3 per log_{10}(size interval)]"')
     g('set xrange [' +  str(xmin) + ':' + str(xmax) + ']')
     g('set yrange [' +  str(ymin) + ':' + str(ymax) + ']')
     g('set grid')
@@ -165,14 +172,6 @@ def plot_fig3(data, output_folder = '', output_title = ''):
     s6_ini = data.variables['chemd_S_VI'][0,:]  * data.variables["rhod"][0]  / d_log_rd
     s6_end = data.variables['chemd_S_VI'][-1,:] * data.variables["rhod"][-1] / d_log_rd
 
-    mass1 = 1.35837239e-10 * 1e9
-    mass2 = 2.00500078e-09 * 1e9
-    edge1 = .08
-    edge2 = .125
-
-    #g('set arrow from ' + str(edge1) + ',' + str(mass1) + 'to ' + str(edge1) + ',' + str(ymin) + 'nohead lw 2')
-    #g('set arrow from ' + str(edge2) + ',' + str(mass2) + 'to ' + str(edge2) + ',' + str(ymin) + 'nohead lw 2')
- 
     plot_ini = Gnuplot.PlotItems.Data(rd * 2 * 1e6, s6_ini * 1e9, with_="steps lw 3 lt 1", title="ini")
     plot_end = Gnuplot.PlotItems.Data(rd * 2 * 1e6, s6_end * 1e9, with_="steps lw 3 lt 2", title="end")
 
