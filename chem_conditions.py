@@ -38,6 +38,7 @@ HNO3_g_init = fn.mole_frac_to_mix_ratio(100e-12, p_init, cm.M_HNO3, T_init, rhod
 mean_r = .04e-6
 gstdev = 2.
 n_tot  = 566.e6 * rho_stp / rho_init
+kappa  = 0.61
 
 # chem process toggling
 chem_dsl = False
@@ -72,5 +73,5 @@ parcel_dict = {'dt': dt, 'z_max': z_max, 'outfreq': outfreq, 'w': w,\
                'CO2_g': CO2_g_init, 'NH3_g': NH3_g_init,'HNO3_g': HNO3_g_init,\
                'chem_rho': chem_rho, 'outfile': outfile,\
                'chem_dsl': chem_dsl, 'chem_dsc': chem_dsc, 'chem_rct': chem_rct,\
-               'n_tot': n_tot, 'mean_r': mean_r, 'gstdev': gstdev,\
+               'n_tot': n_tot, 'mean_r': mean_r, 'gstdev': gstdev, 'kappa': kappa,\
                'sd_conc': sd_conc, 'out_bin': out_bin}

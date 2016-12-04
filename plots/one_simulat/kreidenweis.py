@@ -107,14 +107,14 @@ def plot_fig2(data, output_folder = '', output_title = ''):
     g('set term svg dynamic enhanced')
 
     ymin = 0
-    ymax = 1500
-    xmin = 0.001
-    xmax = 10
+    ymax = 1200
+    xmin = 0.01
+    xmax = 1
 
     for t in range(data.variables['t'].shape[0]):
         if t % 10 == 0:
             g('reset')
-            g('set output "' + output_folder + '/Kreidenweis_plot_spec_' + str("%03d" % t) + '.svg"')
+            g('set output "' + output_folder + output_title +'_plot_spec_' + str("%03d" % t) + '.svg"')
             g('set logscale x')
             g('set xlabel "particle diameter [μm]" ')
             g('set ylabel "dN/dlog_{10}(D) [cm^{-3} log_{10}(size interval)]"')
@@ -125,7 +125,7 @@ def plot_fig2(data, output_folder = '', output_title = ''):
     
             nd = data.variables['specd_m0'][t,:] * data.variables["rhod"][0] / d_log_rd
     
-            plot_rd = Gnuplot.PlotItems.Data(rd * 2 * 1e6, nd * 1e-6, with_="steps", title="dry radius")
+            plot_rd = Gnuplot.PlotItems.Data(rd * 2 * 1e6, nd * 1e-6, with_="steps lw 2", title="dry radius")
     
             g.plot(plot_rd)
 
@@ -147,8 +147,8 @@ def plot_fig3(data, output_folder = '', output_title = ''):
     g = Gnuplot.Gnuplot()# persist=1)
     g('set term svg dynamic enhanced')
 
-    ymin = .01
-    ymax = 10
+    ymin = .001
+    ymax = 20
     xmin = 0.01
     xmax = 1
 
@@ -165,18 +165,51 @@ def plot_fig3(data, output_folder = '', output_title = ''):
     s6_ini = data.variables['chemd_S_VI'][0,:]  * data.variables["rhod"][0]  / d_log_rd
     s6_end = data.variables['chemd_S_VI'][-1,:] * data.variables["rhod"][-1] / d_log_rd
 
-    mass1 = 1.35837239e-10 * 1e9
-    mass2 = 2.00500078e-09 * 1e9
-    edge1 = .08
-    edge2 = .125
-
-    #g('set arrow from ' + str(edge1) + ',' + str(mass1) + 'to ' + str(edge1) + ',' + str(ymin) + 'nohead lw 2')
-    #g('set arrow from ' + str(edge2) + ',' + str(mass2) + 'to ' + str(edge2) + ',' + str(ymin) + 'nohead lw 2')
- 
     plot_ini = Gnuplot.PlotItems.Data(rd * 2 * 1e6, s6_ini * 1e9, with_="steps lw 3 lt 1", title="ini")
     plot_end = Gnuplot.PlotItems.Data(rd * 2 * 1e6, s6_end * 1e9, with_="steps lw 3 lt 2", title="end")
 
     g.plot(plot_ini, plot_end)
+
+
+def plot_pH_size_dist(data, output_folder = '', output_title = ''):
+    import Gnuplot
+
+    r3     = data.variables["radii_m3"][-1]
+    r1     = data.variables["radii_m1"][-1]
+    r0     = data.variables["radii_m0"][-1]
+    n_H    = data.variables["chem_H"][-1] / cm.M_H
+    conc_H = np.ones(r3.shape)
+    for it, val in enumerate(r3[:]):
+        if val > 0:
+             conc_H[it] = n_H[it] / (4./3 * math.pi * val * 1e3)
+
+    pH  = -1 * np.log10(conc_H)
+
+    print " "
+    print "pH    = ", pH
+    print "r1/r0 = ", r1 / r0
+
+    g = Gnuplot.Gnuplot()# persist=1)
+    g('set term svg dynamic enhanced')
+
+    ymin = 3
+    ymax = 6
+    xmin = 0.01
+    xmax = 1
+
+    g('reset')
+    g('set output "' + output_folder + output_title + '.svg"')
+    g('set logscale x')
+    g('set xlabel "particle diameter [μm]" ')
+    g('set ylabel "pH"')
+    g('set xrange [' +  str(xmin) + ':' + str(xmax) + ']')
+    g('set yrange [' +  str(ymin) + ':' + str(ymax) + ']')
+    g('set grid')
+    g('set nokey')
+
+    plot_end = Gnuplot.PlotItems.Data(r1 * 2 * 1e6, pH, with_="steps lw 3 lt 2", title="todo")
+
+    g.plot(plot_end)
 
 def main():
 
