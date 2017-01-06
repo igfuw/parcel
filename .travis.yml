@@ -76,8 +76,8 @@ script:
   # install libcloudphxx in Debug mode
   - cd ..
   - cd libcloudphxx/build
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then cmake                             -DCMAKE_BUILD_TYPE=Debug ..; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Debug ..; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then cmake                             -DCMAKE_BUILD_TYPE=Debug ..; fi
   - make
   - sudo make install
   - cd ../..
