@@ -34,14 +34,15 @@ def data(request):
     p_dict['chem_dsc'] = True
     p_dict['chem_rct'] = True
 
-    p_dict['sd_conc']  = 1025
-    p_dict['outfreq']  = int(p_dict['z_max'] / p_dict['dt'] / 100) * 4
+    p_dict['sd_conc']  = 1 #1025
+    p_dict['outfreq']  = 50 / (p_dict['dt'] * p_dict['w'])
 
     p_dict['out_bin']  =  p_dict['out_bin'][:-1] + \
-      ', "chem"  : {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "log", "nbin": 100, "moms": ["H"]},\
-         "chemd" : {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 100, "moms": ["S_VI", "H2O2_a", "O3_a"]},\
-         "radii" : {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "log", "nbin": 100, "moms": [3]},\
-         "specd" : {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 100, "moms": [0, 1, 3]}}'
+      ', "chem"  : {"rght": 1e-4, "left": 1e-6,  "drwt": "wet", "lnli": "log", "nbin": 100, "moms": ["H"]},\
+         "radii" : {"rght": 1e-4, "left": 1e-6,  "drwt": "wet", "lnli": "log", "nbin": 100, "moms": [3]},\
+         "acti"  : {"rght": 1e-3, "left": 1e-6,  "drwt": "wet", "lnli": "log", "nbin": 1,   "moms": [0,3]},\
+         "chemd" : {"rght": 1e-6, "left": 1e-8,  "drwt": "dry", "lnli": "log", "nbin": 100, "moms": ["S_VI", "H2O2_a", "O3_a"]},\
+         "specd" : {"rght": 1e-6, "left": 1e-8,  "drwt": "dry", "lnli": "log", "nbin": 100, "moms": [0, 1, 3]}}'
 
     pp.pprint(p_dict)
 
@@ -55,7 +56,7 @@ def data(request):
     def removing_files():
         subprocess.call(["rm", p_dict['outfile']])
 
-    request.addfinalizer(removing_files)
+    #request.addfinalizer(removing_files)
     return data
 
 def test_chem_plot(data):
@@ -102,7 +103,7 @@ def test_chem_sulfate_formation(data):
     for it, val in enumerate(r3):
         if val > 0:
             nom += (n_H[it] / (4./3 * math.pi * val * 1e3)) * val
-            den  = np.sum(r3[:])                      # to liters
+    den  = np.sum(r3[:])                      # to liters
 
     pH  = -1 * np.log10(nom / den)
 
@@ -110,7 +111,7 @@ def test_chem_sulfate_formation(data):
     print " "
     print "water weighted average pH = ", pH, " vs 4.82-4.85 from size resolved models "
 
-    s6_ini = data.variables["chemd_S_VI"][0, :]
+    s6_ini = data.variables["chemd_S_VI"][1, :]
     s6_end = data.variables["chemd_S_VI"][-1, :]
 
     sulf_ppt = fn.mix_ratio_to_mole_frac((np.sum(s6_end) - np.sum(s6_ini)), p, cm.M_H2SO4, T, rhod) * 1e12
@@ -138,3 +139,7 @@ def test_chem_sulfate_formation(data):
     print "sulfate formation from H2O2 (ppt) = ", sulf_ppt_H2O2, " vs 85-105 from size resolved models"
     print "sulfate formation from O3 (ppt)   = ", sulf_ppt_O3, " vs 70-85 from size resolved models"
 
+    print " "
+    n_tot = data.variables["acti_m0"][3, 0] * rhod * 1e-6
+    print "N of droplets           = ", n_tot, " in cm3"
+    print "maximum supersaturation = ", (data.RH_max - 1) * 100, "%"

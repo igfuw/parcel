@@ -39,11 +39,16 @@ def plot_fig1(data, output_folder = '', output_title = ''):
       ax.tick_params(axis='y', pad=15)
 
     #plt.tight_layout()
-    spn_idx = 0#4
+    spn_idx = 2
 
     # read in y-axis (time)
     t   = data.variables["t"][spn_idx:] - data.variables["t"][spn_idx]
-    tb  = 200 # time at cloud base #TODO check exactly with RH calculations 
+
+    p    = data.variables["p"][spn_idx:]
+    T    = data.variables["T"][spn_idx:]
+    rhod = data.variables["rhod"][spn_idx:]
+    r_v  = data.variables["r_v"][spn_idx:]
+    rho  = fn.rho_calc(T, p, r_v)
 
     # calculate lwc
     plots[0].set_xlabel('LWC [g/kg]')
@@ -51,13 +56,9 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     plots[0].grid()
     #plots[0].set_xlim([0., 2.5])
     #plots[0].set_xticks([0., 0.5, 1, 1.5, 2, 2.5])
-    plots[0].plot(np.sum(data.variables["radii_m3"][spn_idx:], axis=1) * 4. / 3 * math.pi * 998.2 * 1e3, t-tb,"b.-",ms=15,lw=4.)
+    plots[0].plot(data.variables["acti_m3"][spn_idx:] * 4./3 * math.pi * 999.5 * 1e3 * rhod / rho, t,"b.-",ms=15,lw=4.)
 
     # calculate SO2 gas volume concentration
-    p    = data.variables["p"][spn_idx:]
-    T    = data.variables["T"][spn_idx:]
-    rhod = data.variables["rhod"][spn_idx:]
-
     plots[1].grid()
     plots[1].set_xlabel('$\mathrm{SO_2}$ conc. [ppb]') #gas volume concentration
     plots[1].set_xticks([0., 0.05, 0.1, 0.15, 0.2])
@@ -67,9 +68,10 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     tmp2 = fn.mix_ratio_to_mole_frac(\
       np.squeeze(data.variables["plt_ch_SO2_a"][spn_idx:]), p, cm.M_SO2_H2O, T, rhod)
     #tmp2 = fn.mix_ratio_to_mole_frac(data.variables["SO2_a"][spn_idx:], p, cm.M_SO2_H2O, T, rhod)
-    plots[1].plot((tmp1 + tmp2) * 1e9, t-tb, "b.-", ms=15, lw=4.)
+    plots[1].plot((tmp1 + tmp2) * 1e9 * rhod / rho, t, "b.-", ms=15, lw=4.)
     #plots[1].plot((tmp2) * 1e9, t, "r.-")
     #plots[1].plot((tmp1) * 1e9, t, "b.-")
+    print "total % of SO2 that was converted to H2SO4 = ", (1 - (tmp1[-1] + tmp2[-1]) / (tmp1[0] + tmp2[0])) * 100
 
     # calculate average pH
     # (weighted with volume of cloud droplets)
@@ -91,7 +93,7 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     pH  = -1 * np.log10(nom / den)
     plots[2].set_xlim([3.6, 5])
     plots[2].set_xticks([3.8, 4.0, 4.2, 4.4, 4.6, 4.8, 5])
-    plots[2].plot(pH, t-tb, "b.-",ms=15, lw=4.)
+    plots[2].plot(pH, t, "b.-",ms=15, lw=4.)
 
     plt.savefig(output_folder + output_title + ".pdf")
 
@@ -155,7 +157,7 @@ def plot_fig3(data, output_folder = '', output_title = ''):
     g('set term svg dynamic enhanced font "Verdana, 14"')
 
     ymin = .01
-    ymax = 20
+    ymax = 10
     xmin = 0.01
     xmax = 1
 
