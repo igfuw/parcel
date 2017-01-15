@@ -148,7 +148,7 @@ def plot_fig3(data, output_folder = '', output_title = ''):
     g('set term svg dynamic enhanced')
 
     ymin = .01
-    ymax = 10
+    ymax = 15
     xmin = 0.01
     xmax = 1
 
