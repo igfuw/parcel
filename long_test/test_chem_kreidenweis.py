@@ -34,7 +34,7 @@ def data(request):
     p_dict['chem_dsc'] = True
     p_dict['chem_rct'] = True
 
-    p_dict['sd_conc']  = 1 #1025
+    p_dict['sd_conc']  = 1025
     p_dict['outfreq']  = 50 / (p_dict['dt'] * p_dict['w'])
 
     p_dict['out_bin']  =  p_dict['out_bin'][:-1] + \
@@ -56,7 +56,7 @@ def data(request):
     def removing_files():
         subprocess.call(["rm", p_dict['outfile']])
 
-    #request.addfinalizer(removing_files)
+    request.addfinalizer(removing_files)
     return data
 
 def test_chem_plot(data):
@@ -111,7 +111,7 @@ def test_chem_sulfate_formation(data):
     print " "
     print "water weighted average pH = ", pH, " vs 4.82-4.85 from size resolved models "
 
-    s6_ini = data.variables["chemd_S_VI"][1, :]
+    s6_ini = data.variables["chemd_S_VI"][0, :]
     s6_end = data.variables["chemd_S_VI"][-1, :]
 
     sulf_ppt = fn.mix_ratio_to_mole_frac((np.sum(s6_end) - np.sum(s6_ini)), p, cm.M_H2SO4, T, rhod) * 1e12
