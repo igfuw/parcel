@@ -71,7 +71,7 @@ script:
   # run parcel tests using Release mode of libcloudphxx
   - cd parcel
   - mkdir plots/outputs/
-  - py.test -v unit_test/test_chem_init_spectrum.py
+  - py.test -v unit_test/
 
   # install libcloudphxx in Debug mode
   - cd ..
