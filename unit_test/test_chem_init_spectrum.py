@@ -33,13 +33,14 @@ def data(request):
     p_dict['dt']       = .1
     p_dict['w']        = .5
     p_dict['outfreq']  = 1
-    p_dict['sd_conc']  = 1024 * 44
-    p_dict['outfreq']  = 1
+    p_dict['sd_conc']  = 1024
 
     p_dict['out_bin'] = '{"drad": {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 26, "moms": [0,3]}}'
 
+    print "AQQ"
     # run parcel
     parcel(**p_dict)
+    print "BQQ"
 
     # simulation results
     data = netcdf.netcdf_file(p_dict['outfile'],   "r")
