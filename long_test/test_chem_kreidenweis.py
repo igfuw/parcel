@@ -17,6 +17,7 @@ from chemical_plot import plot_chem
 from kreidenweis import plot_fig1
 from kreidenweis import plot_fig2
 from kreidenweis import plot_fig3
+from thesis_profiles import thesis_profiles
 from chem_conditions import parcel_dict
 
 import functions as fn
@@ -63,6 +64,12 @@ def test_chem_plot(data):
     quicklook for chemistry
     """
     plot_chem(data, output_folder="plots/outputs", output_title='/test_chem_kreidenwies_')
+
+def test_thesis_profiles(data):
+    """
+    profiles from parcel test for thesis
+    """
+    thesis_profiles(data, output_folder="plots/outputs")
 
 def test_chem_fig1(data):
     """
