@@ -108,9 +108,9 @@ def test_init_spectrum(data, eps = 0.06):
         if model[it] > 0:
             assert (theor[it] -  model[it]) / model[it] < eps, str((theor[it] -  model[it]) / model[it])
 
-#def test_plot_init_spectrum(data):
-#    """
-#    Plot the initial dry diameter distribution and compare it with the analitycal solution
-#
-#    """
-#    plot_init_spectrum(data, outfolder = "plots/outputs/")
+def test_plot_init_spectrum(data):
+    """
+    Plot the initial dry diameter distribution and compare it with the analitycal solution
+
+    """
+    plot_init_spectrum(data, outfolder = "plots/outputs/")

@@ -68,12 +68,13 @@ script:
   - sudo make install
   - cd ../..
 
-  # run parcel tests using Release mode of libcloudphxx
+  # run parcel tests using Debug mode of libcloudphxx
   - cd parcel
   - mkdir plots/outputs/
-  - py.test -v unit_test/
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; py.test -v unit_test/; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; py.test -v unit_test_debug/; fi
 
-  # install libcloudphxx in Debug mode
+  # install libcloudphxx in Release mode
   - cd ..
   - cd libcloudphxx/build
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release ..; fi
