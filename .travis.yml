@@ -39,6 +39,7 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo pip install http://prdownloads.sourceforge.net/gnuplot-py/gnuplot-py-1.8.tar.gz?download; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo pip install -U matplotlib; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gnuplot; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export LDFLAGS="$LDFLAGS -L/usr/local/opt/readline/lib" CPPFLAGS="$CPPFLAGS -I/usr/local/opt/readline/include"; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew reinstall gcc --with-fortran; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then mkdir -p /Users/travis/Library/Python/2.7/lib/python/site-packages; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then echo 'import sys; sys.path.insert(1, "/usr/local/lib/python2.7/site-packages")' >> /Users/travis/Library/Python/2.7/lib/python/site-packages/homebrew.pth; fi
@@ -61,27 +62,28 @@ script:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then PY_INC=`python-config --includes | grep -o '\-I[^ ]*' | head -n 1 | cut -c 3-` ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then PY_LIB=`python-config --ldflags | grep -o '\-L[^ ]*' | head -n 1 | cut -c 3- | xargs -I % find % -name libpython*.dylib` ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cmake .. -DPYTHON_LIBRARY=${PY_LIB} -DPYTHON_INCLUDE_DIR=${PY_INC}; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then cmake                             -DCMAKE_BUILD_TYPE=Release ..; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release ..; fi
-  - make
-  - sudo make install
-  - cd ../..
-
-  # run parcel tests using Release mode of libcloudphxx
-  - cd parcel
-  - mkdir plots/outputs/
-  - py.test unit_test/
-  - py.test long_test/
-
-  # install libcloudphxx in Debug mode
-  - cd ..
-  - cd libcloudphxx/build
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then cmake                             -DCMAKE_BUILD_TYPE=Debug ..; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Debug ..; fi
   - make
   - sudo make install
   - cd ../..
 
+  # run parcel tests using Debug mode of libcloudphxx
+  - cd parcel
+  - mkdir plots/outputs/
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then py.test -v unit_test/; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then py.test -v unit_test_debug/; fi
+
+  # install libcloudphxx in Release mode
+  - cd ..
+  - cd libcloudphxx/build
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release ..; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then cmake                             -DCMAKE_BUILD_TYPE=Release ..; fi
+  - make
+  - sudo make install
+  - cd ../..
+
   # run parcel unit tests using Debug mode of libcloudphxx
   - cd parcel
-  - py.test unit_test/
+  - py.test -v unit_test/
+  - py.test -v long_test/

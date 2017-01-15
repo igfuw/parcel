@@ -27,13 +27,13 @@ def data(request):
     # modify options from chem_conditions
     p_dict['outfile']  = "test_init_spectrum.nc"
     p_dict['chem_dsl'] = True
+    p_dict['chem_dsc'] = True
 
     p_dict['z_max']    = .05
     p_dict['dt']       = .1
     p_dict['w']        = .5
     p_dict['outfreq']  = 1
     p_dict['sd_conc']  = 1024 * 44
-    p_dict['outfreq']  = 1
 
     p_dict['out_bin'] = '{"drad": {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 26, "moms": [0,3]}}'
 

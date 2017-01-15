@@ -27,6 +27,13 @@ def rhod_calc(T, p, rv):
     th_0 = T * (cm.p_1000 / p)**(cm.R_d / cm.c_pd)
     return cm.rhod(p, th_0, rv)
 
+def rho_calc(T, p, rv):
+    """
+    calculate total air density (not dry air density)
+    """
+    rho = p / T / (rv/(1.+rv) * cm.R_v + 1./(1.+rv) * cm.R_d)
+    return rho
+
 def henry_teor(chem, p, T, vol, mixr_g, rhod, conc_H):
     """ 
     calculate theoretical mass of chemical species dissolved into cloud droplets - Henry law 
