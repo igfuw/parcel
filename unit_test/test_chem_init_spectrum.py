@@ -51,28 +51,28 @@ def data(request):
     request.addfinalizer(removing_files)
     return data
 
-@pytest.mark.xfail
-def test_init_mass(data, eps = 1e-20):
-    """
-    Check if the initial mass is the same as in Kreidenweis 2003
-
-    """
-    chem_rho = getattr(data, "chem_rho")
-
-    mom3_init = data.variables["drad_m3"][0,:]
-    rhod_init = data.variables["rhod"][0]
-
-    # initial dry mass of aerosol [kg/kg dry air]
-    ini = mom3_init.sum()  * 4./3 * math.pi * chem_rho
-
-    # initial dry mass of aerosol from paper [kg/kg dry air]
-    art = 2.375 * 1e-9 / rhod_init
-
-    print "initial mixing ratio:      ", ini, " [kg / kg dry air]"
-    print "article init mixing ratio: ", art, " [kg / kg dry air]"
-
-    assert np.isclose(art, ini, atol=0, rtol=eps), str((ini-art)/ini)
-
+#@pytest.mark.xfail
+#def test_init_mass(data, eps = 1e-20):
+#    """
+#    Check if the initial mass is the same as in Kreidenweis 2003
+#
+#    """
+#    chem_rho = getattr(data, "chem_rho")
+#
+#    mom3_init = data.variables["drad_m3"][0,:]
+#    rhod_init = data.variables["rhod"][0]
+#
+#    # initial dry mass of aerosol [kg/kg dry air]
+#    ini = mom3_init.sum()  * 4./3 * math.pi * chem_rho
+#
+#    # initial dry mass of aerosol from paper [kg/kg dry air]
+#    art = 2.375 * 1e-9 / rhod_init
+#
+#    print "initial mixing ratio:      ", ini, " [kg / kg dry air]"
+#    print "article init mixing ratio: ", art, " [kg / kg dry air]"
+#
+#    assert np.isclose(art, ini, atol=0, rtol=eps), str((ini-art)/ini)
+#
 def test_init_spectrum(data, eps = 0.06):
     """
     Checking if the initial aerosol size distribution is close to the analytic solution 
