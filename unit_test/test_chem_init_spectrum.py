@@ -27,6 +27,7 @@ def data(request):
     # modify options from chem_conditions
     p_dict['outfile']  = "test_init_spectrum.nc"
     p_dict['chem_dsl'] = True
+    p_dict['chem_dsc'] = True
 
     p_dict['z_max']    = .05
     p_dict['dt']       = .1
