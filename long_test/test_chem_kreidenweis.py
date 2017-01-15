@@ -36,7 +36,7 @@ def data(request):
     p_dict['chem_rct'] = True
 
     p_dict['sd_conc']  = 1025
-    p_dict['outfreq']  = 50 / (p_dict['dt'] * p_dict['w'])
+    p_dict['outfreq']  = 10 / (p_dict['dt'] * p_dict['w'])
 
     p_dict['out_bin']  =  p_dict['out_bin'][:-1] + \
       ', "chem"  : {"rght": 1e-4, "left": 1e-6,  "drwt": "wet", "lnli": "log", "nbin": 100, "moms": ["H"]},\
@@ -57,7 +57,7 @@ def data(request):
     def removing_files():
         subprocess.call(["rm", p_dict['outfile']])
 
-    request.addfinalizer(removing_files)
+    #request.addfinalizer(removing_files)
     return data
 
 def test_chem_plot(data):

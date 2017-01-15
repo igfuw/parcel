@@ -39,7 +39,7 @@ def plot_fig1(data, output_folder = '', output_title = ''):
       ax.tick_params(axis='y', pad=15)
 
     #plt.tight_layout()
-    spn_idx = 2
+    spn_idx = 2 * 5
 
     # read in y-axis (time)
     t   = data.variables["t"][spn_idx:] - data.variables["t"][spn_idx]
