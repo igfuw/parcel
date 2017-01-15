@@ -71,8 +71,8 @@ script:
   # run parcel tests using Debug mode of libcloudphxx
   - cd parcel
   - mkdir plots/outputs/
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; py.test -v unit_test/; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; py.test -v unit_test_debug/; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then py.test -v unit_test/; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then py.test -v unit_test_debug/; fi
 
   # install libcloudphxx in Release mode
   - cd ..
