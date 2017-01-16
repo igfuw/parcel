@@ -143,11 +143,11 @@ def _output_bins(fout, t, micro, opts, spectra):
           elif dct["drwt"] == 'dry':
             micro.diag_dry_mom(vm)
           else: raise Exception("drwt should be wet or dry")
-          fout.variables[dim+'_m'+str(vm)][t, bin] = np.frombuffer(micro.outbuf())
+          fout.variables[dim+'_m'+str(vm)][int(t), int(bin)] = np.frombuffer(micro.outbuf())
         else:
           # calculate chemistry
           micro.diag_chem(_Chem_a_id[vm])
-          fout.variables[dim+'_'+vm][t, bin] = np.frombuffer(micro.outbuf())
+          fout.variables[dim+'_'+vm][int(t), int(bin)] = np.frombuffer(micro.outbuf())
 
 def _output_init(micro, opts, spectra):
   # file & dimensions
@@ -204,7 +204,7 @@ def _output_init(micro, opts, spectra):
 
 def _output_save(fout, state, rec):
   for var, val in state.iteritems():
-    fout.variables[var][rec] = val
+    fout.variables[var][int(rec)] = val
 
 def _save_attrs(fout, dictnr):
   for var, val in dictnr.iteritems():
