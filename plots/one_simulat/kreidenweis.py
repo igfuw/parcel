@@ -183,9 +183,20 @@ def plot_fig3(data, output_folder = '', output_title = ''):
 def plot_pH_size_dist(data, output_folder = '', output_title = ''):
     import Gnuplot
 
+    # from ncdf file attributes read out_bin parameters as a dictionary ...
+    out_bin = ast.literal_eval(getattr(data, "out_bin"))
+    # ... and check if the spacing used in the test was logarithmic
+    assert out_bin["chem"]["lnli"] == 'log', "this plot should be used with logarithmic spacing of bins"
+
+    # left bin edges
+    rw = data.variables["chem_r_wet"][:]
+
+    # for comparison, model solution needs to be divided by log(d2) - log(d2)
+    # since the test is run with log spacing of bins log(d2) - log(d1) = const
+    d_log_rw = math.log(rw[2], 10) - math.log(rw[1], 10)
+
+
     r3     = data.variables["radii_m3"][-1]
-    r1     = data.variables["radii_m1"][-1]
-    r0     = data.variables["radii_m0"][-1]
     n_H    = data.variables["chem_H"][-1] / cm.M_H
     conc_H = np.ones(r3.shape)
     for it, val in enumerate(r3[:]):
@@ -196,10 +207,9 @@ def plot_pH_size_dist(data, output_folder = '', output_title = ''):
 
     print " "
     print "pH    = ", pH
-    print "r1/r0 = ", r1 / r0
 
     g = Gnuplot.Gnuplot()# persist=1)
-    g('set term svg dynamic enhanced')
+    g('set term svg dynamic enhanced font "Verdana, 14"')
 
     ymin = 3
     ymax = 6
@@ -211,12 +221,12 @@ def plot_pH_size_dist(data, output_folder = '', output_title = ''):
     g('set logscale x')
     g('set xlabel "particle diameter [μm]" ')
     g('set ylabel "pH"')
-    g('set xrange [' +  str(xmin) + ':' + str(xmax) + ']')
-    g('set yrange [' +  str(ymin) + ':' + str(ymax) + ']')
+    #g('set xrange [' +  str(xmin) + ':' + str(xmax) + ']')
+    #g('set yrange [' +  str(ymin) + ':' + str(ymax) + ']')
     g('set grid')
     g('set nokey')
 
-    plot_end = Gnuplot.PlotItems.Data(r1 * 2 * 1e6, pH, with_="steps lw 3 lt 2", title="todo")
+    plot_end = Gnuplot.PlotItems.Data(rw * 2 * 1e6, pH , with_="steps lw 3 lt 2")
 
     g.plot(plot_end)
 
@@ -238,7 +248,7 @@ def main():
     p_dict['out_bin']  = '{\
                   "chem"  : {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "log", "nbin": 100, "moms": ["H"]},\
                   "chemd" : {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 100, "moms": ["S_VI"]},\
-                  "radii" : {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "log", "nbin": 100, "moms": [3]},\
+                  "radii" : {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "log", "nbin": 100, "moms": [0, 1, 3]},\
                    "specd": {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 100, "moms": [0, 1, 3]},\
                   "plt_rw": {"rght": 1,    "left": 0,     "drwt": "wet", "lnli": "lin", "nbin": 1,   "moms": [0, 1, 3]},\
                   "plt_rd": {"rght": 1,    "left": 0,     "drwt": "dry", "lnli": "lin", "nbin": 1,   "moms": [0, 1, 3]},\
