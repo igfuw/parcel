@@ -38,3 +38,14 @@ Some tests may fail when libcloudph++ is compiled with -Ofast flag
   (it was tested that they work with -O3 flag).
 Untill this problem is solved they are moved to unit_test_debug folder
   and will be tested on Travis only in debug mode (without -Ofast flag).
+
+# documentation
+
+The documentation of the project, including some usage examples,
+  is available in the doc folder and is generated usin LaTex.
+To generate a pdf of the current documentation please type in terminal
+
+  $ cd doc/
+  $ ./make.sh
+
+
