@@ -42,10 +42,11 @@ Untill this problem is solved they are moved to unit_test_debug folder
 # documentation
 
 The documentation of the project, including some usage examples,
-  is available in the doc folder and is generated usin LaTex.
-To generate a pdf of the current documentation please type in terminal
+  is available in the doc folder and is generated using LaTex.
+To obtain a pdf file with the current documentation please type in terminal
 
   $ cd doc/
+
   $ ./make.sh
 
 
