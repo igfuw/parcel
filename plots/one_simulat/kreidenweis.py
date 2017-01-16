@@ -205,24 +205,21 @@ def plot_pH_size_dist(data, output_folder = '', output_title = ''):
 
     pH  = -1 * np.log10(conc_H)
 
-    print " "
-    print "pH    = ", pH
-
     g = Gnuplot.Gnuplot()# persist=1)
     g('set term svg dynamic enhanced font "Verdana, 14"')
 
-    ymin = 3
+    ymin = 0
     ymax = 6
-    xmin = 0.01
-    xmax = 1
+    xmin = 10
+    xmax = 100
 
     g('reset')
     g('set output "' + output_folder + output_title + '.svg"')
     g('set logscale x')
     g('set xlabel "particle diameter [μm]" ')
     g('set ylabel "pH"')
-    #g('set xrange [' +  str(xmin) + ':' + str(xmax) + ']')
-    #g('set yrange [' +  str(ymin) + ':' + str(ymax) + ']')
+    g('set xrange [' +  str(xmin) + ':' + str(xmax) + ']')
+    g('set yrange [' +  str(ymin) + ':' + str(ymax) + ']')
     g('set grid')
     g('set nokey')
 
