@@ -44,7 +44,7 @@ def data(request):
     request.addfinalizer(removing_files)
     return data
 
-def test_water_const(data, eps = 2e-14):
+def test_water_const(data, eps = 3e-14):
     """
     Check if the total water is preserved
 

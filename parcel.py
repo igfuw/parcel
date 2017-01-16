@@ -204,7 +204,7 @@ def _output_init(micro, opts, spectra):
 
 def _output_save(fout, state, rec):
   for var, val in state.iteritems():
-    fout.variables[var][rec] = val
+    fout.variables[var][int(rec)] = val
 
 def _save_attrs(fout, dictnr):
   for var, val in dictnr.iteritems():

@@ -88,7 +88,7 @@ def test_moles_const_dsl_dsc_rct(data, chem, eps = {"CO2": 2e-14, "NH3": 3.4e-15
      # do the checking
      assert np.isclose(end, ini, atol=0, rtol=eps[chem]), chem + " : " + str((ini-end)/ini)
 
-def test_moles_const_S4_S6(data, eps = 2e-14):
+def test_moles_const_S4_S6(data, eps = 5e-10):
      """
      Checking if the total number of moles of S in closed chemical system 
      with dissocoation and chemical reactions remains constant

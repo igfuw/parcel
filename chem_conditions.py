@@ -47,7 +47,7 @@ chem_rct = False
 chem_rho = 1.8e3
 
 # output
-z_max   = 1400
+z_max   = 1300
 dt      = .1
 w       = .5
 outfreq = int(z_max / dt / 30) 
