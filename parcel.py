@@ -2,8 +2,8 @@
 
 # TEMP TODO TEMP TODO !!!
 import sys
-sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
-sys.path.insert(0, "../../../libcloudphxx/build/bindings/python/")
+#sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
+#sys.path.insert(0, "../../../libcloudphxx/build/bindings/python/")
 # TEMP TODO TEMP TODO !!!
 
 from argparse import ArgumentParser, RawTextHelpFormatter
@@ -143,11 +143,11 @@ def _output_bins(fout, t, micro, opts, spectra):
           elif dct["drwt"] == 'dry':
             micro.diag_dry_mom(vm)
           else: raise Exception("drwt should be wet or dry")
-          fout.variables[dim+'_m'+str(vm)][t, bin] = np.frombuffer(micro.outbuf())
+          fout.variables[dim+'_m'+str(vm)][int(t), int(bin)] = np.frombuffer(micro.outbuf())
         else:
           # calculate chemistry
           micro.diag_chem(_Chem_a_id[vm])
-          fout.variables[dim+'_'+vm][t, bin] = np.frombuffer(micro.outbuf())
+          fout.variables[dim+'_'+vm][int(t), int(bin)] = np.frombuffer(micro.outbuf())
 
 def _output_init(micro, opts, spectra):
   # file & dimensions
