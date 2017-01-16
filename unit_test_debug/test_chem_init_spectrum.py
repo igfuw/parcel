@@ -106,7 +106,7 @@ def test_init_spectrum(data, eps = 0.06):
     # (TODO missing differences where from empty bin vs analityc solution)
     for it in range(theor.shape[0]):
         if model[it] > 0:
-            assert (theor[it] -  model[it]) / model[it] < eps, str((theor[it] -  model[it]) / model[it])
+            assert (abs(theor[it] -  model[it]) / model[it] < eps, str(rd[it]) + str(theor[it]) + str(model[it]) + str(abs(theor[it] -  model[it]) / model[it]))
 
 def test_plot_init_spectrum(data):
     """
