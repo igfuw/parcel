@@ -54,7 +54,7 @@ def thesis_profiles(fnc, output_folder="../outputs"):
     plt.grid()
     plt.plot( fnc.variables["RH"][:]                    , z, "b.-", ms=15, lw=4.)
     #plt.plot([fnc.variables["RH"][:].max()] * z.shape[0], z, "r.-", ms=15, lw=4.)
-    plt.plot([1] * z.shape[0]                           , z, "r-", lw=2.)
+    plt.plot([1] * z.shape[0]                           , z, "r-", lw=4.)
 
     #inset_axes = inset_axes(ax, 
     #                width="50%", # width = 30% of parent_bbox
