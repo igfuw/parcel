@@ -35,7 +35,7 @@ def data(request):
     p_dict['chem_dsc'] = True
     p_dict['chem_rct'] = True
 
-    p_dict['sd_conc']  = 1025
+    p_dict['sd_conc']  = 1024
     p_dict['outfreq']  = 10 / (p_dict['dt'] * p_dict['w'])
 
     p_dict['out_bin']  =  p_dict['out_bin'][:-1] + \
