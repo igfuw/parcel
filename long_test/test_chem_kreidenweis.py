@@ -48,7 +48,7 @@ def data(request):
     pp.pprint(p_dict)
 
     # run parcel
-    #parcel(**p_dict)
+    parcel(**p_dict)
 
     #simulation results
     data = netcdf.netcdf_file(p_dict['outfile'],   "r")
@@ -57,7 +57,7 @@ def data(request):
     def removing_files():
         subprocess.call(["rm", p_dict['outfile']])
 
-    #request.addfinalizer(removing_files)
+    request.addfinalizer(removing_files)
     return data
 
 def test_chem_plot(data):
