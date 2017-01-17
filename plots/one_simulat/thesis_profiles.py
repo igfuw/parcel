@@ -66,7 +66,7 @@ def thesis_profiles(fnc, output_folder="../outputs"):
    
     if not os.path.exists(output_folder):
         subprocess.call(["mkdir", output_folder])
-    plt.savefig(os.path.join(output_folder, "thesis_profiles.pdf"))
+    plt.savefig(os.path.join(output_folder, "Kreidenweis_thesis_profiles.pdf"))
 
 def main(dt=1):
     # running parcel model for different ways to solve for pressure  ...            

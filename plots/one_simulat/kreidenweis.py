@@ -154,7 +154,6 @@ def plot_fig3(data, output_folder = '', output_title = ''):
     d_log_rd = math.log(rd[2], 10) - math.log(rd[1], 10)
 
     g = Gnuplot.Gnuplot()# persist=1)
-    g('set term svg dynamic enhanced font "Verdana, 14"')
 
     s6_ini = data.variables['chemd_S_VI'][0,:]  * data.variables["rhod"][0]  / d_log_rd
     s6_end = data.variables['chemd_S_VI'][-1,:] * data.variables["rhod"][-1] / d_log_rd
@@ -167,6 +166,8 @@ def plot_fig3(data, output_folder = '', output_title = ''):
     ymin = .01
     ymax = 15
 
+    g('reset')
+    g('set term svg dynamic enhanced font "Verdana, 14"')
     g('set xlabel "particle diameter [μm]" ')
     g('set ylabel "dS(VI)/dlog_{10}(D) [μg /m^3 per log_{10}(size interval)]"')
     g('set xrange [' +  str(xmin) + ':' + str(xmax) + ']')
@@ -174,11 +175,20 @@ def plot_fig3(data, output_folder = '', output_title = ''):
     g('set grid')
     g('set nokey')
 
-    #g('reset')
     g('set output "' + output_folder + output_title + '.svg"')
     g('set logscale xy')
 
     g.plot(plot_ini, plot_end)
+
+    g('reset')
+    g('set term svg dynamic enhanced font "Verdana, 14"')
+    g('set xlabel "particle diameter [μm]" ')
+    g('set ylabel "dS(VI)/dlog_{10}(D) [μg /m^3 per log_{10}(size interval)]"')
+    g('set xrange [' +  str(xmin) + ':' + str(xmax) + ']')
+    g('set yrange [' +  str(ymin) + ':' + str(ymax) + ']')
+    g('set ytics 0,5,15')
+    g('set grid')
+    g('set nokey')
 
     g('set output "' + output_folder + output_title + '_no_ylog.svg"')
     g('set logscale x')
