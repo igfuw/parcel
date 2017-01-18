@@ -120,8 +120,8 @@ def test_Kreidenweis_convergence(data):
        "power of two thould be 10 and is " + str(data['power of two'][-1])
     assert np.equal(data['number of super-droplets'][-1], 1024),\
        "number of super-droplets should be 1024 and is " + str(data['number of super-droplets'][-1])
-    assert np.isclose(data['cloud droplet conc. at CB'][-1], 273 , atol=1),\
-       " cloud droplet conc. at CB should be 273 and is " + str(data['cloud droplet conc. at '][-1])
+    assert np.isclose(data['cloud droplet conc. at CB'][-1], 273 , atol=2),\
+       " cloud droplet conc. at CB should be 273 and is " + str(data['cloud droplet conc. at CB'][-1])
     assert np.isclose(data['maximum supersaturation'][-1], 0.27, atol=0.01),\
        "maximum supersaturation should be 0.27 and is " + str(data['maximum supersaturation'][-1])
     assert np.isclose(data['water weighted average pH'][-1], 4.83, atol=0.01),\
