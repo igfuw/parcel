@@ -35,7 +35,7 @@ def data(request):
     p_dict['chem_dsc'] = True
     p_dict['chem_rct'] = True
 
-    p_dict['sd_conc']  = 1025
+    p_dict['sd_conc']  = 1024
     p_dict['outfreq']  = 10 / (p_dict['dt'] * p_dict['w'])
 
     p_dict['out_bin']  =  p_dict['out_bin'][:-1] + \
@@ -147,6 +147,6 @@ def test_chem_sulfate_formation(data):
     print "sulfate formation from O3 (ppt)   = ", sulf_ppt_O3, " vs 70-85 from size resolved models"
 
     print " "
-    n_tot = data.variables["acti_m0"][3, 0] * rhod * 1e-6
+    n_tot = data.variables["acti_m0"][12, 0] * rhod * 1e-6
     print "N of droplets           = ", n_tot, " in cm3"
     print "maximum supersaturation = ", (data.RH_max - 1) * 100, "%"
