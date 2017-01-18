@@ -80,7 +80,7 @@ def data(request):
         sulf_ppt = fn.mix_ratio_to_mole_frac((np.sum(s6_end) - np.sum(s6_ini)), p, cm.M_H2SO4, T, rhod) * 1e12
       
         # number of droplets at RH = max:
-        n_tot = tmp_data.variables["acti_m0"][-12, 0] * rhod * 1e-6
+        n_tot = tmp_data.variables["acti_m0"][12, 0] * rhod * 1e-6
                                         #     ^^ TODO - think of something better
         # maximum supersaturation:
         RH_max = (tmp_data.RH_max - 1) * 100
