@@ -29,12 +29,20 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     #plt.tight_layout(pad=4, w_pad=4, h_pad=4)
     plt.rcParams.update({'font.size': 30})
     plots = []
+    y_ticks   = [0,   200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400]
+    y_labels1 = [0,   200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400] #time above CB
+    y_labels2 = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6,   0.7, 0.8,   0.9,    1, 1.1,  1.2,  1.3 ] #height above the ground
+
     for i in range(3):
       plots.append(plt.subplot(1,3,i+1))
                              #(rows, columns, number)
+    todo = 0
     for ax in plots:
+      todo += 1
       ax.set_ylim([0, 2400])
       ax.set_yticks([0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400])
+      if todo == 3:
+          ax.set_yticklabels(y_labels2)
       ax.tick_params(axis='x', pad=15)
       ax.tick_params(axis='y', pad=15)
 
@@ -64,6 +72,7 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     plots[1].set_xticks([0., 0.05, 0.1, 0.15, 0.2])
     plots[1].set_xticklabels(['0', '0.05', '0.1', '0.15', '0.2'])
     plots[1].set_xlim([0., 0.2])
+    plots[1].yaxis.set_major_formatter(plt.NullFormatter())
     tmp1 = fn.mix_ratio_to_mole_frac(data.variables["SO2_g"][spn_idx:], p, cm.M_SO2, T, rhod)
     tmp2 = fn.mix_ratio_to_mole_frac(\
       np.squeeze(data.variables["plt_ch_SO2_a"][spn_idx:]), p, cm.M_SO2_H2O, T, rhod)
@@ -77,6 +86,11 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     # (weighted with volume of cloud droplets)
     plots[2].set_xlabel('average pH')
     plots[2].grid()
+    plots[2].yaxis.tick_right()
+    plots[2].set_ylabel('height above the ground [km]')
+    plots[2].yaxis.set_label_position("right")
+
+    
     #plots[2].set_xlim([3.8, 5])
     #plots[2].set_xticks([3.8, 4, 4.2, 4.4, 4.6, 4.8, 5])
  
