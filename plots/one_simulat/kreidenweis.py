@@ -21,11 +21,11 @@ def plot_fig1(data, output_folder = '', output_title = ''):
 
     # read in data
     spn_idx = 2 * 5
-    t    = data.variables["t"][spn_idx:] - data.variables["t"][spn_idx]
-    p    = data.variables["p"][spn_idx:]
-    T    = data.variables["T"][spn_idx:]
-    rhod = data.variables["rhod"][spn_idx:]
-    r_v  = data.variables["r_v"][spn_idx:]
+    t    = data.variables["t"][:] #- data.variables["t"][spn_idx]
+    p    = data.variables["p"][:]
+    T    = data.variables["T"][:]
+    rhod = data.variables["rhod"][:]
+    r_v  = data.variables["r_v"][:]
     rho  = fn.rho_calc(T, p, r_v)
 
     import matplotlib
@@ -35,14 +35,13 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     # plot settings
     fig = plt.figure(figsize=(28,13))
     plt.rcParams.update({'font.size': 30})
-    y_ticks   = [0,   200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400]
     y_labels  = [0,   200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400] #time above CB
     y_labels2 = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6,   0.7, 0.8,   0.9,    1, 1.1,  1.2,  1.3 ] #height above the ground
 
     # calculate lwc
     ax = fig.add_subplot(131)
-    ax.set_ylim([0, 2400])
-    ax.set_yticks([0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400])
+    ax.set_ylim([200, 2600])
+    ax.set_yticks([200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600])
     ax.set_yticklabels(y_labels)
 
     ax.tick_params(axis='x', pad=15)
@@ -52,19 +51,19 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     ax.set_ylabel('time above cloud base [s]')
 
     plt.grid()
-    plt.plot(data.variables["acti_m3"][spn_idx:] * 4./3 * math.pi * 999.5 * 1e3 * rhod / rho, t,"b.-",ms=15,lw=4.)
+    plt.plot(data.variables["acti_m3"][:] * 4./3 * math.pi * 999.5 * 1e3 * rhod / rho, t,"b", lw=4.)
 
     # calculate SO2 gas volume concentration
-    tmp1 = fn.mix_ratio_to_mole_frac(data.variables["SO2_g"][spn_idx:], p, cm.M_SO2, T, rhod)
+    tmp1 = fn.mix_ratio_to_mole_frac(data.variables["SO2_g"][:], p, cm.M_SO2, T, rhod)
     tmp2 = fn.mix_ratio_to_mole_frac(\
-      np.squeeze(data.variables["plt_ch_SO2_a"][spn_idx:]), p, cm.M_SO2_H2O, T, rhod)
+      np.squeeze(data.variables["plt_ch_SO2_a"][:]), p, cm.M_SO2_H2O, T, rhod)
 
     ax = fig.add_subplot(132)
     ax.yaxis.set_major_formatter(plt.NullFormatter())
 
-    ax.set_ylim([0, 2400])
-    ax.set_yticks([0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400])
-
+    ax.set_ylim([200, 2600])
+    ax.set_yticks([200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600])
+ 
     ax.set_xlim([0., 0.2])
     ax.set_xticks([0., 0.05, 0.1, 0.15, 0.2])
     ax.set_xticklabels(['0', '0.05', '0.1', '0.15', '0.2'])
@@ -72,13 +71,13 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     ax.set_xlabel('$\mathrm{SO_2}$ conc. [ppb]') #gas volume concentration
 
     plt.grid()
-    plt.plot((tmp1 + tmp2) * 1e9 * rhod / rho, t, "b.-", ms=15, lw=4.)
+    plt.plot((tmp1 + tmp2) * 1e9 * rhod / rho, t, "b", lw=4.)
     print "total % of SO2 that was converted to H2SO4 = ", (1 - (tmp1[-1] + tmp2[-1]) / (tmp1[0] + tmp2[0])) * 100
 
     # calculate average pH
     # (weighted with volume of cloud droplets)
-    r3     = data.variables["radii_m3"][spn_idx:]
-    n_H    = data.variables["chem_H"][spn_idx:] / cm.M_H
+    r3     = data.variables["radii_m3"][:]
+    n_H    = data.variables["chem_H"][:] / cm.M_H
     nom    = np.zeros(t.shape[0])
     den    = np.zeros(t.shape[0])
     for time in range(t.shape[0]): 
@@ -91,8 +90,8 @@ def plot_fig1(data, output_folder = '', output_title = ''):
 
     ax = fig.add_subplot(133)
 
-    ax.set_ylim([0, 2400])
-    ax.set_yticks([0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400])
+    ax.set_ylim([200, 2600])
+    ax.set_yticks([200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600])
     ax.set_yticklabels(y_labels2)
     ax.yaxis.tick_right()
 
@@ -104,7 +103,7 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     ax.set_xticks([3.8, 4.0, 4.2, 4.4, 4.6, 4.8, 5])
 
     plt.grid()
-    plt.plot(pH, t, "b.-",ms=15, lw=4.)
+    plt.plot(pH, t, "b", lw=4.)
 
     plt.savefig(output_folder + output_title + ".pdf")
 
