@@ -126,8 +126,8 @@ def test_Kreidenweis_convergence(data):
        "maximum supersaturation should be 0.27 and is " + str(data['maximum supersaturation'][-1])
     assert np.isclose(data['water weighted average pH'][-1], 4.83, atol=0.01),\
        "water weighted average pH should be 4.83 and is " + str(data['water weighted average pH'][-1])
-    assert np.isclose(data['total sulfate production'][-1], 170, atol=1),\
-       "total sulfate production should be " + str(data['total sulfate production'][-1])
+    assert np.isclose(data['total sulfate production'][-1], 170, atol=2),\
+       "total sulfate production should be 170 and is " + str(data['total sulfate production'][-1])
 
     import matplotlib
     matplotlib.use('Agg')
