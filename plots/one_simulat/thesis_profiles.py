@@ -23,14 +23,16 @@ def thesis_profiles(fnc, output_folder="../outputs"):
   
     ax = fig.add_subplot(131) 
     ax.set_ylim([0, 1300])
-    ax.set_yticks([0,100, 200,300, 400,500, 600,700, 800,900, 1000,1100, 1200, 1300])
+    ax.set_yticks([  0,100, 200, 300, 400, 500, 600, 700,    800,  900, 1000, 1100, 1200, 1300])
+    y_labels=[    -200,  0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400]
+    ax.set_yticklabels(y_labels)
     ax.tick_params(axis='x', pad=15)
     ax.tick_params(axis='y', pad=15)
-    ax.ticklabel_format(useOffset=False) 
+    #ax.ticklabel_format(useOffset=False) 
     ax.set_xlabel('$\mathrm{\Theta_d}$ [K]')
     ax.set_xlim([289, 297])
     ax.set_xticks([289, 291, 293, 295, 297]) 
-    ax.set_ylabel('height above ground [m]')
+    ax.set_ylabel('time above cloud base [s]')
     plt.grid()
     plt.plot( fnc.variables["th_d"][:]                  , z, "b.-", ms=15, lw=4.)
 
@@ -41,11 +43,17 @@ def thesis_profiles(fnc, output_folder="../outputs"):
     ax.tick_params(axis='y', pad=15)
     ax.set_xlabel('$\mathrm{r_v}$ [g/kg]')
     plt.grid()
+    ax.yaxis.set_major_formatter(plt.NullFormatter())
     plt.plot( fnc.variables["r_v"][:] * 1000            , z, "b.-", ms=15, lw=4.)
 
     ax = fig.add_subplot(133) 
     ax.set_ylim([0, 1300])
-    ax.set_yticks([0,100, 200,300, 400,500, 600,700, 800,900, 1000,1100, 1200, 1300])
+    ax.set_yticks([0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300])
+    y_labels=[     0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,    1,  1.1,  1.2,  1.3]
+    ax.set_yticklabels(y_labels)
+    ax.yaxis.tick_right()
+    ax.set_ylabel('height above the ground [km]')
+    ax.yaxis.set_label_position("right")
     ax.tick_params(axis='x', pad=15)
     ax.tick_params(axis='y', pad=15)
     ax.set_xlabel('RH')
