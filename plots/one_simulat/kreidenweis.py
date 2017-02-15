@@ -126,14 +126,14 @@ def plot_fig2(data, output_folder = '', output_title = ''):
     g('set term svg dynamic enhanced')
 
     ymin = 0
-    ymax = 1500
-    xmin = 0.001
-    xmax = 10
+    ymax = 1200
+    xmin = 0.01
+    xmax = 1
 
     for t in range(data.variables['t'].shape[0]):
         if t % 10 == 0:
             g('reset')
-            g('set output "' + output_folder + '/Kreidenweis_plot_spec_' + str("%03d" % t) + '.svg"')
+            g('set output "' + output_folder + output_title +'_plot_spec_' + str("%03d" % t) + '.svg"')
             g('set logscale x')
             g('set xlabel "particle diameter [μm]" ')
             g('set ylabel "dN/dlog_{10}(D) [cm^{-3} log_{10}(size interval)]"')
@@ -144,7 +144,7 @@ def plot_fig2(data, output_folder = '', output_title = ''):
     
             nd = data.variables['specd_m0'][t,:] * data.variables["rhod"][0] / d_log_rd
     
-            plot_rd = Gnuplot.PlotItems.Data(rd * 2 * 1e6, nd * 1e-6, with_="steps", title="dry radius")
+            plot_rd = Gnuplot.PlotItems.Data(rd * 2 * 1e6, nd * 1e-6, with_="steps lw 2", title="dry radius")
     
             g.plot(plot_rd)
 
@@ -205,6 +205,54 @@ def plot_fig3(data, output_folder = '', output_title = ''):
 
     g.plot(plot_ini, plot_end)
 
+
+def plot_pH_size_dist(data, output_folder = '', output_title = ''):
+    import Gnuplot
+
+    # from ncdf file attributes read out_bin parameters as a dictionary ...
+    out_bin = ast.literal_eval(getattr(data, "out_bin"))
+    # ... and check if the spacing used in the test was logarithmic
+    assert out_bin["chem"]["lnli"] == 'log', "this plot should be used with logarithmic spacing of bins"
+
+    # left bin edges
+    rw = data.variables["chem_r_wet"][:]
+
+    # for comparison, model solution needs to be divided by log(d2) - log(d2)
+    # since the test is run with log spacing of bins log(d2) - log(d1) = const
+    d_log_rw = math.log(rw[2], 10) - math.log(rw[1], 10)
+
+
+    r3     = data.variables["radii_m3"][-1]
+    n_H    = data.variables["chem_H"][-1] / cm.M_H
+    conc_H = np.ones(r3.shape)
+    for it, val in enumerate(r3[:]):
+        if val > 0:
+             conc_H[it] = n_H[it] / (4./3 * math.pi * val * 1e3)
+
+    pH  = -1 * np.log10(conc_H)
+
+    g = Gnuplot.Gnuplot()# persist=1)
+    g('set term svg dynamic enhanced font "Verdana, 14"')
+
+    ymin = 0
+    ymax = 6
+    xmin = 10
+    xmax = 100
+
+    g('reset')
+    g('set output "' + output_folder + output_title + '.svg"')
+    g('set logscale x')
+    g('set xlabel "particle diameter [μm]" ')
+    g('set ylabel "pH"')
+    g('set xrange [' +  str(xmin) + ':' + str(xmax) + ']')
+    g('set yrange [' +  str(ymin) + ':' + str(ymax) + ']')
+    g('set grid')
+    g('set nokey')
+
+    plot_end = Gnuplot.PlotItems.Data(rw * 2 * 1e6, pH , with_="steps lw 3 lt 2")
+
+    g.plot(plot_end)
+
 def main():
 
     # copy options from chem_conditions ...
@@ -223,7 +271,7 @@ def main():
     p_dict['out_bin']  = '{\
                   "chem"  : {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "log", "nbin": 100, "moms": ["H"]},\
                   "chemd" : {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 100, "moms": ["S_VI"]},\
-                  "radii" : {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "log", "nbin": 100, "moms": [3]},\
+                  "radii" : {"rght": 1e-4, "left": 1e-10, "drwt": "wet", "lnli": "log", "nbin": 100, "moms": [0, 1, 3]},\
                    "specd": {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 100, "moms": [0, 1, 3]},\
                   "plt_rw": {"rght": 1,    "left": 0,     "drwt": "wet", "lnli": "lin", "nbin": 1,   "moms": [0, 1, 3]},\
                   "plt_rd": {"rght": 1,    "left": 0,     "drwt": "dry", "lnli": "lin", "nbin": 1,   "moms": [0, 1, 3]},\
