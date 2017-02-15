@@ -67,7 +67,7 @@ def data(request):
     request.addfinalizer(removing_files)
     return data
 
-def test_timestep_print(data, eps=3e-3):
+def test_timestep_print(data, eps=5e-3):
     """
     Check if the total mass of dry aerosol (sum of 3rm moment of dry radii)
     doesn't change too much with different initail super droplet concentration
