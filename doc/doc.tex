@@ -5,6 +5,9 @@
 % misc
 \usepackage{amsmath}
 
+% chemistry!
+\usepackage[version=4]{mhchem}
+
 % refrerences, url
 \usepackage[colorlinks=true,allcolors=blue]{hyperref}
 
@@ -96,10 +99,13 @@
 
 \section{Introduction}\label{sec:intro}
 
-The parcel model represents an idealised scenario of a 0-dimensional air parcel rising adiabatically with a~constant vertical velocity. 
-Because of its simplicity, the parcel approach provides computationally efficient testbed for cloud microphysics schemes.\\
+The parcel model represents an idealized scenario of a 0-dimensional air parcel 
+  rising adiabatically with a~constant vertical velocity. 
+Because of its simplicity, the parcel approach provides 
+  computationally efficient testbed for cloud microphysics schemes.\\
 
-Representation of microphysical and chemical processes in the parcel model is done using the particle-based scheme.
+Representation of microphysical and chemical processes in the parcel model 
+  is done using the particle-based scheme.
 The particle-based scheme (aka Lagrangian scheme) allows to track the properties of both 
   aerosol particles and cloud droplets throughout the entire simulation.
 The processes resolved by the particle-based scheme cover:
@@ -109,21 +115,35 @@ The processes resolved by the particle-based scheme cover:
   (iv) aqueous phase chemical reactions.
 All the processes can be easily switched on/off by the user.
 
-We are using the particle-based scheme from the \emph{libcloudph++} library. This is a library of algorithms for representing cloud microphysics in numerical models.
-The introduction to the \emph{libcloudph++} containing description of the particle-based scheme used in the parcel model, 
+We are using the particle-based scheme from the \emph{libcloudph++} library. 
+This is a library of algorithms for representing cloud microphysics in numerical models.
+The introduction to the \emph{libcloudph++} containing description 
+  of the particle-based scheme used in the parcel model, 
   complete description of the programming interface of the library and a performance analysis
   is available online at \cite{Arabas_et_al_2015}.
+The aqueous phase chemistry module of \emph{libcloudph++} is focused on the
+  oxidation of \ce{SO2} dissolved inside water drops to sulfate.
+Two reaction paths are included - oxidation by \ce{O3} and \ce{H2O2}.
+A description of the representation of aqueous phase chemistry in \emph{libcloudph++} is 
+  available in the PhD thesis of Jaruga.
 
 \section{Solved equations}\label{sec:eqs}
 
-The particle-based microphysics scheme used within the parcel model expects dry air density $\rho_d$ as one of the input arguments.
-To evaluate $\rho_d$, the profile of pressure within the parcel model is predicted by integrating the hydrostatic equation:
+The particle-based microphysics scheme used within the parcel model 
+  expects dry air density $\rho_d$ as one of the input arguments.
+To evaluate $\rho_d$, the profile of pressure within the parcel model 
+  is predicted by integrating the hydrostatic equation:
 \begin{equation}
 	\frac{dp}{dz} = -\rho g,
 	\label{hydro}
 \end{equation}
-\noindent{where p - pressure, z - vertical displacement, $\rho$ - density of air, g - gravitational acceleration.}
-A method used in the parcel model to integrate eq.~\ref{hydro} is to assume a piecewise constant profile of $\rho$. 
+\noindent
+  where $p$ represents pressure, 
+        $z$  is the vertical displacement, 
+        $\rho$ is the density of air and
+        $g$ is the gravitational acceleration.
+To integrate Eq.~(\ref{hydro}) it is assumed that $\rho$ is constant
+  at each height level (i.e. piecewise constant profile). 
 As a result, at a given time level $n$ the pressure used to predict $\rho_d$ is defined as
   \begin{equation*}
     p^n = p^{n-1} - \rho^{n-1} g z^n .
@@ -135,44 +155,62 @@ The following function is used to retrieve dry air density from the pressure:
   \label{rho}
 \end{equation}
 \noindent
-where $p_v(p, r_v)$ represents partial pressure of water vapour, 
-$p_{1000}$ stands for pressure equal 1000 $hPa$ that comes from the definition of potential temperature,
-$R_d$ is the gas constant for dry air and
-$c_{pd}$ is the specific heat at constant pressure for dry air.
+where 
+  $p_v(p, r_v)$ represents partial pressure of water vapor, 
+  $p_{1000}$ stands for pressure equal 1000 $hPa$ that comes from the definition of potential temperature,
+  $R_d$ is the gas constant for dry air and
+  $c_{pd}$ is the specific heat at constant pressure for dry air.
 The dry air density at a given time level $n$ is calculated as $\rho_d(p^n, \theta^n, r_v^n)$. 
-The pressure outputted by the parcel model is the same as the one used to calculate dry air density for the microphysics scheme.
+The pressure outputted by the parcel model is the same 
+  as the one used to calculate dry air density for the microphysics scheme.
 
-At each timestep the microphysics scheme changes the temperature and moisture fields.
+The parcel model uses water vapor mixing ratio and dry air potential temperature
+  as model variables, see \citet{Arabas_et_al_2015} for definition.
+Both variables can only be changed due to the microphysical processes
+  (the model is adiabatic and includes only microphysics and aqueous phase chemistry).
 The derivation of source terms of heat and moisture due to microphysical processes 
   is available in Appendix A of \citep{Arabas_et_al_2015}.
-
+For simulations with aqueous phase chemistry six additional model variables are needed
+  that specify the mixing ratio of \ce{SO2}, \ce{O3}, \ce{H2O2}, \ce{CO2}, \ce{NH3} and \ce{HNO3} 
+  trace gases in the model.
+The aqueous phase chemistry module of \emph{libcloudph++} changes the
+  trace gas mixing ratios as described in Chapter 3.3 of the PhD thesis of Jaruga.
 
 \section{Initial condition}
 
+The user needs to specify the initial temperature $T_0$, pressure $p_0$ and water vapor mixing ratio $r_0$.
 The initial thermodynamic condition must be set below supersaturation, i.e.
 \begin{equation}
 	r_0 < \epsilon \frac{e_s(T_0)}{p_0 - e_s(T_0)},
 \end{equation}
 \noindent
-where $r_0$ is initial water vapour mass mixing ratio, $e_s(T_0)$ is water vapour saturation pressure at initial temperature $T_0$, $p_0$ is initial pressure and $\epsilon = 0.622$.
-
+where 
+  $e_s(T_0)$ is water vapor saturation pressure at initial temperature 
+  and $\epsilon = 0.622$.
 The initial lognormal monomodal size distribution of dry aerosol is assumed:
 \begin{equation}
-        n(r) = \frac{n_{tot}}{r\sqrt{2\pi}ln(\sigma_g)}exp(-\frac{(ln(r)-ln(\overline{r}))^2}{2ln^2(\sigma_g)})
+        n(r) = \frac{n_{tot}}{r\sqrt{2\pi}ln(\sigma_g)}exp\left(-\frac{(ln(r)-ln(\overline{r}))^2}{2ln^2(\sigma_g)}\right)
         \label{lognormalny}
 \end{equation}
 \noindent
-where $n(r)$ is spectral density function for particles radius $r$, $n_{tot}$ is total aerosol concentration, $\overline{r}$ is mode radius and $\sigma_g$ is geometric standard deviation.
-The parametres of the size distribution can be specified by the user.
+where 
+  $n(r)$ is spectral density function for particles radius $r$, 
+  $n_{tot}$ is total aerosol concentration, 
+  $\overline{r}$ is mode radius and 
+  $\sigma_g$ is geometric standard deviation.
+The parameters of the size distribution can be specified by the user.
 
-If chemical reactions are enabled, the model assumes that the initial aerosol is ammonium bisulfate aerosol.
+For simulations with aqueous phase chemistry the initial trace gas mixing ratios 
+  need to be additionally specified.
+If chemical reactions are enabled, the model assumes that 
+  the initial aerosol is ammonium bisulfate aerosol (\ce{NH4HSO4}).
 The initial mass of chemical compounds is then calculated using the initial 
   dry aerosol size distribution and assumed dry particle density of 1.8 $g/cm^3$.
-
+The dry particle density can be changed by the user.
 
 \section{Arguments}
 
-The arguments of the parcel model are divided into 4 groups:
+The arguments of the parcel model are divided into 5 groups:
 
 \subsection{thermodynamic variables}
 
@@ -180,8 +218,25 @@ The arguments of the parcel model are divided into 4 groups:
 
   \item \textbf{T\_0} : float (default = 300);\\ initial temperature [K]
   \item \textbf{p\_0} : float (default = 101300);\\ initial pressure [Pa]
-  \item \textbf{r\_0} : float (default = 0.022);\\ initial water vapour mass mixing ratio [kg/kg].
+  \item \textbf{r\_0} : float (default = 0.022);\\ initial water vapor mass mixing ratio [kg/kg].
   \item \textbf{w} : float (default = 1);\\ Updraft velocity [m/s]
+
+\end{itemize}
+
+\subsection{chemistry module variables}
+
+\begin{itemize}
+
+  \item \textbf{SO2\_g}    : float (default = 0); \\ initial \ce{SO2} trace gas mixing ratio [kg/kg]
+  \item \textbf{O3\_g}     : float (default = 0); \\ initial \ce{O3} trace gas mixing ratio [kg/kg]
+  \item \textbf{H2O2\_g}   : float (default = 0); \\ initial \ce{H2O2} trace gas mixing ratio [kg/kg]
+  \item \textbf{CO2\_g}    : float (default = 0); \\ initial \ce{CO2} trace gas mixing ratio [kg/kg]
+  \item \textbf{NH3\_g}    : float (default = 0); \\ initial \ce{NH3} trace gas mixing ratio [kg/kg]
+  \item \textbf{HNO3\_g}   : float (default = 0); \\ initial \ce{HNO3} trace gas mixing ratio [kg/kg]
+  \item \textbf{chem\_rho} : float (default = 1800);  \\ assumed dry particulate density [kg/m3]
+  \item \textbf{chem\_dsl} : bool  (default = false); \\ switch for dissolving trace gases into droplets
+  \item \textbf{chem\_dsc} : bool  (default = false); \\ switch for dissociation of chemical compounds in droplets
+  \item \textbf{chem\_rct} : bool  (default = false); \\ switch for aqueous phase reactions in droplets
 
 \end{itemize}
 
@@ -194,7 +249,6 @@ The arguments of the parcel model are divided into 4 groups:
   \item \textbf{n\_tot} : float (default = 60e6);\\ total concentration of lognormal distribution in standard conditions 
                                (T=20C, p=1013.25 hPa, r=0) [m\textsuperscript{-3}]
   \item \textbf{kappa} : float (default = 0.5);\\ $\kappa$ hygroscopicity parameter (see \citep{Petters_et_al_2007} for more details)
-  \item{TODO - mole fractions of trace gases}
 
 \end{itemize}
 
@@ -208,10 +262,9 @@ The arguments of the parcel model are divided into 4 groups:
   \item \textbf{pprof} : string (default = "pprof\_piecewise\_const\_rhod"); \\ 
                 method to calculate pressure profile used to calculate 
                 dry air density that is used by the super-droplet scheme. The parcel model uses method described in sec. \ref{sec:eqs}. It is possible to switch on another option: "pprof\_const\_th\_rv" (see Appendix A for details).
-  \item TODO - open/closed chem system
 \end{itemize}
 
-\subsection{output parametres}\label{sec:output}
+\subsection{output parameters}\label{sec:output}
 
 \begin{itemize}
   \item \textbf{outfile} : string (default = "test.nc"); \\ output file name; the output file is in NetCDF format
@@ -254,10 +307,19 @@ $$
  
 \vspace{0.35cm}
    It will generate five output spectra:
-      0-th spectrum moment for 26 bins spaced logaritmically between $10^{-9}$ and $10^{-4}$ m for wet radius for variable 'A' and 
-      0, 1, 2 and 3-rd moments for 49 bins spaced linearly between $5\cdot10^{-7}$ and $2.5\cdot10^{-5}$ m for wet radius for variable 'B'.
+      0-th spectrum moment for 26 bins spaced logaritmically 
+        between $10^{-9}$ and $10^{-4}$ m for wet radius for variable 'A' and 
+      0, 1, 2 and 3-rd moments for 49 bins spaced linearly 
+        between $5\cdot10^{-7}$ and $2.5\cdot10^{-5}$ m for wet radius for variable 'B'.
 
-    TODO - chem output
+   \vspace{1.5em}
+   For simulations with aqueous phase chemistry the ``moms'' key can also be used 
+     for outputting the total mass of chemical compounds dissolved in droplets.
+   The allowed values for moms are "SO2\_a", "CO2\_a", "NH3\_a", "HNO3\_a", "O3\_a", "H2O2\_a", "S\_VI" and "H".
+   The first six output the total dissolved mass of the corresponding trace gases.
+   The "S\_VI" outputs the mass of created \ce{H2SO4} and the "H" outputs the mass of \ce{H^+} ions.
+   The number of bins and the size range of droplets selected for output 
+     is defined in the same way as for the previously described output of size distribution moments.
 
 \end{itemize}
 
@@ -265,35 +327,30 @@ $$
 
 The parcel model uses NetCDF file format\footnote{see unidata.ucar.edu/software/netcdf/ for details} for output.
 The content of the output file can be be viewed in terminal by using the \prog{ncdump} command.
-Output variables describing time-dependent ambient conditions in the parcel are:
-
+All the initial parameters of the parcel model are saved as global attributes of the output file.
+Additionally the maximum relative humidity reached during simulation 
+  \textbf{RH\_{max}} is also saved as a global attribute.
+Output variables describing time-dependent ambient conditions in the parcel are saved as:
 \begin{itemize}
   \item \textbf{t} - time [s],
   \item \textbf{z} - height above the starting point[m],
   \item \textbf{p} - pressure [Pa],
-  \item \textbf{r\_v} - water vapour mixing ratio [kg/kg],
+  \item \textbf{r\_v} - water vapor mixing ratio [kg/kg],
   \item \textbf{RH} - relative humidity [1],
   \item \textbf{T} - temperature [K],
   \item \textbf{th\_d} - dry potential temperature [K],
-  \item TODO - chem trace gases.
-
-There is also one value for the entire simulation:
-
-\item \textbf{RH\_{max}} - maximum relative humidity reached during the simulation [1].
-
+  \item \textbf{SO2\_g, O3\_g, H2O2\_g, CO2\_g, NH3\_g, HNO3\_g} - trace gas mixing ratios [kg/kg of dry air]
+  \item \textbf{SO2\_a, O3\_a, H2O2\_a, CO2\_a, NH3\_a, HNO3\_a} - total number of moles dissolved in droplets [moles/kg of dry air]
 \end{itemize}
-
 \noindent
-Output variables describing size distribution of particles from microphysics scheme depend 
-  on the user-defined "out\_bin" parameter.
+Output variables describing size distribution of particles or mass of the dissolved chemical compounds 
+  from the particle tracking scheme depend on the user-defined "out\_bin" parameter.
 For example, for the default setting of "out\_bin" parameter there are two output variables 
   describing placing and spacing of size distribution bins:
-
 \begin{itemize}
   \item \textbf{radii\_r\_wet} - left edges of the bins of the spectrum histogram [m],
   \item \textbf{radii\_dr\_wet} - bins width [m]
 \end{itemize}
-
 and one output variable containing the time-dependent chosen moment of size distribution:
 \begin{itemize}
   \item \textbf{radii\_m0} - 0th moment of spectrum.
@@ -302,7 +359,7 @@ and one output variable containing the time-dependent chosen moment of size dist
 \section{Installation}
 
 The parcel model requires the \emph{libcloudph++} library to be installed. 
-The \emph{libcloudph++} library can be obtained from the project github repository 
+The \emph{libcloudph++} library can be obtained from the project Github repository 
   at \url{https://github.com/igfuw/libcloudphxx}.
 The library dependencies and installation guidelines are available there in a Readme file.
 
@@ -333,8 +390,8 @@ will generate an output file 'test2.nc', which contains results of the simulatio
 
 \subsection{py.test}
 
-The parcel model is shipped with a set of tests designed for checking the particle-based microphysics scheme
-  from the \emph{libcloudph++} library.
+The parcel model is shipped with a set of tests designed for checking the particle-based microphysics 
+  and aqueous phase chemistry schemes from the \emph{libcloudph++} library.
 The tests may serve as usage examples for the parcel model and \emph{libcloudph++} library.
 The tests are located in the {\bf unit\_test} and {\bf long\_test} folders.
 The tests use the py.test Python package for test automation and can be run by typing from terminal:\\
@@ -370,7 +427,8 @@ It then plots the size distribution of particles at different timelevels.
 \newpage
 \subsection{Python}
 
-The following example shows how to use the parcel model from Python programming language and plot vertical profiles for pressure, temperature and relative humidity from NetCDF file. 
+The following example shows how to use the parcel model from Python programming language 
+  and plot vertical profiles for pressure, temperature and relative humidity from NetCDF file. 
 
 % first column
 \begin{minipage}[t]{0.65\textwidth}
@@ -382,11 +440,10 @@ The following example shows how to use the parcel model from Python programming 
 
 \appendix
 
-
 \section*{\\Appendix A} \label{App:AppendixA}
 
 Another method for integrating equation (\ref{hydro}) and retrieving pressure profile is to
-assume constant potential temperature, $\theta = \theta^0$, and constant water vapour mixing ratio, $r_v = r_v^0$ (option "pprof\_const\_th\_rv", see sec. \ref{sec:simpar}).
+assume constant potential temperature, $\theta = \theta^0$, and constant water vapor mixing ratio, $r_v = r_v^0$ (option "pprof\_const\_th\_rv", see sec. \ref{sec:simpar}).
 
   As a result at a given time level $n$ the pressure used to predict $\rho_d$ is defined as
   \begin{equation*}
@@ -404,11 +461,6 @@ The pressure outputted by the parcel model is then calculated as $ \rho_d  (R_d 
 This method follows the procedure used in the 2-dimensional kinematic model \emph{icicle}, 
   described in \citep{Arabas_et_al_2015} and was added to the parcel model to allow better comparison 
   between the two setups.
-
-
-
-\section*{Acknowledgements}
-\footnotesize
 
 \bibliography{doc}
 
