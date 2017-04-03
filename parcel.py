@@ -56,12 +56,18 @@ def _micro_init(opts, state, info):
       -(lnr - log(opts["mean_r"]))**2 / 2 / log(opts["gstdev"])**2
     ) / log(opts["gstdev"]) / sqrt(2*pi);
 
+  def lognormal2(lnr):
+    from math import exp, log, sqrt, pi
+    return opts["n_tot2"] * exp(
+      -(lnr - log(opts["mean_r2"]))**2 / 2 / log(opts["gstdev2"])**2
+    ) / log(opts["gstdev2"]) / sqrt(2*pi);
+
   # lagrangian scheme options
   opts_init = lgrngn.opts_init_t()  
   for opt in ["dt", "sd_conc", "chem_rho", "sstp_cond"]:  
     setattr(opts_init, opt, opts[opt])
   opts_init.n_sd_max    = opts_init.sd_conc
-  opts_init.dry_distros = {opts["kappa"]:lognormal}
+  opts_init.dry_distros = {opts["kappa"]:lognormal, opts["kappa2"]:lognormal2}
 
   # switch off sedimentation and collisions
   opts_init.sedi_switch = False
@@ -225,8 +231,9 @@ def _p_hydro_const_th_rv(z_lev, p_0, th_std, r_v, z_0=0.):
 def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, 
   outfile="test.nc", 
   pprof="pprof_piecewise_const_rhod",
-  outfreq=100, sd_conc=64, kappa=.5,
-  mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
+  outfreq=100, sd_conc=64, kappa=.5, kappa2=.5,
+  mean_r = .029e-6 , gstdev  = 1.36, n_tot  = 48.e6, 
+  mean_r2 = .071e-6 , gstdev2  = 1.57, n_tot2  = 114.e6, 
   out_bin = '{"radii": {"rght": 0.0001, "moms": [0], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09}}',
   SO2_g = 0., O3_g = 0., H2O2_g = 0., CO2_g = 0., HNO3_g = 0., NH3_g = 0.,
   chem_dsl = False, chem_dsc = False, chem_rct = False, 
