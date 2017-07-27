@@ -223,7 +223,7 @@ def _p_hydro_const_th_rv(z_lev, p_0, th_std, r_v, z_0=0.):
   return common.p_hydro(z_lev, th_std, r_v, z_0, p_0)
  
 def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., 
-  r_0=-1, RH_0=-1, #if none specified, the default will be r_0=.022, 
+  r_0=-1., RH_0=-1., #if none specified, the default will be r_0=.022, 
   outfile="test.nc", 
   pprof="pprof_piecewise_const_rhod",
   outfreq=100, sd_conc=64, kappa=.5,
@@ -401,7 +401,7 @@ def _arguments_checking(opts, spectra):
     raise Exception("temperature should be larger than 0C - microphysics works only for warm clouds")
   if ((opts["r_0"] < 0) and (opts["RH_0"] < 0)): 
     print "both r_0 and RH_0 negative, using default r_0 = 0.022"
-    opts["r_0"] = 0.022
+    opts["r_0"] = .022
   elif ((opts["r_0"] >= 0) and (opts["RH_0"] >= 0)): 
     raise Exception("both r_0 and RH_0 specified, please use only one")
   if ((opts["r_0"] < 0) and (opts["RH_0"] >= 0)): 
