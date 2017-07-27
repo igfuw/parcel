@@ -4,6 +4,7 @@
 import sys
 #sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
 #sys.path.insert(0, "../../../libcloudphxx/build/bindings/python/")
+sys.path.insert(0, "/usr/local/lib/site-python/")
 # TEMP TODO TEMP TODO !!!
 
 from argparse import ArgumentParser, RawTextHelpFormatter
@@ -49,25 +50,32 @@ def _micro_init(opts, state, info):
   _stats(state, info)
   if (state["RH"] > 1): raise Exception("Please supply initial T,p,r_v below supersaturation")
 
+  p_stp = 101325
+  T_stp = 273.25 + 15 
+
   # using nested function to get access to opts
   def lognormal(lnr):
     from math import exp, log, sqrt, pi
-    return opts["n_tot"] * exp(
+    return opts["n_tot"] * p_stp / opts["p_0"] * opts["T_0"] / T_stp * exp(
       -(lnr - log(opts["mean_r"]))**2 / 2 / log(opts["gstdev"])**2
     ) / log(opts["gstdev"]) / sqrt(2*pi);
 
   def lognormal2(lnr):
     from math import exp, log, sqrt, pi
-    return opts["n_tot2"] * exp(
+    return opts["n_tot2"] * p_stp / opts["p_0"] * opts["T_0"] / T_stp * exp(
       -(lnr - log(opts["mean_r2"]))**2 / 2 / log(opts["gstdev2"])**2
     ) / log(opts["gstdev2"]) / sqrt(2*pi);
+
+  def lognormal12(lnr):
+    return lognormal(lnr) + lognormal2(lnr);
 
   # lagrangian scheme options
   opts_init = lgrngn.opts_init_t()  
   for opt in ["dt", "sd_conc", "chem_rho", "sstp_cond"]:  
     setattr(opts_init, opt, opts[opt])
   opts_init.n_sd_max    = opts_init.sd_conc
-  opts_init.dry_distros = {opts["kappa"]:lognormal, opts["kappa2"]:lognormal2}
+  #opts_init.dry_distros = {opts["kappa"]:lognormal, opts["kappa2"]:lognormal2}
+  opts_init.dry_distros = {opts["kappa"]:lognormal12}
 
   # switch off sedimentation and collisions
   opts_init.sedi_switch = False
@@ -231,10 +239,11 @@ def _p_hydro_const_th_rv(z_lev, p_0, th_std, r_v, z_0=0.):
 def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, 
   outfile="test.nc", 
   pprof="pprof_piecewise_const_rhod",
-  outfreq=1960, sd_conc=64, kappa=.5, kappa2=.5,
-  mean_r = .029e-6 , gstdev  = 1.36, n_tot  = 48.e6, 
-  mean_r2 = .071e-6 , gstdev2  = 1.57, n_tot2  = 114.e6, 
-  out_bin = '{"radii": {"rght": 42e-6, "moms": [0], "drwt": "wet", "nbin": 42, "lnli": "lin", "left": 0}}',
+  outfreq=10, sd_conc=64, kappa=1.28, kappa2=0.01,
+  mean_r = .011e-6 , gstdev  = 1.2, n_tot  = 125.e6, 
+  mean_r2 = .06e-6 , gstdev2  = 1.7, n_tot2  = 65.e6, 
+  out_bin = '{"radii": {"rght": 1e-6, "moms": [0], "drwt": "dry", "nbin": 500, "lnli": "log", "left": 1e-9},'+
+            '"cloud": {"rght": 40e-6, "moms": [0], "drwt": "wet", "nbin": 500, "lnli": "log", "left": 1e-9}}',
   SO2_g = 0., O3_g = 0., H2O2_g = 0., CO2_g = 0., HNO3_g = 0., NH3_g = 0.,
   chem_dsl = False, chem_dsc = False, chem_rct = False, 
   chem_rho = 1.8e3,
@@ -303,7 +312,9 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   _arguments_checking(opts, spectra)
 
   th_0 = T_0 * (common.p_1000 / p_0)**(common.R_d / common.c_pd)
-  nt = int(z_max / (w * dt))
+#  nt = int(z_max / (w * dt))
+  nt = int(10. / dt)
+  outfreq = int(outfreq / dt)
   state = {
     "t" : 0, "z" : 0,
     "r_v" : np.array([r_0]), "p" : p_0,
@@ -408,8 +419,8 @@ def _arguments_checking(opts, spectra):
     raise Exception("water vapour should be larger than 0")
   if opts["w"] < 0: 
     raise Exception("vertical velocity should be larger than 0")
-  if opts["kappa"] <= 0: 
-    raise Exception("kappa hygroscopicity parameter should be larger than 0 ")
+#  if opts["kappa"] <= 0: 
+#    raise Exception("kappa hygroscopicity parameter should be larger than 0 ")
   for name, dct in spectra.iteritems():
     # TODO: check if name is valid netCDF identifier 
     # (http://www.unidata.ucar.edu/software/thredds/current/netcdf-java/CDM/Identifiers.html)
