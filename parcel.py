@@ -222,7 +222,8 @@ def _p_hydro_const_th_rv(z_lev, p_0, th_std, r_v, z_0=0.):
   # hydrostatic pressure assuming constatnt theta and r_v
   return common.p_hydro(z_lev, th_std, r_v, z_0, p_0)
  
-def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, 
+def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., 
+  r_0=-1, RH_0=-1, #if none specified, the default will be r_0=.022, 
   outfile="test.nc", 
   pprof="pprof_piecewise_const_rhod",
   outfreq=100, sd_conc=64, kappa=.5,
@@ -243,6 +244,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
     T_0     (Optional[float]):    initial temperature [K]
     p_0     (Optional[float]):    initial pressure [Pa]
     r_0     (Optional[float]):    initial water vapour mass mixing ratio [kg/kg]
+    RH_0    (Optional[float]):    initial relative humidity
     outfile (Optional[string]):   output netCDF file name
     outfreq (Optional[int]):      output interval (in number of time steps)
     sd_conc (Optional[int]):      number of moving bins (super-droplets)
@@ -397,8 +399,13 @@ def _arguments_checking(opts, spectra):
     raise Exception("standar deviation should be != 1 to avoid monodisperse distribution")
   if opts["T_0"] < 273.15: 
     raise Exception("temperature should be larger than 0C - microphysics works only for warm clouds")
-  if opts["r_0"] < 0: 
-    raise Exception("water vapour should be larger than 0")
+  if ((opts["r_0"] < 0) and (opts["RH_0"] < 0)): 
+    print "both r_0 and RH_0 negative, using default r_0 = 0.022"
+    opts["r_0"] = 0.022
+  elif ((opts["r_0"] >= 0) and (opts["RH_0"] >= 0)): 
+    raise Exception("both r_0 and RH_0 specified, please use only one")
+  if ((opts["r_0"] < 0) and (opts["RH_0"] >= 0)): 
+    opts["r_0"] = common.eps * opts["RH_0"] * common.p_vs(T_0) / (p_0 - opts["RH_0"] * common.p_vs(T_0))
   if opts["w"] < 0: 
     raise Exception("vertical velocity should be larger than 0")
   if opts["kappa"] <= 0: 
