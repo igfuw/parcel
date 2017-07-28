@@ -65,6 +65,9 @@ out_bin = '{"plt_rw":   {"rght": 1,    "left":    0, "drwt": "wet", "lnli": "lin
                          "moms": ["O3_a", "H2O2_a", "H", "SO2_a", "S_VI",\
                                  "CO2_a", "NH3_a", "HNO3_a"]}}'
 
+# initial aerosol distribution
+aerosol = '{"chem_aerosol": {"kappa": ' + str(kappa) + ', "mean_r": [' + str(mean_r) + '], "gstdev": [' + str(gstdev) + '], "n_tot": [' + str(n_tot) + ']}}'
+
 # saving parcel options as a dictionary
 parcel_dict = {'dt': dt, 'z_max': z_max, 'outfreq': outfreq, 'w': w,\
                'sstp_cond': sstp_cond, 'sstp_chem': sstp_chem,\
@@ -73,5 +76,5 @@ parcel_dict = {'dt': dt, 'z_max': z_max, 'outfreq': outfreq, 'w': w,\
                'CO2_g': CO2_g_init, 'NH3_g': NH3_g_init,'HNO3_g': HNO3_g_init,\
                'chem_rho': chem_rho, 'outfile': outfile,\
                'chem_dsl': chem_dsl, 'chem_dsc': chem_dsc, 'chem_rct': chem_rct,\
-               'n_tot': n_tot, 'mean_r': mean_r, 'gstdev': gstdev, 'kappa': kappa,\
+               'aerosol': aerosol,\
                'sd_conc': sd_conc, 'out_bin': out_bin}

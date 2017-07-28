@@ -54,7 +54,9 @@ def data(request):
           CO2_g = CO2_g_init, NH3_g = NH3_g_init, HNO3_g = HNO3_g_init,\
           outfile = outfile,\
           chem_dsl = True, chem_dsc = True, chem_rct = False,\
-          mean_r = mean_r, gstdev = gstdev, n_tot = n_tot, sd_conc = sd_conc,\
+          aerosol = \
+            '{"test": {"kappa": 0.5, "mean_r": [' + str(mean_r) + '], "gstdev": [' + str(gstdev) + '], "n_tot": [' + str(n_tot) + ']}}',\
+          sd_conc = sd_conc,\
           out_bin = \
             '{"radii": {"rght": 1.0, "left": 0.0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 3]},\
               "chem" : {"rght": 1.0, "left": 0.0, "drwt": "wet", "lnli": "lin", "nbin": 1,\

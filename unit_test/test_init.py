@@ -16,11 +16,11 @@ def test_supersat(tmpdir):
         pc.parcel(outfile=str_f,  r_0=.1)
 
 
-@pytest.mark.parametrize("arg",[{"gstdev" : 1},
-                                {"T_0" : 255},
-                                {"r_0":-0.1},
+@pytest.mark.parametrize("arg",[{"T_0" : 255},
+                                {"RH_0": 1.00001},
                                 {"w" : -1},
-                                {"kappa" : 0.},
+                                {"aerosol" : '{"zero_kappa": {"kappa" : 0., "mean_r": [2e-8], "gstdev": [1.2], "n_tot": [60e6]}}'},
+                                {"aerosol" : '{"unity_gstdev": {"kappa" : 0.61, "mean_r": [2e-8], "gstdev": [1.], "n_tot": [60e6]}}'},
                                 {"out_bin" : '{"radii": {"moms": [0], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09}}'},
                                 {"out_bin" : '{"radii": {"aqq": 1, "rght": 0.0001, "moms": [0], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09}}'},
                                 {"out_bin" : '{"radii": {"rght": "aqq", "moms": [0], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09}}'},

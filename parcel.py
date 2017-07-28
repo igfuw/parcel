@@ -4,6 +4,7 @@
 import sys
 #sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
 #sys.path.insert(0, "../../../libcloudphxx/build/bindings/python/")
+#sys.path.insert(0, "/usr/local/lib/site-python/")
 # TEMP TODO TEMP TODO !!!
 
 from argparse import ArgumentParser, RawTextHelpFormatter
@@ -44,24 +45,48 @@ _Chem_a_id = {
   "S_VI"   : lgrngn.chem_species_t.S_VI
 }
 
-def _micro_init(opts, state, info):
+class lognormal(object):
+  def __init__(self, mean_r, gstdev, n_tot):
+    self.mean_r = mean_r
+    self.gstdev = gstdev
+    self.n_tot = n_tot
+
+  def __call__(self, lnr):
+    from math import exp, log, sqrt, pi
+    return self.n_tot * exp(
+      -(lnr - log(self.mean_r))**2 / 2 / log(self.gstdev)**2
+    ) / log(self.gstdev) / sqrt(2*pi);
+
+class sum_of_lognormals(object):
+  def __init__(self, lognormals=[]):
+    self.lognormals = lognormals
+
+  def __call__(self, lnr):
+    res = 0.
+    for lognormal in self.lognormals:
+      res += lognormal(lnr)
+    return res
+
+def _micro_init(aerosol, opts, state, info):
+
   # sanity check
   _stats(state, info)
   if (state["RH"] > 1): raise Exception("Please supply initial T,p,r_v below supersaturation")
-
-  # using nested function to get access to opts
-  def lognormal(lnr):
-    from math import exp, log, sqrt, pi
-    return opts["n_tot"] * exp(
-      -(lnr - log(opts["mean_r"]))**2 / 2 / log(opts["gstdev"])**2
-    ) / log(opts["gstdev"]) / sqrt(2*pi);
 
   # lagrangian scheme options
   opts_init = lgrngn.opts_init_t()  
   for opt in ["dt", "sd_conc", "chem_rho", "sstp_cond"]:  
     setattr(opts_init, opt, opts[opt])
   opts_init.n_sd_max    = opts_init.sd_conc
-  opts_init.dry_distros = {opts["kappa"]:lognormal}
+
+  dry_distros = {}
+  for name, dct in aerosol.iteritems(): # loop over kappas
+    lognormals = []
+    for i in range(len(dct["mean_r"])):
+      lognormals.append(lognormal(dct["mean_r"][i], dct["gstdev"][i], dct["n_tot"][i]))
+    dry_distros[dct["kappa"]] = sum_of_lognormals(lognormals)
+
+  opts_init.dry_distros = dry_distros
 
   # switch off sedimentation and collisions
   opts_init.sedi_switch = False
@@ -222,12 +247,13 @@ def _p_hydro_const_th_rv(z_lev, p_0, th_std, r_v, z_0=0.):
   # hydrostatic pressure assuming constatnt theta and r_v
   return common.p_hydro(z_lev, th_std, r_v, z_0, p_0)
  
-def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022, 
+def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., 
+  r_0=-1., RH_0=-1., #if none specified, the default will be r_0=.022, 
   outfile="test.nc", 
   pprof="pprof_piecewise_const_rhod",
-  outfreq=100, sd_conc=64, kappa=.5,
-  mean_r = .04e-6 / 2, gstdev  = 1.4, n_tot  = 60.e6, 
-  out_bin = '{"radii": {"rght": 0.0001, "moms": [0], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09}}',
+  outfreq=100, sd_conc=64,
+  aerosol = '{"ammonium_sulfate": {"kappa": 0.61, "mean_r": [0.02e-6], "gstdev": [1.4], "n_tot": [60.0e6]}}',
+  out_bin = '{"radii": {"rght": 0.0001, "moms": [0], "drwt": "wet", "nbin": 1, "lnli": "log", "left": 1e-09}}',
   SO2_g = 0., O3_g = 0., H2O2_g = 0., CO2_g = 0., HNO3_g = 0., NH3_g = 0.,
   chem_dsl = False, chem_dsc = False, chem_rct = False, 
   chem_rho = 1.8e3,
@@ -243,14 +269,22 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
     T_0     (Optional[float]):    initial temperature [K]
     p_0     (Optional[float]):    initial pressure [Pa]
     r_0     (Optional[float]):    initial water vapour mass mixing ratio [kg/kg]
+    RH_0    (Optional[float]):    initial relative humidity
     outfile (Optional[string]):   output netCDF file name
     outfreq (Optional[int]):      output interval (in number of time steps)
     sd_conc (Optional[int]):      number of moving bins (super-droplets)
-    kappa   (Optional[float]):    kappa hygroscopicity parameter (see doi:10.5194/acp-7-1961-2007)
-    mean_r  (Optional[float]):    lognormal distribution mode diameter [m]
-    gstdev  (Optional[float]):    lognormal distribution geometric standard deviation [1]
-    n_tot   (Optional[float]):    lognormal distribution total concentration under standard 
-                                  conditions (T=20C, p=1013.25 hPa, rv=0) [m-3]
+    aerosol (Optional[json str]): dict of dicts defining aerosol distribution, e.g.:
+                                  
+                                  {"ammonium_sulfate": {"kappa": 0.61, "mean_r": [0.02e-6, 0.07e-7], "gstdev": [1.4, 1.2], "n_tot": [120.0e6, 80.0e6]}
+                                   "gccn" : {"kappa": 1.28, "mean_r": [2e-6], "gstdev": [1.6], "n_tot": [1e2]}}
+              
+                                  where kappa  - hygroscopicity parameter (see doi:10.5194/acp-7-1961-2007)
+                                        mean_r - lognormal distribution mean radius [m]                    (list if multimodal distribution)
+                                        gstdev - lognormal distribution geometric standard deviation       (list if multimodal distribution)
+                                        n_tot  - lognormal distribution total concentration under standard 
+                                                 conditions (T=20C, p=1013.25 hPa, rv=0) [m^-3]            (list if multimodal distribution)
+
+
     out_bin (Optional[json str]): dict of dicts defining spectrum diagnostics, e.g.:
 
                                   {"radii": {"rght": 0.0001,  "moms": [0],          "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09},
@@ -292,8 +326,19 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   # parsing json specification of output spectra
   spectra = json.loads(opts["out_bin"])
 
+  # parsing json specification of init aerosol spectra
+  aerosol = json.loads(opts["aerosol"])
+
+  # default water content
+  if ((opts["r_0"] < 0) and (opts["RH_0"] < 0)): 
+    print "both r_0 and RH_0 negative, using default r_0 = 0.022"
+    r_0 = .022
+  # water coontent specified with RH
+  if ((opts["r_0"] < 0) and (opts["RH_0"] >= 0)): 
+    r_0 = common.eps * opts["RH_0"] * common.p_vs(T_0) / (p_0 - opts["RH_0"] * common.p_vs(T_0))
+
   # sanity checks for arguments
-  _arguments_checking(opts, spectra)
+  _arguments_checking(opts, spectra, aerosol)
 
   th_0 = T_0 * (common.p_1000 / p_0)**(common.R_d / common.c_pd)
   nt = int(z_max / (w * dt))
@@ -312,7 +357,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
   info = { "RH_max" : 0, "libcloud_Git_revision" : libcloud_version, 
            "parcel_Git_revision" : parcel_version }
 
-  micro = _micro_init(opts, state, info)
+  micro = _micro_init(aerosol, opts, state, info)
 
   with _output_init(micro, opts, spectra) as fout:
     # adding chem state vars
@@ -392,17 +437,47 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300., r_0=.022,
           rec = it/outfreq
           _output(fout, opts, micro, state, rec, spectra)
     
-def _arguments_checking(opts, spectra):
-  if opts["gstdev"] == 1: 
-    raise Exception("standar deviation should be != 1 to avoid monodisperse distribution")
+def _arguments_checking(opts, spectra, aerosol):
   if opts["T_0"] < 273.15: 
     raise Exception("temperature should be larger than 0C - microphysics works only for warm clouds")
-  if opts["r_0"] < 0: 
-    raise Exception("water vapour should be larger than 0")
+  elif ((opts["r_0"] >= 0) and (opts["RH_0"] >= 0)): 
+    raise Exception("both r_0 and RH_0 specified, please use only one")
   if opts["w"] < 0: 
     raise Exception("vertical velocity should be larger than 0")
-  if opts["kappa"] <= 0: 
-    raise Exception("kappa hygroscopicity parameter should be larger than 0 ")
+
+  for name, dct in aerosol.iteritems():
+    # TODO: check if name is valid netCDF identifier 
+    # (http://www.unidata.ucar.edu/software/thredds/current/netcdf-java/CDM/Identifiers.html)
+    keys = ["kappa", "mean_r", "n_tot", "gstdev"]
+    for key in keys:
+      if key not in dct: 
+        raise Exception(">>" + key + "<< is missing in aerosol[" + name + "]")
+    for key in dct:
+      if key not in keys:
+        raise Exception("invalid key >>" + key + "<< in aerosol[" + name + "]")
+    if dct["kappa"] <= 0: 
+      raise Exception("kappa hygroscopicity parameter should be larger than 0 for aerosol[" + name + "]")
+    if type(dct["mean_r"]) != list:
+        raise Exception(">>mean_r<< key in aerosol["+ name +"] must be a list") 
+    if type(dct["gstdev"]) != list:
+        raise Exception(">>gstdev<< key in aerosol["+ name +"] must be a list") 
+    if type(dct["n_tot"]) != list:
+        raise Exception(">>n_tot<< key in aerosol["+ name +"] must be a list") 
+    if not len(dct["mean_r"]) == len(dct["n_tot"]) == len(dct["gstdev"]):
+      raise Exception("mean_r, n_tot and gstdev lists should have same sizes for aerosol[" + name + "]")
+    for mean_r in dct["mean_r"]:
+      if mean_r <= 0: 
+        raise Exception("mean radius should be > 0 for aerosol[" + name + "]")
+    for n_tot in dct["n_tot"]:
+      if n_tot <= 0: 
+        raise Exception("concentration should be > 0 for aerosol[" + name + "]")
+    for gstdev in dct["gstdev"]:
+      if gstdev <= 0: 
+        raise Exception("standard deviation should be > 0 for aerosol[" + name + "]")
+    # necessary?
+      if gstdev == 1.: 
+        raise Exception("standard deviation should be != 1 to avoid monodisperse distribution for aerosol[" + name + "]")
+
   for name, dct in spectra.iteritems():
     # TODO: check if name is valid netCDF identifier 
     # (http://www.unidata.ucar.edu/software/thredds/current/netcdf-java/CDM/Identifiers.html)
