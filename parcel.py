@@ -69,10 +69,6 @@ class sum_of_lognormals(object):
 
 def _micro_init(aerosol, opts, state, info):
 
-  # sanity check
-  _stats(state, info)
-  if (state["RH"] > 1): raise Exception("Please supply initial T,p,r_v below supersaturation")
-
   # lagrangian scheme options
   opts_init = lgrngn.opts_init_t()  
   for opt in ["dt", "sd_conc", "chem_rho", "sstp_cond"]:  
@@ -104,6 +100,11 @@ def _micro_init(aerosol, opts, state, info):
   if micro.opts_init.chem_switch:
     ambient_chem = dict((v, state[k]) for k,v in _Chem_g_id.iteritems())
   micro.init(state["th_d"], state["r_v"], state["rhod"], ambient_chem=ambient_chem)
+
+  # sanity check
+  _stats(state, info, micro)
+  if (state["RH"] > 1): raise Exception("Please supply initial T,p,r_v below supersaturation")
+
   return micro
 
 def _micro_step(micro, state, info, opts, it, fout):
@@ -130,7 +131,7 @@ def _micro_step(micro, state, info, opts, it, fout):
   micro.step_async(libopts)
 
   # update state after microphysics (needed for below update for chemistry)
-  _stats(state, info)
+  _stats(state, info, micro)
 
   # update in state for aqueous chem (TODO do we still want to have aq chem in state?)
   if micro.opts_init.chem_switch:
@@ -140,10 +141,14 @@ def _micro_step(micro, state, info, opts, it, fout):
       micro.diag_chem(id_int)
       state[id_str.replace('_g', '_a')] = np.frombuffer(micro.outbuf())[0]
  
-def _stats(state, info):
+def _stats(state, info, micro):
   state["T"] = np.array([common.T(state["th_d"][0], state["rhod"][0])])
   state["RH"] = state["p"] * state["r_v"] / (state["r_v"] + common.eps) / common.p_vs(state["T"][0])
   info["RH_max"] = max(info["RH_max"], state["RH"])
+  #get number of activated droplets
+  micro.diag_rw_ge_rc()
+  micro.diag_wet_mom(0)
+  state["act_conc"] = np.frombuffer(micro.outbuf()) *  state["rhod"][0] / 1e6 
 
 def _output_bins(fout, t, micro, opts, spectra):
   for dim, dct in spectra.iteritems():
@@ -213,7 +218,7 @@ def _output_init(micro, opts, spectra):
 	fout.variables[name+'_m'+str(vm)].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
   
   units = {"z" : "m",  "t" : "s", "r_v" : "kg/kg", "th_d" : "K", "rhod" : "kg/m3", 
-           "p" : "Pa", "T" : "K", "RH"  : "1"
+           "p" : "Pa", "T" : "K", "RH"  : "1", "act_conc" : "1/cm^3"
   }
 
   if micro.opts_init.chem_switch:
@@ -347,7 +352,8 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300.,
     "r_v" : np.array([r_0]), "p" : p_0,
     "th_d" : np.array([common.th_std2dry(th_0, r_0)]), 
     "rhod" : np.array([common.rhod(p_0, th_0, r_0)]),
-    "T" : None, "RH" : None
+    "T" : None, "RH" : None,
+    "act_conc" : 0.
   }
 
   if opts["chem_dsl"] or opts["chem_dsc"] or opts["chem_rct"]:
