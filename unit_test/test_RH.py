@@ -11,7 +11,7 @@ def test_RH_gt1(tmpdir, kappa):
     (i.e. cloud is created) 
     """
     str_f = str(tmpdir.join("test_pcl.nc"))
-    pc.parcel(outfile=str_f,  outfreq=1, kappa=kappa)
+    pc.parcel(outfile=str_f,  outfreq=1, aerosol='{"ammonium_sulfate": {"kappa": ' + str(kappa) + ', "mean_r": [0.02e-6], "gstdev": [1.4], "n_tot": [60.0e6]}}')
     f_out = netcdf.netcdf_file(str_f, "r")
     assert f_out.variables["RH"][-1] >= .99
 

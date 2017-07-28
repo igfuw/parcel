@@ -474,9 +474,9 @@ def _arguments_checking(opts, spectra, aerosol):
     for gstdev in dct["gstdev"]:
       if gstdev <= 0: 
         raise Exception("standard deviation should be > 0 for aerosol[" + name + "]")
-    # TODO: necessary?
-    #  if dct_p["gstdev"] == 1: 
-    #    raise Exception("standar deviation should be != 1 to avoid monodisperse distribution for aerosol[" + name + "]")
+    # necessary?
+      if gstdev == 1.: 
+        raise Exception("standard deviation should be != 1 to avoid monodisperse distribution for aerosol[" + name + "]")
 
   for name, dct in spectra.iteritems():
     # TODO: check if name is valid netCDF identifier 
