@@ -8,9 +8,10 @@ import pytest
 @pytest.mark.parametrize("arg",[{"r_0" : 0.01, "T_0" : 298., "z_max" : 300.}, 
                                 {"w" : 2., "p_0" : 1e5}, 
                                 {"dt" : 0.5, "outfreq" : 20},
-                                {"sd_conc" : 32, "kappa" : 1.}, 
+                                {"sd_conc" : 32}, 
                                 {"SO2_g" : 0., "O3_g" : 0., "H2O2_g" : 0.},
-                                {"gstdev" : 1.1}, 
+                                {"aerosol": '{"ammonium_sulfate": {"kappa": 0.61, "mean_r": [0.02e-6, 0.07e-7], "gstdev": [1.4, 1.2], "n_tot": [120.0e6, 80.0e6]},' 
+                                             '"gccn"            : {"kappa": 1.28, "mean_r": [2e-6], "gstdev": [1.6], "n_tot": [1e3]}}'},
                                 {"outfreq" : 2},
                                 {"out_bin" : '{"radii": {"rght": 1, "moms": [3], "drwt": "wet", "nbin": 1, "lnli": "lin", "left": 0}}'},
                                 {"out_bin" : '{"r1": {"rght": 1, "moms": [3], "drwt": "wet", "nbin": 1, "lnli": "lin", "left": 0}, "r2": {"rght": 10000000000.0, "moms": [3], "drwt": "wet", "nbin": 1, "lnli": "log", "left": 1e-10}}'}, 
