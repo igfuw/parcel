@@ -69,10 +69,6 @@ class sum_of_lognormals(object):
 
 def _micro_init(aerosol, opts, state, info):
 
-  # sanity check
-  _stats(state, info)
-  if (state["RH"] > 1): raise Exception("Please supply initial T,p,r_v below supersaturation")
-
   # lagrangian scheme options
   opts_init = lgrngn.opts_init_t()  
   for opt in ["dt", "sd_conc", "chem_rho", "sstp_cond"]:  
@@ -104,6 +100,11 @@ def _micro_init(aerosol, opts, state, info):
   if micro.opts_init.chem_switch:
     ambient_chem = dict((v, state[k]) for k,v in _Chem_g_id.iteritems())
   micro.init(state["th_d"], state["r_v"], state["rhod"], ambient_chem=ambient_chem)
+
+  # sanity check
+  _stats(state, info)
+  if (state["RH"] > 1): raise Exception("Please supply initial T,p,r_v below supersaturation")
+
   return micro
 
 def _micro_step(micro, state, info, opts, it, fout):

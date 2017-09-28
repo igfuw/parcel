@@ -1,4 +1,7 @@
 language: cpp
+dist: trusty
+sudo: required
+
 os: 
     - linux
     - osx
@@ -9,8 +12,19 @@ matrix:
     exclude:
         - os: osx
           compiler: gcc
+addons:
+  apt:
+    packages:
+      - g++-5
+      - clang-4.0
+    sources: &sources
+      - ubuntu-toolchain-r-test
+      - llvm-toolchain-trusty-4.0
+
 
 before_install:
+# to avoid python lib/interpreter mismatch; https://github.com/travis-ci/travis-ci/issues/5326
+  - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then export PATH=$(echo $PATH | tr ':' "\n" | sed '/\/opt\/python/d' | tr "\n" ":" | sed "s|::|:|g"); fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo add-apt-repository "deb http://us.archive.ubuntu.com/ubuntu/ trusty main universe multiverse restricted"; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export apt_get_install="apt-get install -t trusty --no-install-recommends -y"; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update; fi
@@ -18,8 +32,8 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
 
 install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" && $CXX == "clang++" ]]; then sudo $apt_get_install clang; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" && $CXX == "g++"     ]]; then sudo $apt_get_install g++  ; fi
+  - if [[ $TRAVIS_OS_NAME == 'linux' && $CXX == 'clang++' ]]; then export CXX=clang++-4.0; fi
+  - if [[ $TRAVIS_OS_NAME == 'linux' && $CXX == 'g++'     ]]; then export CXX=g++-5; fi
 
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo $apt_get_install libblitz0-dev cmake libboost-python-dev python-numpy python-scipy libthrust-dev python-pytest; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install --no-install-recommends gnuplot-nox python-gnuplot python-tk python-matplotlib; fi 
@@ -36,7 +50,7 @@ install:
   - git clone --depth=1 git://github.com/thrust/thrust.git;
   - sudo ln -s `pwd`/thrust/thrust /usr/local/include/thrust;
 
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo pip install http://prdownloads.sourceforge.net/gnuplot-py/gnuplot-py-1.8.tar.gz?download; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo -H pip install http://prdownloads.sourceforge.net/gnuplot-py/gnuplot-py-1.8.tar.gz?download; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo pip install -U matplotlib; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gnuplot; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export LDFLAGS="$LDFLAGS -L/usr/local/opt/readline/lib" CPPFLAGS="$CPPFLAGS -I/usr/local/opt/readline/include"; fi
@@ -75,11 +89,11 @@ script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then py.test -v unit_test/; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then py.test -v unit_test_debug/; fi
 
-  # install libcloudphxx in Release mode
+  # install libcloudphxx in Release mode with asserts on
   - cd ..
   - cd libcloudphxx/build
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release ..; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then cmake                             -DCMAKE_BUILD_TYPE=Release ..; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RelWithDebInfo ..; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then cmake                             -DCMAKE_BUILD_TYPE=RelWithDebInfo ..; fi
   - make
   - sudo make install
   - cd ../..
