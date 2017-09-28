@@ -77,11 +77,11 @@ script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then py.test -v unit_test/; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then py.test -v unit_test_debug/; fi
 
-  # install libcloudphxx in Release mode
+  # install libcloudphxx in Release mode with asserts on
   - cd ..
   - cd libcloudphxx/build
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release ..; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then cmake                             -DCMAKE_BUILD_TYPE=Release ..; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RelWithDebInfo ..; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then cmake                             -DCMAKE_BUILD_TYPE=RelWithDebInfo ..; fi
   - make
   - sudo make install
   - cd ../..
