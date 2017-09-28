@@ -1,4 +1,7 @@
 language: cpp
+dist: trusty
+sudo: required
+
 os: 
     - linux
     - osx
@@ -9,6 +12,15 @@ matrix:
     exclude:
         - os: osx
           compiler: gcc
+addons:
+  apt:
+    packages:
+      - g++-5
+      - clang-4.0
+    sources: &sources
+      - ubuntu-toolchain-r-test
+      - llvm-toolchain-trusty-4.0
+
 
 before_install:
 # to avoid python lib/interpreter mismatch; https://github.com/travis-ci/travis-ci/issues/5326
@@ -20,8 +32,8 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
 
 install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" && $CXX == "clang++" ]]; then sudo $apt_get_install clang; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" && $CXX == "g++"     ]]; then sudo $apt_get_install g++  ; fi
+  - if [[ $TRAVIS_OS_NAME == 'linux' && $CXX == 'clang++' ]]; then export CXX=clang++-4.0; fi
+  - if [[ $TRAVIS_OS_NAME == 'linux' && $CXX == 'g++'     ]]; then export CXX=g++-5; fi
 
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo $apt_get_install libblitz0-dev cmake libboost-python-dev python-numpy python-scipy libthrust-dev python-pytest; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install --no-install-recommends gnuplot-nox python-gnuplot python-tk python-matplotlib; fi 
