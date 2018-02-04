@@ -36,10 +36,11 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     fig = plt.figure(figsize=(28,13))
     plt.rcParams.update({'font.size': 30})
     y_labels  = [0,   200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400] #time above CB
-    y_labels2 = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6,   0.7, 0.8,   0.9,    1, 1.1,  1.2,  1.3 ] #height above the ground
+    y_labels2 = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6,   0.7, 0.8,   0.9,    1, 1.1,  1.2,  1.3 ] #height above CB
 
     # calculate lwc
     ax = fig.add_subplot(131)
+    ax.set_xlim([0., 2.5])
     ax.set_ylim([200, 2600])
     ax.set_yticks([200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600])
     ax.set_yticklabels(y_labels)
@@ -96,7 +97,7 @@ def plot_fig1(data, output_folder = '', output_title = ''):
     ax.yaxis.tick_right()
 
     ax.set_xlabel('average pH')
-    ax.set_ylabel('height above the ground [km]')
+    ax.set_ylabel('height above cloud base [km]')
     ax.yaxis.set_label_position("right")
 
     ax.set_xlim([3.6, 5])
