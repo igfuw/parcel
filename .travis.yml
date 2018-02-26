@@ -60,8 +60,8 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then echo 'import sys; sys.path.insert(1, "/usr/local/lib/python2.7/site-packages")' >> /Users/travis/Library/Python/2.7/lib/python/site-packages/homebrew.pth; fi
 
   # get latest FindBoost.cmake
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then wget https://raw.githubusercontent.com/Kitware/CMake/master/Modules/FindBoost.cmake; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo mv FindBoost.cmake /usr/local/Cellar/cmake/3.6.2/share/cmake/Modules/; fi
+  #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then wget https://raw.githubusercontent.com/Kitware/CMake/master/Modules/FindBoost.cmake; fi
+  #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo mv FindBoost.cmake /usr/local/Cellar/cmake/3.6.2/share/cmake/Modules/; fi
   
   
 script:
