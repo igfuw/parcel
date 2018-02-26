@@ -16,6 +16,7 @@ addons:
   apt:
     packages:
       - g++-5
+      - gcc-5
       - clang-4.0
     sources: &sources
       - ubuntu-toolchain-r-test
@@ -54,14 +55,15 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo pip2 install -U matplotlib; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gnuplot; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export LDFLAGS="$LDFLAGS -L/usr/local/opt/readline/lib" CPPFLAGS="$CPPFLAGS -I/usr/local/opt/readline/include"; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew reinstall gcc --with-fortran; fi
+  #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew reinstall gcc --with-fortran; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then mkdir -p /Users/travis/Library/Python/2.7/lib/python/site-packages; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then echo 'import sys; sys.path.insert(1, "/usr/local/lib/python2.7/site-packages")' >> /Users/travis/Library/Python/2.7/lib/python/site-packages/homebrew.pth; fi
 
   # get latest FindBoost.cmake
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then wget https://raw.githubusercontent.com/Kitware/CMake/master/Modules/FindBoost.cmake; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo mv FindBoost.cmake /usr/local/Cellar/cmake/3.6.2/share/cmake/Modules/; fi
-    
+  
+  
 script:
 
   # install libcloudphxx in Debug mode
@@ -73,10 +75,9 @@ script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CXX" == "clang++" ]]; then cmake -DCMAKE_CXX_COMPILER=/usr/bin/clang++ ../; fi 
                                                               # Travis default is not the packaged one
   # find python paths, taken from https://github.com/breannansmith/scisim/blob/master/.travis.yml
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then PY_INC=`python-config --includes | grep -o '\-I[^ ]*' | head -n 1 | cut -c 3-` ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then PY_LIB=`python-config --ldflags | grep -o '\-L[^ ]*' | head -n 1 | cut -c 3- | xargs -I % find % -name libpython*.dylib` ; fi
+  #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then PY_INC=`python-config --includes | grep -o '\-I[^ ]*' | head -n 1 | cut -c 3-` ; fi
+  #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then PY_LIB=`python-config --ldflags | grep -o '\-L[^ ]*' | head -n 1 | cut -c 3- | xargs -I % find % -name libpython*.dylib` ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cmake .. -DPYTHON_LIBRARY=${PY_LIB} -DPYTHON_INCLUDE_DIR=${PY_INC}; fi
-
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then cmake                             -DCMAKE_BUILD_TYPE=Debug ..; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Debug ..; fi
   - make
