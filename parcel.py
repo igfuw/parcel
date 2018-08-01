@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # TEMP TODO TEMP TODO !!!
-#import sys
+import sys
 #sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
 #sys.path.insert(0, "../../../libcloudphxx/build/bindings/python/")
 #sys.path.insert(0, "/usr/local/lib/site-python/")
