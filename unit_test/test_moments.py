@@ -4,20 +4,16 @@ sys.path.insert(0, "./")
 sys.path.insert(0, "plots/one_simulat/")
 
 from scipy.io import netcdf
-from scipy.integrate import simps, trapz
+from scipy.integrate import trapz
 
 import numpy as np
 import math
 import subprocess
 import pytest
-import copy
-import pprint as pp
 import ast
 
 from parcel import parcel
 from libcloudphxx import common as cm
-from autoconversion import plot_spectrum_m0, plot_profiles
-import functions as fn
 
 @pytest.fixture(scope="module")
 def data(request):
