@@ -2,7 +2,7 @@ language: cpp
 dist: trusty
 sudo: required
 
-os: 
+os:
     - linux
     - osx
 compiler:
@@ -35,11 +35,11 @@ before_install:
 # first find brew python python-config
   - if [[ $TRAVIS_OS_NAME == "osx" ]]; then export BREWPYCONFIG=`brew ls python2 | grep config | head -n1`; fi
 
-# find python paths, taken from 
+# find python paths, taken from
 # https://github.com/breannansmith/scisim/blob/master/.travis.yml
   - if [[ $TRAVIS_OS_NAME == "osx" ]]; then export PY_INC=`$BREWPYCONFIG --includes | grep -o '\-I[^ ]*' | head -n 1 | cut -c 3-` ; fi
   - if [[ $TRAVIS_OS_NAME == "osx" ]]; then export PY_LIB=`$BREWPYCONFIG --ldflags | grep -o '\-L[^ ]*' | head -n 1 | cut -c 3- | xargs -I % find % -name libpython*.dylib` ; fi
-    
+
 # also find brew python executable dir and prepend it to PATH
   - if [[ $TRAVIS_OS_NAME == "osx" ]]; then export PY_EXC=`$BREWPYCONFIG --exec-prefix`/bin; fi
   - if [[ $TRAVIS_OS_NAME == "osx" ]]; then export PATH=$PY_EXC:$PATH; fi
@@ -55,7 +55,7 @@ install:
   - if [[ $TRAVIS_OS_NAME == 'linux' && $CXX == 'g++'     ]]; then export CXX=g++-5; fi
 
   - if [[ $TRAVIS_OS_NAME == "linux" ]]; then sudo $apt_get_install libblitz0-dev cmake libboost-python-dev python-numpy python-scipy libthrust-dev python-pytest; fi
-  - if [[ $TRAVIS_OS_NAME == "linux" ]]; then sudo apt-get install --no-install-recommends gnuplot-nox python-gnuplot python-tk python-matplotlib; fi 
+  - if [[ $TRAVIS_OS_NAME == "linux" ]]; then sudo apt-get install --no-install-recommends gnuplot-nox python-gnuplot python-tk python-matplotlib; fi
 
   - if [[ $TRAVIS_OS_NAME == "linux" ]]; then git clone --depth=1 https://github.com/boostorg/odeint.git; fi # get boost odeint > 1.58
   - if [[ $TRAVIS_OS_NAME == "linux" ]]; then sudo rm -f /usr/include/boost/numeric/odeint.hpp; fi
@@ -68,12 +68,13 @@ install:
   - if [[ $TRAVIS_OS_NAME == "osx" ]]; then sudo -H pip2 install http://prdownloads.sourceforge.net/gnuplot-py/gnuplot-py-1.8.tar.gz?download; fi
   - if [[ $TRAVIS_OS_NAME == "osx" ]]; then sudo pip2 install -U matplotlib --ignore-installed six; fi
   - if [[ $TRAVIS_OS_NAME == "osx" ]]; then sudo pip2 install -U pytest --ignore-installed six; fi
+  - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then sudo pip2 install --only-binary=numpy,scipy numpy scipy --ignore-installed six; fi
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then command curl -sSL https://rvm.io/mpapis.asc | gpg --import - ; fi
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then rvm get stable; fi
 
   - git clone --depth=1 git://github.com/thrust/thrust.git;
   - sudo ln -s `pwd`/thrust/thrust /usr/local/include/thrust;
-  
+
 script:
 
   # install libcloudphxx in Debug mode
@@ -82,7 +83,7 @@ script:
   - cd libcloudphxx
   - mkdir build
   - cd build
-  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CXX" == "clang++" ]]; then cmake -DCMAKE_CXX_COMPILER=/usr/bin/clang++ ../; fi 
+  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CXX" == "clang++" ]]; then cmake -DCMAKE_CXX_COMPILER=/usr/bin/clang++ ../; fi
                                                               # Travis default is not the packaged one
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then cmake .. -DPYTHON_LIBRARY=${PY_LIB} -DPYTHON_INCLUDE_DIR=${PY_INC}; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then cmake                             -DCMAKE_BUILD_TYPE=Debug ..; fi
