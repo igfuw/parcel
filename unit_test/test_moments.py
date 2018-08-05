@@ -109,7 +109,7 @@ def test_dry_moments(data):
         int_mom_end[it] = trapez_moms(mid_bin, dry_conc_end, it)
 
     # relative accuracy of the test
-    rtol_mdl = [1e-4, 1e-4, 1e-4, 1e-4, 1e-4, 1e-4, 1e-3]
+    rtol_mdl = [1e-3, 1e-3, 1e-3, 1e-3, 1e-3, 1e-3, 1e-3]
     rtol_int = [1e-2, 1e-2, 1e-1, 1e-1, 1e-1, 1e-1, 1e-1]
 
     for it in range(0,7,1):

@@ -2,9 +2,9 @@
 
 # TEMP TODO TEMP TODO !!!
 import sys
-#sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
-#sys.path.insert(0, "../../../libcloudphxx/build/bindings/python/")
-#sys.path.insert(0, "/usr/local/lib/site-python/")
+sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
+sys.path.insert(0, "../../../libcloudphxx/build/bindings/python/")
+sys.path.insert(0, "/usr/local/lib/site-python/")
 # TEMP TODO TEMP TODO !!!
 
 from argparse import ArgumentParser, RawTextHelpFormatter
@@ -153,7 +153,7 @@ def _micro_init(aerosol, gccn, opts, state, info):
 
   return micro
 
-def _micro_step(micro, state, info, opts, it, fout, dt):
+def _micro_step(micro, state, info, opts, it, fout):
   libopts = lgrngn.opts_t()
   libopts.cond = True
   libopts.coal = False
@@ -176,28 +176,7 @@ def _micro_step(micro, state, info, opts, it, fout, dt):
 
   # call libcloudphxx microphysics
   micro.step_sync(libopts, state["th_d"], state["r_v"], state["rhod"], ambient_chem=ambient_chem)
-
-  # calculate autoconversion rate and cloud and rain water mixing ratios
-  micro.diag_wet_rng(25e-6, 1.)
-  micro.diag_wet_mom(3)
-  m3_rain_before_col = np.longdouble(np.frombuffer(micro.outbuf()))
-
   micro.step_async(libopts)
-
-  micro.diag_wet_rng(25e-6, 1.)
-  micro.diag_wet_mom(3)
-  m3_rain_after_col = np.longdouble(np.frombuffer(micro.outbuf()))
-
-  from math import pi
-  state["acnv"] = (m3_rain_after_col - m3_rain_before_col) / dt * 4/3. * pi * common.rho_w
-
-  micro.diag_wet_rng(1e-6, 25e-6)
-  micro.diag_wet_mom(3)
-  state["r_c"] = np.frombuffer(micro.outbuf()) * 4/3. * pi * common.rho_w
-
-  micro.diag_wet_rng(25e-6, 1.)
-  micro.diag_wet_mom(3)
-  state["r_r"] = np.frombuffer(micro.outbuf()) * 4/3. * pi * common.rho_w
 
   # update state after microphysics (needed for below update for chemistry)
   _stats(state, info)
@@ -283,8 +262,7 @@ def _output_init(micro, opts, spectra):
 	fout.variables[name+'_m'+str(vm)].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
 
   units = {"z"  : "m",     "t"   : "s",     "r_v"  : "kg/kg", "th_d" : "K", "rhod" : "kg/m3",
-           "p"  : "Pa",    "T"   : "K",     "RH"   : "1",
-           "r_c": "kg/kg", "r_r" : "kg/kg", "acnv" : "m3/s"
+           "p"  : "Pa",    "T"   : "K",     "RH"   : "1"
   }
 
   if micro.opts_init.chem_switch:
@@ -337,8 +315,8 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300.,
   gccn_flag = False,
   gccn = '{}',
   sd_const_multi_dry_sizes = 2,
-  large_tail = False,
-  rng_seed = 13
+  large_tail = True,
+  rng_seed = 44
 ):
   """
   Args:
@@ -455,8 +433,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300.,
     "r_v" : np.array([r_0]), "p" : p_0,
     "th_d" : np.array([common.th_std2dry(th_0, r_0)]),
     "rhod" : np.array([common.rhod(p_0, th_0, r_0)]),
-    "T" : None, "RH" : None,
-    "acnv" : None
+    "T" : None, "RH" : None
   }
 
   if opts["chem_dsl"] or opts["chem_dsc"] or opts["chem_rct"]:
@@ -523,7 +500,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300.,
         )
 
       # microphysics
-      _micro_step(micro, state, info, opts, it, fout, dt)
+      _micro_step(micro, state, info, opts, it, fout)
 
       # TODO: only if user wants to stop @ RH_max
       #if (state["RH"] < info["RH_max"]): break
@@ -549,7 +526,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300.,
         state["rhod"][0] = tmp_rhod
         state["p"] = tmp_p
 
-        _micro_step(micro, state, info, opts, it, fout, dt)
+        _micro_step(micro, state, info, opts, it, fout)
 
         if (it % outfreq == 0):
           rec = it/outfreq
