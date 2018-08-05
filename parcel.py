@@ -91,11 +91,12 @@ class sum_of_lognormals(object):
       res += lognormal(lnr)
     return res
 
-def _micro_init(aerosol, gccn, opts, state, info):
+def _micro_init(aerosol, opts, state, info):
+#def _micro_init(aerosol, gccn, opts, state, info):
 
   # lagrangian scheme options
   opts_init = lgrngn.opts_init_t()
-  for opt in ["dt", "sd_conc", "chem_rho", "sstp_cond", "rng_seed"]:
+  for opt in ["dt", "sd_conc", "chem_rho", "sstp_cond"]:#, "rng_seed"]:
     setattr(opts_init, opt, opts[opt])
   opts_init.n_sd_max = opts_init.sd_conc
 
@@ -109,30 +110,30 @@ def _micro_init(aerosol, gccn, opts, state, info):
   opts_init.dry_distros = dry_distros
 
   # read in the initial giant aerosol sizes
-  if opts["gccn_flag"]:
-      opts_init.sd_const_multi_dry_sizes = opts["sd_const_multi_dry_sizes"]
-      opts_init.n_sd_max = int(1e6)  # some more space for the tail SDs
-      dry_sizes = {}
-      dry_sizes[gccn["kappa"]] = {}
-      for it in range(len(gccn["r_d"])):
-          dry_sizes[gccn["kappa"]][gccn["r_d"][it]] = gccn["n_tot"][it]
-      opts_init.dry_sizes = dry_sizes
+  #if opts["gccn_flag"]:
+  #    opts_init.sd_const_multi_dry_sizes = opts["sd_const_multi_dry_sizes"]
+  #    opts_init.n_sd_max = int(1e6)  # some more space for the tail SDs
+  #    dry_sizes = {}
+  #    dry_sizes[gccn["kappa"]] = {}
+  #    for it in range(len(gccn["r_d"])):
+  #        dry_sizes[gccn["kappa"]][gccn["r_d"][it]] = gccn["n_tot"][it]
+  #    opts_init.dry_sizes = dry_sizes
 
   # use better resolution for the SD tail
-  if opts["large_tail"]:
-      opts_init.sd_conc_large_tail = 1
-      opts_init.n_sd_max = int(1e6)  # some more space for the tail SDs
+  #if opts["large_tail"]:
+  #    opts_init.sd_conc_large_tail = 1
+  #    opts_init.n_sd_max = int(1e6)  # some more space for the tail SDs
 
   # switch on/off sedimentation and collisions
   opts_init.sedi_switch = False
   opts_init.coal_switch = False
-  if opts['coal']:
-    opts_init.coal_switch = True
+  #if opts['coal']:
+  #  opts_init.coal_switch = True
 
-    opts_init.terminal_velocity = _terminal_vel_id[opts["terminal_vel"]]
-    opts_init.kernel = _coal_kernel_id[opts["coal_kernel"]]
-    if "onishi" in opts["coal_kernel"]:
-        opts_init.kernel_parameters = np.array([opts["coal_dissipation_rate"], opts["coal_Reynolds_number"]])
+  #  opts_init.terminal_velocity = _terminal_vel_id[opts["terminal_vel"]]
+  #  opts_init.kernel = _coal_kernel_id[opts["coal_kernel"]]
+  #  if "onishi" in opts["coal_kernel"]:
+  #      opts_init.kernel_parameters = np.array([opts["coal_dissipation_rate"], opts["coal_Reynolds_number"]])
 
   # switching on chemistry if either dissolving, dissociation or reactions are chosen
   opts_init.chem_switch = False
@@ -157,8 +158,8 @@ def _micro_step(micro, state, info, opts, it, fout):
   libopts = lgrngn.opts_t()
   libopts.cond = True
   libopts.coal = False
-  if micro.opts_init.coal_switch:
-    libopts.coal = True
+  #if micro.opts_init.coal_switch:
+  #  libopts.coal = True
   libopts.adve = False
   libopts.sedi = False
 
@@ -308,15 +309,15 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300.,
   chem_rho = 1.8e3,
   sstp_cond = 1,
   sstp_chem = 1,
-  wait = 0,
-  coal = False,
-  coal_kernel = "hall", terminal_vel = "beard77fast",
-  coal_dissipation_rate = 0.04, coal_Reynolds_number = 100,
-  gccn_flag = False,
-  gccn = '{}',
-  sd_const_multi_dry_sizes = 2,
-  large_tail = True,
-  rng_seed = 44
+  wait = 0#,
+  #coal = False,
+  #coal_kernel = "hall", terminal_vel = "beard77fast",
+  #coal_dissipation_rate = 0.04, coal_Reynolds_number = 100,
+  #gccn_flag = False,
+  #gccn = '{}',
+  #sd_const_multi_dry_sizes = 2,
+  #large_tail = True,
+  #rng_seed = 44
 ):
   """
   Args:
@@ -413,7 +414,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300.,
   aerosol = json.loads(opts["aerosol"])
 
   # parsing json specifications of initial giant aerosol sizes
-  gccn = json.loads(opts["gccn"])
+  #gccn = json.loads(opts["gccn"])
 
   # default water content
   if ((opts["r_0"] < 0) and (opts["RH_0"] < 0)):
@@ -443,7 +444,8 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300.,
   info = { "RH_max" : 0, "libcloud_Git_revision" : libcloud_version,
            "parcel_Git_revision" : parcel_version }
 
-  micro = _micro_init(aerosol, gccn, opts, state, info)
+  micro = _micro_init(aerosol, opts, state, info)
+  #micro = _micro_init(aerosol, gccn, opts, state, info)
 
   with _output_init(micro, opts, spectra) as fout:
     # adding chem state vars
