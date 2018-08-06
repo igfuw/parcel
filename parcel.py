@@ -89,6 +89,7 @@ def _micro_init(aerosol, opts, state, info):
       opts_init.sd_conc_large_tail = 1
       opts_init.n_sd_max = int(1e6)  # some more space for the tail SDs
 
+  # switch off sedimentation and collisions
   opts_init.sedi_switch = False
   opts_init.coal_switch = False
 
@@ -489,9 +490,6 @@ def _arguments_checking(opts, spectra, aerosol):
     # necessary?
       if gstdev == 1.:
         raise Exception("standard deviation should be != 1 to avoid monodisperse distribution for aerosol[" + name + "]")
-
-  #TODO - add similar checks for gccn dict
-
 
   for name, dct in spectra.iteritems():
     # TODO: check if name is valid netCDF identifier
