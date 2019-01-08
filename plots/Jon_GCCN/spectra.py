@@ -76,12 +76,10 @@ def plot_spectra(data, output_folder = '', output_title = ''):
     #nd = data.variables['radii_m0'][t,:] * data.variables["rhod"][0] / 1.#d_log_rd
     nd = data.variables['radii_m0'][0,:] * data.variables["rhod"][0] /  drd
     nw = data.variables['cloud_m0'][0,:] * data.variables["rhod"][0] /  drw
-    nw_end = data.variables['cloud_m0'][1,:] * data.variables["rhod"][0] /  drw
 #    print nd
   
     plot_rd = Gnuplot.PlotItems.Data((rd+0.5*drd) * 1e6, nd * 1e-12, with_="l lt 3 lc 3", title="dry radius")
     plot_rw = Gnuplot.PlotItems.Data((rw+0.5*drw) * 1e6, nw * 1e-12, with_="line lw 1 lc 4", title="wet radius")
-    plot_rw_end = Gnuplot.PlotItems.Data((rw+0.5*drw) * 1e6, nw_end * 1e-12, with_="line lw 1 lc 5", title="wet radius")
 #    print plot_rd
 
 #      print 'aaa'

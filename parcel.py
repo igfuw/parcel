@@ -1,14 +1,10 @@
-##!/usr/bin/env python
+#!/usr/bin/env python
 
 # TEMP TODO TEMP TODO !!!
 import sys
 #sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
 #sys.path.insert(0, "../../../libcloudphxx/build/bindings/python/")
-#<<<<<<< HEAD
 #sys.path.insert(0, "/usr/local/lib/site-python/")
-#=======
-#sys.path.insert(0, "/usr/local/lib/site-python/")
-#>>>>>>> master
 # TEMP TODO TEMP TODO !!!
 
 from argparse import ArgumentParser, RawTextHelpFormatter
@@ -81,12 +77,10 @@ def _micro_init(aerosol, opts, state, info):
 
   # read in the initial aerosol size distribution
   dry_distros = {}
-  p_stp = 101325
-  T_stp = 273.25 + 15 
   for name, dct in aerosol.iteritems(): # loop over kappas
     lognormals = []
     for i in range(len(dct["mean_r"])):
-      lognormals.append(lognormal(dct["mean_r"][i], dct["gstdev"][i], dct["n_tot"][i] * p_stp / opts["p_0"] * opts["T_0"] / T_stp))
+      lognormals.append(lognormal(dct["mean_r"][i], dct["gstdev"][i], dct["n_tot"][i]))
     dry_distros[dct["kappa"]] = sum_of_lognormals(lognormals)
   opts_init.dry_distros = dry_distros
 
@@ -259,16 +253,13 @@ def _p_hydro_const_th_rv(z_lev, p_0, th_std, r_v, z_0=0.):
   # hydrostatic pressure assuming constatnt theta and r_v
   return common.p_hydro(z_lev, th_std, r_v, z_0, p_0)
 
-def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300.,
+def parcel(dt=.1, nt=0, z_max=200., w=1., T_0=300., p_0=101300.,
   r_0=-1., RH_0=-1., #if none specified, the default will be r_0=.022,
   outfile="test.nc",
   pprof="pprof_piecewise_const_rhod",
-  outfreq=10, sd_conc=64,
-  #aerosol = '{"ammonium_sulfate": {"kappa": 0.61, "mean_r": [0.02e-6], "gstdev": [1.4], "n_tot": [60.0e6]}}',
-  aerosol = '{"NaCl": {"kappa": 1.28, "mean_r": [0.011e-6, 0.06e-6], "gstdev": [1.2, 1.7], "n_tot": [125e6, 65.0e6]}}',
-  #out_bin = '{"radii": {"rght": 0.0001, "moms": [0], "drwt": "wet", "nbin": 1, "lnli": "log", "left": 1e-09}}',
-  out_bin = '{"radii": {"rght": 1e-6, "moms": [0], "drwt": "dry", "nbin": 500, "lnli": "log", "left": 1e-9},'+
-            '"cloud": {"rght": 40e-6, "moms": [0], "drwt": "wet", "nbin": 500, "lnli": "log", "left": 1e-9}}',
+  outfreq=100, sd_conc=64,
+  aerosol = '{"ammonium_sulfate": {"kappa": 0.61, "mean_r": [0.02e-6], "gstdev": [1.4], "n_tot": [60.0e6]}}',
+  out_bin = '{"radii": {"rght": 0.0001, "moms": [0], "drwt": "wet", "nbin": 1, "lnli": "log", "left": 1e-09}}',
   SO2_g = 0., O3_g = 0., H2O2_g = 0., CO2_g = 0., HNO3_g = 0., NH3_g = 0.,
   chem_dsl = False, chem_dsc = False, chem_rct = False,
   chem_rho = 1.8e3,
@@ -280,6 +271,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300.,
   """
   Args:
     dt      (Optional[float]):    timestep [s]
+    nt      (Optional[int]):      number of timesteps
     z_max   (Optional[float]):    maximum vertical displacement [m]
     w       (Optional[float]):    updraft velocity [m/s]
     T_0     (Optional[float]):    initial temperature [K]
@@ -363,9 +355,9 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300.,
   _arguments_checking(opts, spectra, aerosol)
 
   th_0 = T_0 * (common.p_1000 / p_0)**(common.R_d / common.c_pd)
-#  nt = int(z_max / (w * dt))
-  nt = int(10. / dt)
-  outfreq = int(outfreq / dt)
+  if(z_max > 0):
+    nt = int(z_max / (w * dt))
+
   state = {
     "t" : 0, "z" : 0,
     "r_v" : np.array([r_0]), "p" : p_0,
@@ -466,6 +458,10 @@ def _arguments_checking(opts, spectra, aerosol):
     raise Exception("temperature should be larger than 0C - microphysics works only for warm clouds")
   elif ((opts["r_0"] >= 0) and (opts["RH_0"] >= 0)):
     raise Exception("both r_0 and RH_0 specified, please use only one")
+  elif ((opts["z_max"] > 0) and (opts["nt"] > 0)):
+    raise Exception("both z_max and nt specified, please use only one")
+  elif ((opts["z_max"] <= 0) and (opts["nt"] <= 0)):
+    raise Exception("either z_max or nt should be larger than 0")
   if opts["w"] < 0:
     raise Exception("vertical velocity should be larger than 0")
 
