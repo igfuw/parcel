@@ -55,17 +55,6 @@ class lognormal(object):
     self.gstdev = gstdev
     self.n_tot = n_tot
 
-#<<<<<<< HEAD
-#  p_stp = 101325
-#  T_stp = 273.25 + 15 
-#
-#  # using nested function to get access to opts
-#  def lognormal(lnr):
-#    from math import exp, log, sqrt, pi
-#    return opts["n_tot"] * p_stp / opts["p_0"] * opts["T_0"] / T_stp * exp(
-#      -(lnr - log(opts["mean_r"]))**2 / 2 / log(opts["gstdev"])**2
-#    ) / log(opts["gstdev"]) / sqrt(2*pi);
-#=======
   def __call__(self, lnr):
     from math import exp, log, sqrt, pi
     return self.n_tot * exp(
@@ -83,26 +72,11 @@ class sum_of_lognormals(object):
     return res
 
 def _micro_init(aerosol, opts, state, info):
-#>>>>>>> master
-
-#  def lognormal2(lnr):
-#    from math import exp, log, sqrt, pi
-#    return opts["n_tot2"] * p_stp / opts["p_0"] * opts["T_0"] / T_stp * exp(
-#      -(lnr - log(opts["mean_r2"]))**2 / 2 / log(opts["gstdev2"])**2
-#    ) / log(opts["gstdev2"]) / sqrt(2*pi);
-#
-#  def lognormal12(lnr):
-#    return lognormal(lnr) + lognormal2(lnr);
 
   # lagrangian scheme options
   opts_init = lgrngn.opts_init_t()
   for opt in ["dt", "sd_conc", "chem_rho", "sstp_cond"]:
     setattr(opts_init, opt, opts[opt])
-#<<<<<<< HEAD
-#  opts_init.n_sd_max    = opts_init.sd_conc
-#  #opts_init.dry_distros = {opts["kappa"]:lognormal, opts["kappa2"]:lognormal2}
-#  opts_init.dry_distros = {opts["kappa"]:lognormal12}
-#=======
   opts_init.n_sd_max = opts_init.sd_conc
 
   # read in the initial aerosol size distribution
@@ -120,7 +94,6 @@ def _micro_init(aerosol, opts, state, info):
   if opts["large_tail"]:
       opts_init.sd_conc_large_tail = 1
       opts_init.n_sd_max = int(1e6)  # some more space for the tail SDs
-#>>>>>>> master
 
   # switch off sedimentation and collisions
   opts_init.sedi_switch = False
@@ -290,20 +263,12 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300.,
   r_0=-1., RH_0=-1., #if none specified, the default will be r_0=.022,
   outfile="test.nc",
   pprof="pprof_piecewise_const_rhod",
-#<<<<<<< HEAD
-#  outfreq=10, sd_conc=64, kappa=1.28, kappa2=0.01,
-#  mean_r = .011e-6 , gstdev  = 1.2, n_tot  = 125.e6, 
-#  mean_r2 = .06e-6 , gstdev2  = 1.7, n_tot2  = 65.e6, 
-#  out_bin = '{"radii": {"rght": 1e-6, "moms": [0], "drwt": "dry", "nbin": 500, "lnli": "log", "left": 1e-9},'+
-#            '"cloud": {"rght": 40e-6, "moms": [0], "drwt": "wet", "nbin": 500, "lnli": "log", "left": 1e-9}}',
-#=======
   outfreq=10, sd_conc=64,
   #aerosol = '{"ammonium_sulfate": {"kappa": 0.61, "mean_r": [0.02e-6], "gstdev": [1.4], "n_tot": [60.0e6]}}',
   aerosol = '{"NaCl": {"kappa": 1.28, "mean_r": [0.011e-6, 0.06e-6], "gstdev": [1.2, 1.7], "n_tot": [125e6, 60.0e6]}}',
   #out_bin = '{"radii": {"rght": 0.0001, "moms": [0], "drwt": "wet", "nbin": 1, "lnli": "log", "left": 1e-09}}',
   out_bin = '{"radii": {"rght": 1e-6, "moms": [0], "drwt": "dry", "nbin": 500, "lnli": "log", "left": 1e-9},'+
             '"cloud": {"rght": 40e-6, "moms": [0], "drwt": "wet", "nbin": 500, "lnli": "log", "left": 1e-9}}',
-#>>>>>>> master
   SO2_g = 0., O3_g = 0., H2O2_g = 0., CO2_g = 0., HNO3_g = 0., NH3_g = 0.,
   chem_dsl = False, chem_dsc = False, chem_rct = False,
   chem_rho = 1.8e3,
@@ -503,10 +468,6 @@ def _arguments_checking(opts, spectra, aerosol):
     raise Exception("both r_0 and RH_0 specified, please use only one")
   if opts["w"] < 0:
     raise Exception("vertical velocity should be larger than 0")
-#<<<<<<< HEAD
-##  if opts["kappa"] <= 0: 
-##    raise Exception("kappa hygroscopicity parameter should be larger than 0 ")
-#=======
 
   for name, dct in aerosol.iteritems():
     # TODO: check if name is valid netCDF identifier
@@ -541,7 +502,6 @@ def _arguments_checking(opts, spectra, aerosol):
       if gstdev == 1.:
         raise Exception("standard deviation should be != 1 to avoid monodisperse distribution for aerosol[" + name + "]")
 
-#>>>>>>> master
   for name, dct in spectra.iteritems():
     # TODO: check if name is valid netCDF identifier
     # (http://www.unidata.ucar.edu/software/thredds/current/netcdf-java/CDM/Identifiers.html)
