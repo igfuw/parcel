@@ -265,7 +265,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300.,
   pprof="pprof_piecewise_const_rhod",
   outfreq=10, sd_conc=64,
   #aerosol = '{"ammonium_sulfate": {"kappa": 0.61, "mean_r": [0.02e-6], "gstdev": [1.4], "n_tot": [60.0e6]}}',
-  aerosol = '{"NaCl": {"kappa": 1.28, "mean_r": [0.011e-6, 0.06e-6], "gstdev": [1.2, 1.7], "n_tot": [125e6, 60.0e6]}}',
+  aerosol = '{"NaCl": {"kappa": 1.28, "mean_r": [0.011e-6, 0.06e-6], "gstdev": [1.2, 1.7], "n_tot": [125e6, 65.0e6]}}',
   #out_bin = '{"radii": {"rght": 0.0001, "moms": [0], "drwt": "wet", "nbin": 1, "lnli": "log", "left": 1e-09}}',
   out_bin = '{"radii": {"rght": 1e-6, "moms": [0], "drwt": "dry", "nbin": 500, "lnli": "log", "left": 1e-9},'+
             '"cloud": {"rght": 40e-6, "moms": [0], "drwt": "wet", "nbin": 500, "lnli": "log", "left": 1e-9}}',
