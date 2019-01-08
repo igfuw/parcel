@@ -15,7 +15,7 @@ from libcloudphxx import common as cm
 from henry_plot import plot_henry
 import functions as fn
 
-@pytest.fixture(scope="module")  
+@pytest.fixture(scope="module")
 def data(request):
     # initial condition
     RH_init = .999999
@@ -54,7 +54,9 @@ def data(request):
           CO2_g = CO2_g_init, NH3_g = NH3_g_init, HNO3_g = HNO3_g_init,\
           outfile = outfile,\
           chem_dsl = True, chem_dsc = True, chem_rct = False,\
-          mean_r = mean_r, gstdev = gstdev, n_tot = n_tot, sd_conc = sd_conc,\
+          aerosol = \
+            '{"test": {"kappa": 0.5, "mean_r": [' + str(mean_r) + '], "gstdev": [' + str(gstdev) + '], "n_tot": [' + str(n_tot) + ']}}',\
+          sd_conc = sd_conc,\
           out_bin = \
             '{"radii": {"rght": 1.0, "left": 0.0, "drwt": "wet", "lnli": "lin", "nbin": 1, "moms": [0, 3]},\
               "chem" : {"rght": 1.0, "left": 0.0, "drwt": "wet", "lnli": "lin", "nbin": 1,\
@@ -62,7 +64,7 @@ def data(request):
 
     data = netcdf.netcdf_file("test_chem_henry.nc", "r")
 
-    # removing all netcdf files after all tests                                      
+    # removing all netcdf files after all tests
     def removing_files():
         subprocess.call(["rm", "test_chem_henry.nc"])
 
@@ -71,11 +73,11 @@ def data(request):
 
 @pytest.mark.parametrize("chem", ["SO2", "O3", "H2O2", "CO2", "HNO3", "NH3"])
 def test_henry_checker(data, chem, eps = {"SO2": 5e-8, "O3":4e-8, "H2O2": 2e-6, "CO2": 4e-8, "NH3": 4e-7, "HNO3":2e-6}):
-    """                              
+    """
     Checking if dissolving chemical compounds into cloud droplets follows Henrys law
     http://www.henrys-law.org/
 
-    libcloudph++ takes into account the effect of temperature and pH on Henry constant 
+    libcloudph++ takes into account the effect of temperature and pH on Henry constant
     and the effects of mass transfer into droplets
 
     Due o the latter effect, to compare with the teoretical values there is first the "wait" period
@@ -95,7 +97,7 @@ def test_henry_checker(data, chem, eps = {"SO2": 5e-8, "O3":4e-8, "H2O2": 2e-6, 
     # mass in droplets
     chem_tmp  = data.variables["chem_"+chem+"_a"][-1]
 
-    assert np.isclose(chem_tmp, henry_aq, atol=0, rtol=eps[chem]), chem + " : " + str((chem_tmp - henry_aq)/chem_tmp) 
+    assert np.isclose(chem_tmp, henry_aq, atol=0, rtol=eps[chem]), chem + " : " + str((chem_tmp - henry_aq)/chem_tmp)
 
 def test_henry_plot(data):
     """

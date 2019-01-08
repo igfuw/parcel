@@ -179,6 +179,7 @@ The aqueous phase chemistry module of \emph{libcloudph++} changes the
 \section{Initial condition}
 
 The user needs to specify the initial temperature $T_0$, pressure $p_0$ and water vapor mixing ratio $r_0$.
+Instead of explicitly specifying $r_0$, the user can specify the initial relative humidity $RH_0$.
 The initial thermodynamic condition must be set below supersaturation, i.e.
 \begin{equation}
 	r_0 < \epsilon \frac{e_s(T_0)}{p_0 - e_s(T_0)},
@@ -187,7 +188,7 @@ The initial thermodynamic condition must be set below supersaturation, i.e.
 where 
   $e_s(T_0)$ is water vapor saturation pressure at initial temperature 
   and $\epsilon = 0.622$.
-The initial lognormal monomodal size distribution of dry aerosol is assumed:
+The initial size distribution of dry aerosol can be a combination of any number of lognormal distributions:
 \begin{equation}
         n(r) = \frac{n_{tot}}{r\sqrt{2\pi}ln(\sigma_g)}exp\left(-\frac{(ln(r)-ln(\overline{r}))^2}{2ln^2(\sigma_g)}\right)
         \label{lognormalny}
@@ -199,6 +200,7 @@ where
   $\overline{r}$ is mode radius and 
   $\sigma_g$ is geometric standard deviation.
 The parameters of the size distribution can be specified by the user.
+Each of the lognormal modes can have a different value of the hygroscopicity parameter $\kappa$.
 
 For simulations with aqueous phase chemistry the initial trace gas mixing ratios 
   need to be additionally specified.
@@ -216,9 +218,10 @@ The arguments of the parcel model are divided into 5 groups:
 
 \begin{itemize}
 
-  \item \textbf{T\_0} : float (default = 300);\\ initial temperature [K]
-  \item \textbf{p\_0} : float (default = 101300);\\ initial pressure [Pa]
-  \item \textbf{r\_0} : float (default = 0.022);\\ initial water vapor mass mixing ratio [kg/kg].
+  \item \textbf{T\_0}  : float (default = 300);\\ initial temperature [K]
+  \item \textbf{p\_0}  : float (default = 101300);\\ initial pressure [Pa]
+  \item \textbf{r\_0}  : float (default = 0.022);\\ initial water vapor mass mixing ratio [kg/kg].
+  \item \textbf{RH\_0} : float (no default value);\\ initial relative humidity, alternative to the \textbf{r\_0} option.
   \item \textbf{w} : float (default = 1);\\ Updraft velocity [m/s]
 
 \end{itemize}
@@ -243,12 +246,36 @@ The arguments of the parcel model are divided into 5 groups:
 \subsection{aerosol attributes}
 
 \begin{itemize}
+  \item \textbf{aerosol} : jason string (default =\\ '\{"ammonium\_sulfate": \{"kappa": 0.61, "mean\_r": [0.02e-6], "gstdev": [1.4], "n\_tot": [60.0e6]\}\}');\\ 
 
-  \item \textbf{mean\_r} : float (default = 0.04e-6);\\ lognormal distribution mode radius [m]
-  \item \textbf{gstdev} : float (default = 1.4);\\ lognormal distribution geometric standard deviation [1]
-  \item \textbf{n\_tot} : float (default = 60e6);\\ total concentration of lognormal distribution in standard conditions 
-                               (T=20C, p=1013.25 hPa, r=0) [m\textsuperscript{-3}]
-  \item \textbf{kappa} : float (default = 0.5);\\ $\kappa$ hygroscopicity parameter (see \citep{Petters_et_al_2007} for more details)
+    \vspace{-.9em}
+    It is a Python dictionary of dictionaries defining initial dry aerosol spectrum.
+    First key defines the name of the aerosol type. The following dictionary defines the spectrum of aerosol of this type:\\
+      \indent $\cdot$\ "kappa" - hygroscopicity parameter of the aerosol (see \citep{Petters_et_al_2007} for more details)\\
+      \indent $\cdot$\ "mean\_r" - list of mean radii of lognormal modes of aerosol of this type [m]\\
+      \indent $\cdot$\ "gstdev" - list of geometric standard deviations of lognormal modes of aerosol of this type \\
+      \indent $\cdot$\ "n\_tot" - list of concentrations (at the STP dry air density $\rho_d = 1.225$ kg$/$m$^3$) of lognormal modes of aerosol of this type [m\textsuperscript{-3}] \\
+
+    \vspace{-.9em}
+    For example, user can define two types of aerosol - bimodal ammonium bisulfate and monomodal sea salt : \\ 
+  
+$$
+\mbox{"ammonium\_bisulfate"}: \left\{ \begin{array}{ll}
+\mbox{"kappa": 0.61}  & \textrm{}\\
+\mbox{"mean\_r": [0.02e-6, 0.07e-7]}  & \textrm{}\\
+\mbox{"gstdev": [1.4, 1.2]} & \textrm{}\\
+\mbox{"n\_tot": [120.0e6, 80.0e6]} & \textrm{}\\
+\end{array} \right.
+$$
+
+$$
+\mbox{"sea\_salt"}: \left\{ \begin{array}{ll}
+\mbox{"kappa": 1.28}  & \textrm{}\\
+\mbox{"mean\_r": [2e-6]}  & \textrm{}\\
+\mbox{"gstdev": [1.6]} & \textrm{}\\
+\mbox{"n\_tot": [1e3]} & \textrm{}\\
+\end{array} \right.
+$$
 
 \end{itemize}
 

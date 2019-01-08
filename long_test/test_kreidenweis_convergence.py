@@ -143,13 +143,32 @@ def test_Kreidenweis_convergence(data):
     for i in range(4):
       plots.append(plt.subplot(2,2,i+1))
       plots[i].grid()
-      plots[i].set_xlabel('$\mathrm{ln_2(number \, of \, super-droplets)}$')
+      plots[i].set_xlim([0,10])
 
     for ax in plots:
-      #ax.set_ylim([0, 2400])
-      #ax.set_yticks([0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400])
       ax.tick_params(axis='x', pad=15)
       ax.tick_params(axis='y', pad=15)
+
+    x_labels = [1, 4, 16, 64, 256, 1024]
+    plots[0].xaxis.tick_top()
+    plots[1].xaxis.tick_top()
+    plots[0].xaxis.set_label_position("top")
+    plots[1].xaxis.set_label_position("top")
+    plots[0].set_xticklabels(x_labels)
+    plots[1].set_xticklabels(x_labels)
+
+    plots[0].set_ylim([0, 1800])
+    plots[0].set_yticks([0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800])
+    plots[1].set_ylim([0.24, 0.62])
+    plots[1].set_yticks([0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6])
+    plots[2].set_ylim([4.7, 5.15])
+    plots[3].set_ylim([135, 180])
+    plots[3].set_yticks([135, 140, 145, 150, 155, 160, 165, 170, 175, 180])
+ 
+    plots[0].set_xlabel('$\mathrm{number \, of \, super-droplets}$', labelpad=20)
+    plots[1].set_xlabel('$\mathrm{number \, of \, super-droplets}$', labelpad=20)
+    plots[2].set_xlabel('$\mathrm{ln_2(number \, of \, super-droplets)}$')
+    plots[3].set_xlabel('$\mathrm{ln_2(number \, of \, super-droplets)}$')
 
     plots[0].plot(data['power of two'], data['cloud droplet conc. at CB'], "b.-", ms=15, lw=3.)
     plots[1].plot(data['power of two'], data['maximum supersaturation'],   "b.-", ms=15, lw=3.)
