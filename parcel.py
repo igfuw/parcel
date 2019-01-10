@@ -154,17 +154,17 @@ def _stats(state, info):
 def _output_bins(fout, t, micro, opts, spectra):
   for dim, dct in spectra.iteritems():
     for bin in range(dct["nbin"]):
-      if dct["drwt"] == 'wet':
+      if dct["slct"] == 'wet':
 	micro.diag_wet_rng(
 	  fout.variables[dim+"_r_wet"][bin],
 	  fout.variables[dim+"_r_wet"][bin] + fout.variables[dim+"_dr_wet"][bin]
 	)
-      elif dct["drwt"] == 'dry':
+      elif dct["slct"] == 'dry':
 	micro.diag_dry_rng(
 	  fout.variables[dim+"_r_dry"][bin],
 	  fout.variables[dim+"_r_dry"][bin] + fout.variables[dim+"_dr_dry"][bin]
 	)
-      else: raise Exception("drwt should be wet or dry")
+      else: raise Exception("slct should be wet or dry")
 
       for vm in dct["moms"]:
         if type(vm) == int:
@@ -174,7 +174,7 @@ def _output_bins(fout, t, micro, opts, spectra):
           elif dct["drwt"] == 'dry':
             micro.diag_dry_mom(vm)
           else: raise Exception("drwt should be wet or dry")
-          fout.variables[dim+'_m'+str(vm)][int(t), int(bin)] = np.frombuffer(micro.outbuf())
+          fout.variables[dim+'_'+dct["drwt"]+'_mom'+str(vm)][int(t), int(bin)] = np.frombuffer(micro.outbuf())
         else:
           # calculate chemistry
           micro.diag_chem(_Chem_a_id[vm])
@@ -187,12 +187,12 @@ def _output_init(micro, opts, spectra):
   for name, dct in spectra.iteritems():
     fout.createDimension(name, dct["nbin"])
 
-    tmp = name + '_r_' + dct["drwt"]
+    tmp = name + '_r_' + dct["slct"]
     fout.createVariable(tmp, 'd', (name,))
     fout.variables[tmp].unit = "m"
-    fout.variables[tmp].description = "particle wet radius (left bin edge)"
+    fout.variables[tmp].description = "particle "+dct["slct"]+" radius (left bin edge)"
 
-    tmp = name + '_dr_' + dct["drwt"]
+    tmp = name + '_dr_' + dct["slct"]
     fout.createVariable(tmp, 'd', (name,))
     fout.variables[tmp].unit = "m"
     fout.variables[tmp].description = "bin width"
@@ -201,12 +201,12 @@ def _output_init(micro, opts, spectra):
       from math import exp, log
       dlnr = (log(dct["rght"]) - log(dct["left"])) / dct["nbin"]
       allbins = np.exp(log(dct["left"]) + np.arange(dct["nbin"]+1) * dlnr)
-      fout.variables[name+'_r_'+dct["drwt"]][:] = allbins[0:-1]
-      fout.variables[name+'_dr_'+dct["drwt"]][:] = allbins[1:] - allbins[0:-1]
+      fout.variables[name+'_r_'+dct["slct"]][:] = allbins[0:-1]
+      fout.variables[name+'_dr_'+dct["slct"]][:] = allbins[1:] - allbins[0:-1]
     elif dct["lnli"] == 'lin':
       dr = (dct["rght"] - dct["left"]) / dct["nbin"]
-      fout.variables[name+'_r_'+dct["drwt"]][:] = dct["left"] + np.arange(dct["nbin"]) * dr
-      fout.variables[name+'_dr_'+dct["drwt"]][:] = dr
+      fout.variables[name+'_r_'+dct["slct"]][:] = dct["left"] + np.arange(dct["nbin"]) * dr
+      fout.variables[name+'_dr_'+dct["slct"]][:] = dr
     else: raise Exception("lnli should be log or lin")
 
     for vm in dct["moms"]:
@@ -215,8 +215,8 @@ def _output_init(micro, opts, spectra):
       	fout.variables[name+'_'+vm].unit = 'kg of chem species dissolved in cloud droplets (kg of dry air)^-1'
       else:
         assert(type(vm)==int)
-	fout.createVariable(name+'_m'+str(vm), 'd', ('t',name))
-	fout.variables[name+'_m'+str(vm)].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
+	fout.createVariable(name+'_'+dct["drwt"]+'_mom'+str(vm), 'd', ('t',name))
+	fout.variables[name+'_'+dct["drwt"]+'_mom'+str(vm)].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
 
   units = {"z"  : "m",     "t"   : "s",     "r_v"  : "kg/kg", "th_d" : "K", "rhod" : "kg/m3",
            "p"  : "Pa",    "T"   : "K",     "RH"   : "1"
@@ -259,7 +259,7 @@ def parcel(dt=.1, nt=0, z_max=200., w=1., T_0=300., p_0=101300.,
   pprof="pprof_piecewise_const_rhod",
   outfreq=100, sd_conc=64,
   aerosol = '{"ammonium_sulfate": {"kappa": 0.61, "mean_r": [0.02e-6], "gstdev": [1.4], "n_tot": [60.0e6]}}',
-  out_bin = '{"radii": {"rght": 0.0001, "moms": [0], "drwt": "wet", "nbin": 1, "lnli": "log", "left": 1e-09}}',
+  out_bin = '{"radii": {"rght": 0.0001, "moms": [0], "drwt": "wet", "slct": "wet", "nbin": 1, "lnli": "log", "left": 1e-09}}',
   SO2_g = 0., O3_g = 0., H2O2_g = 0., CO2_g = 0., HNO3_g = 0., NH3_g = 0.,
   chem_dsl = False, chem_dsc = False, chem_rct = False,
   chem_rho = 1.8e3,
@@ -302,8 +302,8 @@ def parcel(dt=.1, nt=0, z_max=200., w=1., T_0=300., p_0=101300.,
 
     out_bin (Optional[json str]): dict of dicts defining spectrum diagnostics, e.g.:
 
-                                  {"radii": {"rght": 0.0001,  "moms": [0],          "drwt": "wet", "nbin": 26, "lnli": "log", "left": 1e-09},
-                                   "cloud": {"rght": 2.5e-05, "moms": [0, 1, 2, 3], "drwt": "wet", "nbin": 49, "lnli": "lin", "left": 5e-07}}
+                                  {"radii": {"rght": 0.0001,  "moms": [0],          "drwt": "wet", "slct": "wet", "nbin": 26, "lnli": "log", "left": 1e-09},
+                                   "cloud": {"rght": 2.5e-05, "moms": [0, 1, 2, 3], "drwt": "wet", "slct": "wet", "nbin": 49, "lnli": "lin", "left": 5e-07}}
                                   will generate five output spectra:
                                   - 0-th spectrum moment for 26 bins spaced logarithmically between 0 and 1e-4 m for dry radius
                                   - 0,1,2 & 3-rd moments for 49 bins spaced linearly between .5e-6 and 25e-6 for wet radius
@@ -356,7 +356,7 @@ def parcel(dt=.1, nt=0, z_max=200., w=1., T_0=300., p_0=101300.,
 
   th_0 = T_0 * (common.p_1000 / p_0)**(common.R_d / common.c_pd)
   if(z_max > 0):
-    nt = int(z_max / (w * dt))
+    nt = int(round(z_max / (w * dt)))
 
   state = {
     "t" : 0, "z" : 0,
@@ -501,7 +501,7 @@ def _arguments_checking(opts, spectra, aerosol):
   for name, dct in spectra.iteritems():
     # TODO: check if name is valid netCDF identifier
     # (http://www.unidata.ucar.edu/software/thredds/current/netcdf-java/CDM/Identifiers.html)
-    keys = ["left", "rght", "nbin", "drwt", "lnli", "moms"]
+    keys = ["left", "rght", "nbin", "drwt", "slct", "lnli", "moms"]
     for key in keys:
       if key not in dct:
         raise Exception(">>" + key + "<< is missing in out_bin[" + name + "]")
@@ -516,6 +516,8 @@ def _arguments_checking(opts, spectra, aerosol):
         raise Exception(">>left<< is greater than >>rght<< in out_bin["+ name +"]")
     if dct["drwt"] not in ["dry", "wet"]:
         raise Exception(">>drwt<< key in out_bin["+ name +"] must be either >>dry<< or >>wet<<")
+    if dct["slct"] not in ["dry", "wet"]:
+        raise Exception(">>slct<< key in out_bin["+ name +"] must be either >>dry<< or >>wet<<")
     if dct["lnli"] not in ["lin", "log"]:
         raise Exception(">>lnli<< key in out_bin["+ name +"] must be either >>lin<< or >>log<<")
     if type(dct["nbin"]) != int:

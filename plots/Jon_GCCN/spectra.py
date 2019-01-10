@@ -24,13 +24,13 @@ def plot_spectra(data, output_folder = '', output_title = ''):
     # from ncdf file attributes read out_bin parameters as a dictionary ...
     out_bin = ast.literal_eval(getattr(data, "out_bin"))
     # ... and check if the spacing used in the test was logarithmic
-#    assert out_bin["radii"]["lnli"] == 'lin', "this plot should be used with logarithmic spacing of bins"
+#    assert out_bin["dry"]["lnli"] == 'lin', "this plot should be used with logarithmic spacing of bins"
 
     # left bin edges
-    rd = data.variables["radii_r_dry"][:]
-    drd = data.variables["radii_dr_dry"][:]
-    rw = data.variables["cloud_r_wet"][:]
-    drw = data.variables["cloud_dr_wet"][:]
+    rd = data.variables["dry_r_dry"][:]
+    drd = data.variables["dry_dr_dry"][:]
+    rw = data.variables["wet_r_wet"][:]
+    drw = data.variables["wet_dr_wet"][:]
 #    drd = rd.copy()
 #    for i in range(rd.shape[0]-1):
 #      drd[i] = rd[i+1] - rd[i]
@@ -74,17 +74,19 @@ def plot_spectra(data, output_folder = '', output_title = ''):
     #g('set nokey')
   
     #nd = data.variables['radii_m0'][t,:] * data.variables["rhod"][0] / 1.#d_log_rd
-    nd = data.variables['radii_m0'][0,:] * data.variables["rhod"][0] /  drd
-    nw = data.variables['cloud_m0'][0,:] * data.variables["rhod"][0] /  drw
+    nd = data.variables['dry_m0'][0,:] * data.variables["rhod"][0] /  drd
+    nw = data.variables['wet_m0'][0,:] * data.variables["rhod"][0] /  drw
+    nw_top = data.variables['wet_m0'][8,:] * data.variables["rhod"][8] /  drw
 #    print nd
   
     plot_rd = Gnuplot.PlotItems.Data((rd+0.5*drd) * 1e6, nd * 1e-12, with_="l lt 3 lc 3", title="dry radius")
     plot_rw = Gnuplot.PlotItems.Data((rw+0.5*drw) * 1e6, nw * 1e-12, with_="line lw 1 lc 4", title="wet radius")
+    plot_rw_op = Gnuplot.PlotItems.Data((rw+0.5*drw) * 1e6, nw_top * 1e-12, with_="line lw 1 lc 4", title="wet radius at the top of the ascent")
 #    print plot_rd
 
 #      print 'aaa'
 #    g('show term')
-    g.plot(plot_rd, plot_rw)
+    g.plot(plot_rd, plot_rw, plot_rw_op)
 #    g.plot(plot_rw)
 #    g.plot(plot_rw_end)
 #      print 'aaaa'
