@@ -9,6 +9,7 @@ w       = 0.4 #0
 dt      = .1
 sd_conc = 10000
 z_max   = 600
+z_min   = 300
 
 outfreq = 1 # [s]
 nt      = 0
@@ -45,4 +46,4 @@ aerosol = '{"NaCl": {"kappa": 1.28, "mean_r": [0.029e-6, 0.071e-6], "gstdev": [1
 
 
 #python parcel.py --outfile plots/Jon_GCCN/Jon_GCCN.nc --p_0 93844.6 --T_0 284.3 --RH_0 0.85785275093866054 --w 0. --dt .05 --sd_conc 1000 --z_max 788 --outfreq 10
-os.system("python parcel.py --outfile "+str(outfile)+" --p_0 "+str(p_0)+" --T_0 "+str(T_0)+" --r_0 "+str(r_0)+" --w "+str(w)+" --dt "+str(dt)+" --sd_conc "+str(sd_conc)+" --z_max "+str(z_max)+" --nt "+str(int(nt))+" --aerosol \'"+str(aerosol)+"\' --out_bin \'"+str(out_bin)+"\' --outfreq "+str(int(outfreq)))
+os.system("python parcel.py --outfile "+str(outfile)+" --p_0 "+str(p_0)+" --T_0 "+str(T_0)+" --r_0 "+str(r_0)+" --w "+str(w)+" --dt "+str(dt)+" --sd_conc "+str(sd_conc)+" --z_max "+str(z_max)+" --z_min "+str(z_min)+" --nt "+str(int(nt))+" --aerosol \'"+str(aerosol)+"\' --out_bin \'"+str(out_bin)+"\' --outfreq "+str(int(outfreq)))
