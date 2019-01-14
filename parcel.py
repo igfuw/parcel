@@ -109,7 +109,7 @@ def _micro_init(aerosol, opts, state, info):
   micro.init(state["th_d"], state["r_v"], state["rhod"], ambient_chem=ambient_chem)
 
   # sanity check
-  _stats(state, info)
+  _stats(state, info, micro)
   if (state["RH"] > 1): raise Exception("Please supply initial T,p,r_v below supersaturation")
 
   return micro
@@ -138,7 +138,7 @@ def _micro_step(micro, state, info, opts, it, fout):
   micro.step_async(libopts)
 
   # update state after microphysics (needed for below update for chemistry)
-  _stats(state, info)
+  _stats(state, info, micro)
 
   # update in state for aqueous chem (TODO do we still want to have aq chem in state?)
   if micro.opts_init.chem_switch:
@@ -148,9 +148,11 @@ def _micro_step(micro, state, info, opts, it, fout):
       micro.diag_chem(id_int)
       state[id_str.replace('_g', '_a')] = np.frombuffer(micro.outbuf())[0]
 
-def _stats(state, info):
+def _stats(state, info, micro):
   state["T"] = np.array([common.T(state["th_d"][0], state["rhod"][0])])
   state["RH"] = state["p"] * state["r_v"] / (state["r_v"] + common.eps) / common.p_vs(state["T"][0])
+  micro.diag_RH()
+  state["RH_libcloud"] =  np.frombuffer(micro.outbuf())[0]
   info["RH_max"] = max(info["RH_max"], state["RH"])
 
 def _output_bins(fout, t, micro, opts, spectra):
@@ -221,7 +223,7 @@ def _output_init(micro, opts, spectra):
 	fout.variables[name+'_'+dct["drwt"]+'_mom'+str(vm)].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
 
   units = {"z"  : "m",     "t"   : "s",     "r_v"  : "kg/kg", "th_d" : "K", "rhod" : "kg/m3",
-           "p"  : "Pa",    "T"   : "K",     "RH"   : "1"
+           "p"  : "Pa",    "T"   : "K",     "RH"   : "1"    , "RH_libcloud" : "1", "curr_w" : "m/s"
   }
 
   if micro.opts_init.chem_switch:
@@ -268,6 +270,7 @@ def parcel(dt=.1, nt=0, z_max=200., z_min=-1., w=1., T_0=300., p_0=101300.,
   sstp_cond = 1,
   sstp_chem = 1,
   wait = 0,
+  top_stop = 0.,
   large_tail = False
 ):
   """
@@ -288,6 +291,7 @@ def parcel(dt=.1, nt=0, z_max=200., z_min=-1., w=1., T_0=300., p_0=101300.,
                                   valid options are: pprof_const_th_rv, pprof_const_rhod, pprof_piecewise_const_rhod
     wait (Optional[float]):       number of timesteps to run parcel model with vertical velocity=0 at the end of simulation
                                   (added for testing)
+    top_stop (Optional[float]):   time the parcel waits at the top of the cloud before starting the descent [s]
     sd_conc (Optional[int]):      number of moving bins (super-droplets)
 
     aerosol (Optional[json str]): dict of dicts defining aerosol distribution, e.g.:
@@ -360,16 +364,20 @@ def parcel(dt=.1, nt=0, z_max=200., z_min=-1., w=1., T_0=300., p_0=101300.,
   th_0 = T_0 * (common.p_1000 / p_0)**(common.R_d / common.c_pd)
   if(z_max > 0):
     nt_ud = int(round(z_max / (w * dt)))
+    nt_dd = 0
     if(z_min >= 0):
       nt_dd = int(round((z_max - z_min) / (w * dt)))
-    nt = nt_ud + nt_dd
+    nt_topstop = int(round(top_stop / dt))
+    nt = nt_ud + nt_topstop + nt_dd
+
 
   state = {
     "t" : 0, "z" : 0,
     "r_v" : np.array([r_0]), "p" : p_0,
     "th_d" : np.array([common.th_std2dry(th_0, r_0)]),
     "rhod" : np.array([common.rhod(p_0, th_0, r_0)]),
-    "T" : None, "RH" : None
+    "T" : None, "RH" : None, "RH_libcloud" : None,
+    "curr_w" : w
   }
 
   if opts["chem_dsl"] or opts["chem_dsc"] or opts["chem_rct"]:
@@ -400,10 +408,16 @@ def parcel(dt=.1, nt=0, z_max=200., z_min=-1., w=1., T_0=300., p_0=101300.,
       # the reasons to use analytic solution:
       # - independent of dt
       # - same as in 2D kinematic model
+     
+      state["curr_w"] = w # for runs with nt specified and z_max = 0
       if(it < nt_ud):
-        state["z"] += w * dt
+        state["curr_w"] = w
+      elif(it < nt_ud + nt_topstop):
+        state["curr_w"] = 0.
       else:
-        state["z"] -= w * dt
+        state["curr_w"] = -w
+
+      state["z"] += state["curr_w"] * dt
       state["t"] = it * dt
 
       # pressure
@@ -418,7 +432,7 @@ def parcel(dt=.1, nt=0, z_max=200., z_min=-1., w=1., T_0=300., p_0=101300.,
       elif pprof == "pprof_piecewise_const_rhod":
         # as in Grabowski and Wang 2009 but calculating pressure
         # for rho piecewise constant per each time step
-        state["p"] = _p_hydro_const_rho(w*dt, state["p"], state["rhod"][0])
+        state["p"] = _p_hydro_const_rho(state["curr_w"]*dt, state["p"], state["rhod"][0])
 
       else: raise Exception("pprof should be pprof_const_th_rv, pprof_const_rhod, or pprof_piecewise_const_rhod")
 
@@ -469,6 +483,12 @@ def _arguments_checking(opts, spectra, aerosol):
     raise Exception("both r_0 and RH_0 specified, please use only one")
   elif ((opts["z_max"] > 0) and (opts["nt"] > 0)):
     raise Exception("both z_max and nt specified, please use only one")
+  elif ((opts["z_min"] > 0) and (opts["nt"] > 0)):
+    raise Exception("both z_min and nt specified, please use only one")
+  elif ((opts["top_stop"] > 0) and (opts["nt"] > 0)):
+    raise Exception("both top_stop and nt specified, please use only one")
+  elif ((opts["top_stop"] < 0)):
+    raise Exception("top_stop < 0")
   elif ((opts["z_max"] <= 0) and (opts["nt"] <= 0)):
     raise Exception("either z_max or nt should be larger than 0")
   elif ((opts["z_max"] > 0) and (opts["z_min"] >= opts["z_max"])):
