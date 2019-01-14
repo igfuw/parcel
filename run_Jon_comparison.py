@@ -7,10 +7,10 @@ T_0     = 284.3
 r_0     = 0.007617065 
 w       = 0.4 #0
 dt      = .1
-sd_conc = 100
+sd_conc = 10000
 z_max   = 600
 
-outfreq = 150 # [s]
+outfreq = 1 # [s]
 nt      = 0
 outfreq = outfreq / dt
 nt      = nt / dt
@@ -19,9 +19,9 @@ p_stp = 101325
 T_stp = 273.25 + 15 
 
 
-out_bin = '{"dry":    {"rght": 1e-6,  "moms": [0],       "drwt": "dry", "slct": "dry", "nbin": 500, "lnli": "log", "left": 1e-9},'+\
-          '"wet":     {"rght": 40e-6, "moms": [0],       "drwt": "wet", "slct": "wet", "nbin": 500, "lnli": "log", "left": 1e-9},'+\
-          '"all":     {"rght": 1e-2,  "moms": [0, 1, 2], "drwt": "wet", "slct": "wet", "nbin": 1,   "lnli": "log", "left": 1e-9},'+\
+#out_bin = '{"dry":    {"rght": 1e-6,  "moms": [0],       "drwt": "dry", "slct": "dry", "nbin": 500, "lnli": "log", "left": 1e-9},'+\
+#          '"wet":     {"rght": 40e-6, "moms": [0],       "drwt": "wet", "slct": "wet", "nbin": 500, "lnli": "log", "left": 1e-9},'+\
+out_bin = '{"all":    {"rght": 1e-2,  "moms": [0, 1, 2], "drwt": "wet", "slct": "wet", "nbin": 1,   "lnli": "log", "left": 1e-9},'+\
           '"cloud":   {"rght": 1e-2,  "moms": [0, 1, 2], "drwt": "wet", "slct": "wet", "nbin": 1,   "lnli": "log", "left": 1e-6},'+\
           '"rd20nm":  {"rght": 21e-9,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 19e-9},'+\
           '"rd31nm":  {"rght": 32e-9,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 30e-9},'+\

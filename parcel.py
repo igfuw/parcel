@@ -5,6 +5,8 @@ import sys
 #sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
 #sys.path.insert(0, "../../../libcloudphxx/build/bindings/python/")
 #sys.path.insert(0, "/usr/local/lib/site-python/")
+#sys.path.insert(0, "/mnt/local/pdziekan/usr/local/lib")
+sys.path.insert(0, "/mnt/local/pdziekan/usr/lib64/python2.7/site-packages/")
 # TEMP TODO TEMP TODO !!!
 
 from argparse import ArgumentParser, RawTextHelpFormatter
@@ -100,7 +102,7 @@ def _micro_init(aerosol, opts, state, info):
     opts_init.sstp_chem = opts["sstp_chem"]
 
   # initialisation
-  micro = lgrngn.factory(lgrngn.backend_t.serial, opts_init)
+  micro = lgrngn.factory(lgrngn.backend_t.CUDA, opts_init)
   ambient_chem = {}
   if micro.opts_init.chem_switch:
     ambient_chem = dict((v, state[k]) for k,v in _Chem_g_id.iteritems())
