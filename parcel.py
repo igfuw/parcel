@@ -253,7 +253,7 @@ def _p_hydro_const_th_rv(z_lev, p_0, th_std, r_v, z_0=0.):
   # hydrostatic pressure assuming constatnt theta and r_v
   return common.p_hydro(z_lev, th_std, r_v, z_0, p_0)
 
-def parcel(dt=.1, nt=0, z_max=200., w=1., T_0=300., p_0=101300.,
+def parcel(dt=.1, nt=0, z_max=200., z_min=-1., w=1., T_0=300., p_0=101300.,
   r_0=-1., RH_0=-1., #if none specified, the default will be r_0=.022,
   outfile="test.nc",
   pprof="pprof_piecewise_const_rhod",
@@ -271,8 +271,9 @@ def parcel(dt=.1, nt=0, z_max=200., w=1., T_0=300., p_0=101300.,
   """
   Args:
     dt      (Optional[float]):    timestep [s]
-    nt      (Optional[int]):      number of timesteps
+    nt      (Optional[int]):      number of timesteps, only for updraft
     z_max   (Optional[float]):    maximum vertical displacement [m]
+    z_min   (Optional[float]):    if non-negative, parcel will descend to z_min after reaching z_max [m]
     w       (Optional[float]):    updraft velocity [m/s]
     T_0     (Optional[float]):    initial temperature [K]
     p_0     (Optional[float]):    initial pressure [Pa]
@@ -356,7 +357,10 @@ def parcel(dt=.1, nt=0, z_max=200., w=1., T_0=300., p_0=101300.,
 
   th_0 = T_0 * (common.p_1000 / p_0)**(common.R_d / common.c_pd)
   if(z_max > 0):
-    nt = int(round(z_max / (w * dt)))
+    nt_ud = int(round(z_max / (w * dt)))
+    if(z_min >= 0):
+      nt_dd = int(round((z_max - z_min) / (w * dt)))
+    nt = nt_ud + nt_dd
 
   state = {
     "t" : 0, "z" : 0,
@@ -394,7 +398,10 @@ def parcel(dt=.1, nt=0, z_max=200., w=1., T_0=300., p_0=101300.,
       # the reasons to use analytic solution:
       # - independent of dt
       # - same as in 2D kinematic model
-      state["z"] += w * dt
+      if(it < nt_ud):
+        state["z"] += w * dt
+      else:
+        state["z"] -= w * dt
       state["t"] = it * dt
 
       # pressure
@@ -462,6 +469,8 @@ def _arguments_checking(opts, spectra, aerosol):
     raise Exception("both z_max and nt specified, please use only one")
   elif ((opts["z_max"] <= 0) and (opts["nt"] <= 0)):
     raise Exception("either z_max or nt should be larger than 0")
+  elif ((opts["z_max"] > 0) and (opts["z_min"] >= opts["z_max"])):
+    raise Exception("z_min >= z_max !")
   if opts["w"] < 0:
     raise Exception("vertical velocity should be larger than 0")
 
