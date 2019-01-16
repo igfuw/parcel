@@ -6,7 +6,7 @@ import sys
 #sys.path.insert(0, "../../../libcloudphxx/build/bindings/python/")
 #sys.path.insert(0, "/usr/local/lib/site-python/")
 #sys.path.insert(0, "/mnt/local/pdziekan/usr/local/lib")
-sys.path.insert(0, "/mnt/local/pdziekan/usr/lib64/python2.7/site-packages/")
+sys.path.insert(0, "/mnt/local/pdziekan/lib/python/site-packages/")
 # TEMP TODO TEMP TODO !!!
 
 from argparse import ArgumentParser, RawTextHelpFormatter
@@ -69,13 +69,14 @@ class sum_of_lognormals(object):
       res += lognormal(lnr)
     return res
 
-def _micro_init(aerosol, opts, state, info):
+def _micro_init(aerosol, aerosol_sizes, opts, state, info):
 
   # lagrangian scheme options
   opts_init = lgrngn.opts_init_t()
   for opt in ["dt", "sd_conc", "chem_rho", "sstp_cond"]:
     setattr(opts_init, opt, opts[opt])
-  opts_init.n_sd_max = opts_init.sd_conc
+  #opts_init.n_sd_max = int(1.1*opts_init.sd_conc)
+  opts_init.n_sd_max = opts_init.sd_conc + 38  # some more space for the dry_sizes GCCNs
 
   # read in the initial aerosol size distribution
   dry_distros = {}
@@ -85,6 +86,21 @@ def _micro_init(aerosol, opts, state, info):
       lognormals.append(lognormal(dct["mean_r"][i], dct["gstdev"][i], dct["n_tot"][i]))
     dry_distros[dct["kappa"]] = sum_of_lognormals(lognormals)
   opts_init.dry_distros = dry_distros
+
+  # read in the initial aerosol dry sizes
+  if (aerosol_sizes != None):
+    print aerosol_sizes
+    dry_sizes = {}
+    for name, dct in aerosol_sizes.iteritems(): # loop over kappas
+      print dct["kappa"]
+      print dct["r"]
+      print dct["n_tot"]
+      print dct["multi"]
+      sizes = {}
+      for i in range(len(dct["r"])):
+        sizes[dct["r"][i]] = [dct["n_tot"][i], dct["multi"][i]]
+      dry_sizes[dct["kappa"]] = sizes
+    opts_init.dry_sizes = dry_sizes
 
   # better resolution for the SD tail
   if opts["large_tail"]:
@@ -263,6 +279,7 @@ def parcel(dt=.1, nt=0, z_max=200., z_min=-1., w=1., T_0=300., p_0=101300.,
   pprof="pprof_piecewise_const_rhod",
   outfreq=100, sd_conc=64,
   aerosol = '{"ammonium_sulfate": {"kappa": 0.61, "mean_r": [0.02e-6], "gstdev": [1.4], "n_tot": [60.0e6]}}',
+  aerosol_sizes = 'null', 
   out_bin = '{"radii": {"rght": 0.0001, "moms": [0], "drwt": "wet", "slct": "wet", "nbin": 1, "lnli": "log", "left": 1e-09}}',
   SO2_g = 0., O3_g = 0., H2O2_g = 0., CO2_g = 0., HNO3_g = 0., NH3_g = 0.,
   chem_dsl = False, chem_dsc = False, chem_rct = False,
@@ -303,6 +320,15 @@ def parcel(dt=.1, nt=0, z_max=200., z_min=-1., w=1., T_0=300., p_0=101300.,
                                         mean_r - lognormal distribution mean radius [m]                    (list if multimodal distribution)
                                         gstdev - lognormal distribution geometric standard deviation       (list if multimodal distribution)
                                         n_tot  - lognormal distribution total concentration under standard
+                                                 conditions (T=20C, p=1013.25 hPa, rv=0) [m^-3]            (list if multimodal distribution)
+
+    aerosol_sizes (Optional[json str]): dict of dicts defining aerosol by size-concentration pair, e.g.:
+
+                                  {gccn"            : {"kappa": 1.28, "r": [2e-6, 4e-6],      "n_tot": [1e2, 5e1]}}
+
+                                  where kappa  - hygroscopicity parameter (see doi:10.5194/acp-7-1961-2007)
+                                        r -      dry radius [m]                    (list if multimodal distribution)
+                                        n_tot  - total concentration under standard
                                                  conditions (T=20C, p=1013.25 hPa, rv=0) [m^-3]            (list if multimodal distribution)
 
     large_tail (Optional[bool]) : use more SD to better represent the large tail of the initial aerosol distribution
@@ -349,6 +375,7 @@ def parcel(dt=.1, nt=0, z_max=200., z_min=-1., w=1., T_0=300., p_0=101300.,
 
   # parsing json specification of init aerosol spectra
   aerosol = json.loads(opts["aerosol"])
+  aerosol_sizes = json.loads(opts["aerosol_sizes"])
 
   # default water content
   if ((opts["r_0"] < 0) and (opts["RH_0"] < 0)):
@@ -387,7 +414,7 @@ def parcel(dt=.1, nt=0, z_max=200., z_min=-1., w=1., T_0=300., p_0=101300.,
   info = { "RH_max" : 0, "libcloud_Git_revision" : libcloud_version,
            "parcel_Git_revision" : parcel_version }
 
-  micro = _micro_init(aerosol, opts, state, info)
+  micro = _micro_init(aerosol, aerosol_sizes, opts, state, info)
 
   with _output_init(micro, opts, spectra) as fout:
     # adding chem state vars
