@@ -75,15 +75,15 @@ concentrations = [ 111800.,\
  4.372, 4.465 , 4.395 , 4.427 , 4.411,\
  4.522, 4.542]
 
-multiplicities = [ 11180.,\
-6849., 3840., 2182., 1330., 849.,\
- 548., 380. , 259. , 191. , 127.,\
- 98, 77 , 51 , 40 , 37,\
- 26, 21 , 13 , 12 , 10,\
- 12, 5 , 3 , 5 , 2,\
- 1, 4 , 2 , 3 , 1,\
- 1, 1 , 1 , 1 , 1,\
- 1, 1]
+#multiplicities = [ 11180.,\
+#6849., 3840., 2182., 1330., 849.,\
+# 548., 380. , 259. , 191. , 127.,\
+# 98, 77 , 51 , 40 , 37,\
+# 26, 21 , 13 , 12 , 10,\
+# 12, 5 , 3 , 5 , 2,\
+# 1, 4 , 2 , 3 , 1,\
+# 1, 1 , 1 , 1 , 1,\
+# 1, 1]
 
 aerosol_sizes = '{"NaCl": {"kappa": 1.28, "r": ['
 for size in sizes:
@@ -101,7 +101,8 @@ aerosol_sizes += '], "multi": ['
 #for multi in multiplicities:
 #  aerosol_sizes += str(int(multi))+','
 for conc in concentrations:
-  aerosol_sizes += str(int(conc * p_stp / p_0 * T_0 / T_stp))+','
+  aerosol_sizes += str(1)+','
+#  aerosol_sizes += str(int(conc * p_stp / p_0 * T_0 / T_stp))+','
 #remove last ,
 aerosol_sizes = aerosol_sizes[:-1]
 
