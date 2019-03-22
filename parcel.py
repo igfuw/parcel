@@ -6,7 +6,8 @@ import sys
 #sys.path.insert(0, "../../../libcloudphxx/build/bindings/python/")
 #sys.path.insert(0, "/usr/local/lib/site-python/")
 #sys.path.insert(0, "/mnt/local/pdziekan/usr/local/lib")
-sys.path.insert(0, "/mnt/local/pdziekan/lib/python/site-packages/")
+#sys.path.insert(0, "/mnt/local/pdziekan/lib/python/site-packages/")
+sys.path.insert(0, "/usr/local/lib/python2.7/dist-packages/")
 # TEMP TODO TEMP TODO !!!
 
 from argparse import ArgumentParser, RawTextHelpFormatter
@@ -78,6 +79,9 @@ def _micro_init(aerosol, aerosol_sizes, opts, state, info):
   #opts_init.n_sd_max = int(1.1*opts_init.sd_conc)
   opts_init.n_sd_max = opts_init.sd_conc + 38  # some more space for the dry_sizes GCCNs
 
+  opts_init.kernel = lgrngn.kernel_t.hall_davis_no_waals
+  opts_init.terminal_velocity = lgrngn.vt_t.khvorostyanov_nonspherical;
+
   # read in the initial aerosol size distribution
   dry_distros = {}
   for name, dct in aerosol.iteritems(): # loop over kappas
@@ -109,7 +113,7 @@ def _micro_init(aerosol, aerosol_sizes, opts, state, info):
 
   # switch off sedimentation and collisions
   opts_init.sedi_switch = False
-  opts_init.coal_switch = False
+  opts_init.coal_switch = True
 
   # switching on chemistry if either dissolving, dissociation or reactions are chosen
   opts_init.chem_switch = False
@@ -118,7 +122,7 @@ def _micro_init(aerosol, aerosol_sizes, opts, state, info):
     opts_init.sstp_chem = opts["sstp_chem"]
 
   # initialisation
-  micro = lgrngn.factory(lgrngn.backend_t.CUDA, opts_init)
+  micro = lgrngn.factory(lgrngn.backend_t.OpenMP, opts_init)
   ambient_chem = {}
   if micro.opts_init.chem_switch:
     ambient_chem = dict((v, state[k]) for k,v in _Chem_g_id.iteritems())
@@ -133,7 +137,7 @@ def _micro_init(aerosol, aerosol_sizes, opts, state, info):
 def _micro_step(micro, state, info, opts, it, fout):
   libopts = lgrngn.opts_t()
   libopts.cond = True
-  libopts.coal = False
+  libopts.coal = True
   libopts.adve = False
   libopts.sedi = False
 

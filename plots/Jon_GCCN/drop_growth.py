@@ -40,7 +40,7 @@ def plot_growth_GCCN(data, output_folder = '', output_title = ''):
     g('set nokey')
 
     g('set output "' + output_folder + output_title + '.svg"')
-    g('set xrange [0:60]')
+    g('set xrange [0:100]')
     g('set yrange [-300:400]')
 
     

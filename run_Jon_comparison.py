@@ -6,11 +6,12 @@ T_0     = 284.3
 #RH_0    = 0.85785275093866054 
 r_0     = 0.007617065 
 w       = 0.4 #0
-dt      = .1
-sd_conc = 10000
+dt      = 1.
+sd_conc = 40# 10000
 z_max   = 600
 z_min   = 300
 top_stop = 0 #[s]
+sstp_cond = 10
 
 outfreq = 1 # [s]
 nt      = 0
@@ -25,15 +26,15 @@ T_stp = 273.25 + 15
 #          '"wet":     {"rght": 40e-6, "moms": [0],       "drwt": "wet", "slct": "wet", "nbin": 500, "lnli": "log", "left": 1e-9},'+\
 out_bin = '{"all":    {"rght": 1e-2,  "moms": [0, 1, 2], "drwt": "wet", "slct": "wet", "nbin": 1,   "lnli": "log", "left": 1e-9},'+\
           '"cloud":   {"rght": 1e-2,  "moms": [0, 1, 2], "drwt": "wet", "slct": "wet", "nbin": 1,   "lnli": "log", "left": 1e-6},'+\
-          '"rd1.0um": {"rght": 1.01e-6,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 0.99e-6},'+\
-          '"rd2.0um": {"rght": 2.01e-6,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 1.99e-6},'+\
-          '"rd3.0um": {"rght": 3.01e-6,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 2.99e-6},'+\
-          '"rd4.0um": {"rght": 4.01e-6,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 3.99e-6},'+\
-          '"rd5.0um": {"rght": 5.01e-6,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 4.99e-6},'+\
-          '"rd6.0um": {"rght": 6.01e-6,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 5.99e-6},'+\
-          '"rd7.0um": {"rght": 7.01e-6,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 6.99e-6},'+\
-          '"rd8.0um": {"rght": 8.01e-6,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 7.99e-6},'+\
-          '"rd9.0um": {"rght": 9.01e-6,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 8.99e-6},'+\
+          '"rd1.0um": {"rght": 1.1e-6,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 0.99e-6},'+\
+          '"rd2.0um": {"rght": 2.1e-6,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 1.99e-6},'+\
+          '"rd3.0um": {"rght": 3.1e-6,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 2.99e-6},'+\
+          '"rd4.0um": {"rght": 4.1e-6,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 3.99e-6},'+\
+          '"rd5.0um": {"rght": 5.1e-6,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 4.99e-6},'+\
+          '"rd6.0um": {"rght": 6.1e-6,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 5.99e-6},'+\
+          '"rd7.0um": {"rght": 7.1e-6,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 6.99e-6},'+\
+          '"rd8.0um": {"rght": 8.1e-6,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 7.99e-6},'+\
+          '"rd9.0um": {"rght": 9.1e-6,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 8.99e-6},'+\
           '"rd20nm":  {"rght": 21e-9,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 19e-9},'+\
           '"rd31nm":  {"rght": 32e-9,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 30e-9},'+\
           '"rd152nm": {"rght": 153e-9,  "moms": [0, 1],    "drwt": "wet", "slct": "dry", "nbin": 1, "lnli": "log", "left": 151e-9},'+\
@@ -112,7 +113,7 @@ print aerosol_sizes
 
 
 #python parcel.py --outfile plots/Jon_GCCN/Jon_GCCN.nc --p_0 93844.6 --T_0 284.3 --RH_0 0.85785275093866054 --w 0. --dt .05 --sd_conc 1000 --z_max 788 --outfreq 10
-os.system("python parcel.py --outfile "+str(outfile)+" --p_0 "+str(p_0)+" --T_0 "+str(T_0)+" --r_0 "+str(r_0)+" --w "+str(w)+" --dt "+str(dt)+" --sd_conc "+str(sd_conc)+" --z_max "+str(z_max)+" --z_min "+str(z_min)+" --top_stop "+str(top_stop)+" --nt "+str(int(nt))+" --aerosol \'"+str(aerosol)+"\'"+\
+os.system("python parcel.py --outfile "+str(outfile)+" --p_0 "+str(p_0)+" --T_0 "+str(T_0)+" --r_0 "+str(r_0)+" --w "+str(w)+" --dt "+str(dt)+" --sstp_cond "+str(sstp_cond)+" --sd_conc "+str(sd_conc)+" --z_max "+str(z_max)+" --z_min "+str(z_min)+" --top_stop "+str(top_stop)+" --nt "+str(int(nt))+" --aerosol \'"+str(aerosol)+"\'"+\
 " --aerosol_sizes \'"+str(aerosol_sizes)+"\'"+\
 "  --out_bin \'"+str(out_bin)+"\' --outfreq "+str(int(outfreq)))
 
