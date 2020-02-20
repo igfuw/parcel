@@ -20,8 +20,8 @@ import pdb
 import math
 plt.rcParams.update({'font.size': 18})
 
-w_list = [0.1, 0.5, 2, 5]
-sstp_cond = [1, 2, 5, 10]
+w_list = [0.1, 0.5, 1, 2, 5]
+sstp_cond = [1, 2, 5, 10, 20]
 
 # initial values
 RH_init = .98
@@ -38,8 +38,8 @@ for w in w_list:
         outfile_nc = "timesteptest_cond=" + str(st_cond)+"updraft_velocity"+ str(w)+ ".nc"
         parcel(dt=1, outfreq = math.ceil(1./w),   outfile = outfile_nc,\
                 w = w, T_0 = T_init, p_0 = p_init, r_0 = r_init, z_max = 200, sstp_cond = st_cond, \
-                sd_conc = 100000, \
-                aerosol = '{"ammonium_sulfate": {"kappa": 0.61, "mean_r": [0.011e-6, 0.06e-6], "gstdev": [1.2, 1.7], "n_tot": [125e6, 15e6]}}',
+                sd_conc = 10000, \
+                aerosol = '{"ammonium_sulfate": {"kappa": 0.61, "mean_r": [0.03e-6, 0.14e-6], "gstdev": [1.28, 1.75], "n_tot": [90e6, 15e6]}}',
                 out_bin = '{"cloud": {"rght": 2.5e-05, "moms": [0], "drwt": "wet", "nbin": 1, "lnli": "lin", "left": 5e-07}}'
                 )
         output_folder="/home/piotr/Piotr/IGF/parcel/wyniki_momenty"
@@ -69,7 +69,7 @@ for w in w_list:
         plt.title("0 moment for updraft velocity= " + str(w) + "[m/s]")
         if not os.path.exists(output_folder):
             subprocess.call(["mkdir", output_folder])
-    plt.savefig(os.path.join(output_folder, "Condensation_time_step_variation_for_updraft_velocity"+ str(w)+".svg"))
+    plt.savefig(os.path.join(output_folder, "Condensation_time_step_variation_for_cumulus_updraft_velocity"+ str(w)+".svg"))
 
     #     f_out  = netcdf.netcdf_file(outfile_nc, "r")
     # data = {"sstp_cond" : sstp_cond, "w" : w_list}
