@@ -27,9 +27,12 @@ def plot_init_spectrum(data, outfolder):
     import Gnuplot
 
     # size distribution parameters from Kreidenweis 2003
-    n_tot   = 566e6
-    mean_r  = 0.04e-6
-    gstdev  = 2
+    n_tot   = 125e6#, 15e6]#566e6
+    mean_r  = 0.011e-6#, 0.14e-6]#0.04e-6
+    gstdev  = 1.2#, 1.75]#2
+    n_tot2   = 65e6#566e6
+    mean_r2  = 0.06e-6#0.04e-6
+    gstdev2  = 1.7#2
 
     # from ncdf file attributes read out_bin parameters as a dictionary ...
     out_bin = ast.literal_eval(getattr(data, "out_bin"))
@@ -49,9 +52,10 @@ def plot_init_spectrum(data, outfolder):
     # variables for plotting theoretical solution
     radii = np.logspace(-3, 1, 100) * 1e-6
     theor = np.empty(radii.shape)
+    theor2 = np.empty(radii.shape)
     for it in range(radii.shape[0]):
         theor[it] = fn.log10_size_of_lnr(n_tot, mean_r, math.log(radii[it], 10), gstdev)
-
+        theor2[it] = fn.log10_size_of_lnr(n_tot2, mean_r2, math.log(radii[it], 10), gstdev2)
     g = Gnuplot.Gnuplot()
     g('set term svg dynamic enhanced')
     g('reset')
@@ -64,9 +68,10 @@ def plot_init_spectrum(data, outfolder):
     g('set yrange [0:800]')
 
     theory_r = Gnuplot.PlotItems.Data(radii * 2 * 1e6,  theor * 1e-6, with_="lines", title="theory")
+    theory_r2 = Gnuplot.PlotItems.Data(radii * 2 * 1e6,  theor2 * 1e-6, with_="lines", title="theory2")
     plot     = Gnuplot.PlotItems.Data(rd    * 2 * 1e6,  model * 1e-6, with_="steps", title="model" )
 
-    g.plot(theory_r, plot)
+    g.plot(theory_r, theory_r2, plot)
 
 def main():
     # copy options from chem_conditions ...
@@ -83,7 +88,9 @@ def main():
     opts_dict['sd_conc']  = 1024 * 44
     opts_dict['outfreq']  = 1
 
-    opts_dict['out_bin'] = '{"drad": {"rght": 1e-6, "left": 1e-10, "drwt": "dry", "lnli": "log", "nbin": 26, "moms": [0,3]}}'
+    opts_dict['out_bin'] = '{"drad": {"rght": 2.5e-06, "left": 5e-09, "drwt": "dry", "lnli": "log", "nbin": 26, "moms": [0,1,3]}}'
+
+                            #{"rght": 2.5e-05, "moms": [0,1,3], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 5e-07}}
 
     # run parcel
     parcel(**opts_dict)
