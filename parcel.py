@@ -152,6 +152,7 @@ def _stats(state, info):
   info["RH_max"] = max(info["RH_max"], state["RH"])
 
 def _output_bins(fout, t, micro, opts, spectra):
+
   for dim, dct in spectra.iteritems():
     for bin in range(dct["nbin"]):
       if dct["drwt"] == 'wet':
@@ -166,6 +167,7 @@ def _output_bins(fout, t, micro, opts, spectra):
 	)
       else: raise Exception("drwt should be wet or dry")
 
+
       for vm in dct["moms"]:
         if type(vm) == int:
           # calculating moments
@@ -175,6 +177,7 @@ def _output_bins(fout, t, micro, opts, spectra):
             micro.diag_dry_mom(vm)
           else: raise Exception("drwt should be wet or dry")
           fout.variables[dim+'_m'+str(vm)][int(t), int(bin)] = np.frombuffer(micro.outbuf())
+
         else:
           # calculate chemistry
           micro.diag_chem(_Chem_a_id[vm])
@@ -216,8 +219,11 @@ def _output_init(micro, opts, spectra):
       else:
         assert(type(vm)==int)
 	fout.createVariable(name+'_m'+str(vm), 'd', ('t',name))
-	fout.variables[name+'_m'+str(vm)].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
-
+    # fout.variables[name+'_m'+str(vm)].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
+    fout.variables[name+'_m'+str(vm)].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
+    fout.createVariable('number_of_rc', 'd', 't')
+    # fout.variables[name+'_rc'+str(vm)].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
+    fout.variables['number_of_rc'].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
   units = {"z"  : "m",     "t"   : "s",     "r_v"  : "kg/kg", "th_d" : "K", "rhod" : "kg/m3",
            "p"  : "Pa",    "T"   : "K",     "RH"   : "1"
   }
@@ -242,6 +248,9 @@ def _save_attrs(fout, dictnr):
     setattr(fout, var, val)
 
 def _output(fout, opts, micro, state, rec, spectra):
+  micro.diag_rw_ge_rc()
+  micro.diag_wet_mom(0)
+  fout.variables['number_of_rc'][int(rec)] = np.frombuffer(micro.outbuf())
   _output_bins(fout, rec, micro, opts, spectra)
   _output_save(fout, state, rec)
 
@@ -488,8 +497,8 @@ def _arguments_checking(opts, spectra, aerosol):
       if gstdev <= 0:
         raise Exception("standard deviation should be > 0 for aerosol[" + name + "]")
     # necessary?
-      if gstdev == 1.:
-        raise Exception("standard deviation should be != 1 to avoid monodisperse distribution for aerosol[" + name + "]")
+     # if gstdev == 1.:
+       # raise Exception("standard deviation should be != 1 to avoid monodisperse distribution for aerosol[" + name + "]")
 
   for name, dct in spectra.iteritems():
     # TODO: check if name is valid netCDF identifier
