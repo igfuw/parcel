@@ -221,9 +221,11 @@ def _output_init(micro, opts, spectra):
 	fout.createVariable(name+'_m'+str(vm), 'd', ('t',name))
     # fout.variables[name+'_m'+str(vm)].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
     fout.variables[name+'_m'+str(vm)].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
-    fout.createVariable('number_of_rc', 'd', 't')
+    fout.createVariable('number_of_rc_m0', 'd', ('t'))
+    fout.createVariable('number_of_rc_m1', 'd', ('t'))
     # fout.variables[name+'_rc'+str(vm)].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
-    fout.variables['number_of_rc'].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
+    fout.variables['number_of_rc_m0'].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
+    fout.variables['number_of_rc_m1'].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
   units = {"z"  : "m",     "t"   : "s",     "r_v"  : "kg/kg", "th_d" : "K", "rhod" : "kg/m3",
            "p"  : "Pa",    "T"   : "K",     "RH"   : "1"
   }
@@ -250,7 +252,10 @@ def _save_attrs(fout, dictnr):
 def _output(fout, opts, micro, state, rec, spectra):
   micro.diag_rw_ge_rc()
   micro.diag_wet_mom(0)
-  fout.variables['number_of_rc'][int(rec)] = np.frombuffer(micro.outbuf())
+  fout.variables['number_of_rc_m0'][int(rec)] = np.frombuffer(micro.outbuf())
+  micro.diag_rw_ge_rc()
+  micro.diag_wet_mom(1)
+  fout.variables['number_of_rc_m1'][int(rec)] = np.frombuffer(micro.outbuf())
   _output_bins(fout, rec, micro, opts, spectra)
   _output_save(fout, state, rec)
 
