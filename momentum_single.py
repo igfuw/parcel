@@ -25,6 +25,9 @@ T_init  = 280.
 p_init  = 100000.
 r_init  = common.eps * RH_init * common.p_vs(T_init) / (p_init - RH_init * common.p_vs(T_init))
 
+print common.R_v
+
+'''
 w_list = [ 0.1, 0.5, 1, 2, 5]
 sstp_cond = [1, 2, 5, 10, 20 ]
 # w_list = [ 4, 5]
@@ -48,7 +51,8 @@ for w in w_list:
                  # '{"ammonium_sulfate": {"kappa": 0.61, "mean_r": [0.03e-6, 0.14e-6], "gstdev": [1.28, 1.75], "n_tot": [90e6, 15e6]}}',
                 # '{"ammonium_sulfate": {"kappa": 0.61, "mean_r": [0.011e-6, 0.06e-6], "gstdev": [1.2, 1.7], "n_tot": [125e6, 65e6]}}',
                 # out_bin = '{"cloud": {"rght": 2.5e-05, "moms": [0,1], "drwt": "wet", "nbin": 100, "lnli": "lin", "left": 1e-06 }}'
-                out_bin = '{"cloud": {"rght": 1e-4, "left": 0.5e-6, "drwt": "wet", "lnli": "log", "nbin": 100, "moms": [0,1]}}')
+                out_bin = '{"wradii": {"rght": 1e-4, "left": 1e-9, "drwt": "dry", "lnli": "log", "nbin": 100, "moms": [0,1]},\
+                            "cloud": {"rght": 1e-4, "left": 0.5e-6, "drwt": "wet", "lnli": "log", "nbin": 100, "moms": [0,1]}}')
                 # '{"ammonium_sulfate": {"kappa": 0.61, "mean_r": [0.011e-6, 0.06e-6], "gstdev": [1.2, 1.7], "n_tot": [125e6, 65e6]}}'
         output_folder="/home/piotr/Piotr/IGF/parcel/wyniki_momenty"
         fnc = netcdf.netcdf_file(outfile_nc)
@@ -103,9 +107,10 @@ for w in w_list:
 
 
         plt.subplots_adjust(wspace=0.4, hspace=0.4)
-        plt.suptitle('Parcel model of Stratocumulus cloud with updraft velocity = ' + str(w)+ r'$[ \frac{m}{s}]$')
+        plt.suptitle('Parcel model of Stratoumulus cloud with updraft velocity = ' + str(w)+ r'$[ \frac{m}{s}]$')
 
 
         if not os.path.exists(output_folder):
             subprocess.call(["mkdir", output_folder])
     plt.savefig(os.path.join(output_folder, "STRATOCUMULUS_PARCEL_updraft_velocity_"+ str(w)+".svg"))
+'''
