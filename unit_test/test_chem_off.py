@@ -21,10 +21,10 @@ def test_chem_off():
 
   assert(nc_on.SO2_g > 0)
   assert(nc_off.SO2_g == 0)
-  assert(nc_on.variables.has_key("SO2_g"))
-  assert(nc_on.variables.has_key("SO2_a"))
-  assert(not nc_off.variables.has_key("SO2_g"))
-  assert(not nc_off.variables.has_key("SO2_a"))
+  assert("SO2_g" in nc_on.variables)
+  assert("SO2_a" in nc_on.variables)
+  assert("SO2_g" not in nc_off.variables)
+  assert("SO2_a" not in nc_off.variables)
 
   subprocess.call(["rm", outfile_on])
   subprocess.call(["rm", outfile_off])

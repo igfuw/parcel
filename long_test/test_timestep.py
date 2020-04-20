@@ -40,7 +40,7 @@ def data(request):
     N_list  = []
 
     for dt in Dt_list:
-        print "\nt time step", dt
+        print("\nt time step", dt)
         outfile_nc = "timesteptest_dt=" + str(dt) + ".nc" 
         parcel(dt=dt, outfreq = int(100/dt),   outfile = outfile_nc,\
                 w = 1., T_0 = T_init, p_0 = p_init, r_0 = r_init, z_max = 200, \
@@ -74,7 +74,7 @@ def test_timestep_eps(data, eps=0.01, dt_lim=0.01):
     (Unitill we think of a better convergence test, the check is done for the 
     smallest timesteps. This is done in order to avoid too big epsilon.
     """
-    for var, val in data.iteritems():
+    for var, val in data.items():
         # check for RH and N
         if var in ["RH", "N"]:
             # for simulations with small timesteps

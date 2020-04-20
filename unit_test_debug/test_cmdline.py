@@ -27,7 +27,7 @@ def test_cmdline(tmpdir, arg):
   # calling via subprocess
   # creating a list with all provided arguments
   list_arg = ["python", "parcel.py", "--outfile="+file]
-  for key, value in arg.items():
+  for key, value in list(arg.items()):
     list_arg.append("--" + key + "=" + str(value))
 
   subprocess.check_call(list_arg)
