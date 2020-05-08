@@ -152,12 +152,14 @@ def _stats(state, info):
   info["RH_max"] = max(info["RH_max"], state["RH"])
 
 def _output_bins(fout, t, micro, opts, spectra):
+
   for dim, dct in spectra.iteritems():
     for bin in range(dct["nbin"]):
       if dct["drwt"] == 'wet':
 	micro.diag_wet_rng(
 	  fout.variables[dim+"_r_wet"][bin],
 	  fout.variables[dim+"_r_wet"][bin] + fout.variables[dim+"_dr_wet"][bin]
+
 	)
       elif dct["drwt"] == 'dry':
 	micro.diag_dry_rng(
@@ -165,6 +167,11 @@ def _output_bins(fout, t, micro, opts, spectra):
 	  fout.variables[dim+"_r_dry"][bin] + fout.variables[dim+"_dr_dry"][bin]
 	)
       else: raise Exception("drwt should be wet or dry")
+
+
+      if dct["drwt"] == 'wet':
+        micro.diag_dry_mom(1)
+      fout.variables[dim+'_dry_m_1'][int(t), int(bin)] = np.frombuffer(micro.outbuf())
 
       for vm in dct["moms"]:
         if type(vm) == int:
@@ -190,7 +197,7 @@ def _output_init(micro, opts, spectra):
     tmp = name + '_r_' + dct["drwt"]
     fout.createVariable(tmp, 'd', (name,))
     fout.variables[tmp].unit = "m"
-    fout.variables[tmp].description = "particle wet radius (left bin edge)"
+    fout.variables[tmp].description = "particle "+dct["drwt"]+" radius (left bin edge)"
 
     tmp = name + '_dr_' + dct["drwt"]
     fout.createVariable(tmp, 'd', (name,))
@@ -215,9 +222,17 @@ def _output_init(micro, opts, spectra):
       	fout.variables[name+'_'+vm].unit = 'kg of chem species dissolved in cloud droplets (kg of dry air)^-1'
       else:
         assert(type(vm)==int)
-	fout.createVariable(name+'_m'+str(vm), 'd', ('t',name))
-	fout.variables[name+'_m'+str(vm)].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
 
+	fout.createVariable(name+'_m'+str(vm), 'd', ('t',name))
+    fout.variables[name+'_m'+str(vm)].unit = 'micrometer'
+
+    fout.createVariable(name+'_dry_m_'+str(vm), 'd', ('t',name))
+    fout.variables[name+'_dry_m_'+str(vm)].unit = ' m^'+str(vm)+' (kg of dry air)^-1'
+
+    fout.createVariable('number_of_rc_m0', 'd', ('t'))
+    fout.createVariable('number_of_rc_m1', 'd', ('t'))
+    fout.variables['number_of_rc_m0'].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
+    fout.variables['number_of_rc_m1'].unit = 'micrometer'
   units = {"z"  : "m",     "t"   : "s",     "r_v"  : "kg/kg", "th_d" : "K", "rhod" : "kg/m3",
            "p"  : "Pa",    "T"   : "K",     "RH"   : "1"
   }
@@ -242,6 +257,12 @@ def _save_attrs(fout, dictnr):
     setattr(fout, var, val)
 
 def _output(fout, opts, micro, state, rec, spectra):
+  micro.diag_rw_ge_rc()
+  micro.diag_wet_mom(0)
+  fout.variables['number_of_rc_m0'][int(rec)] = np.frombuffer(micro.outbuf())
+  micro.diag_rw_ge_rc()
+  micro.diag_wet_mom(1)
+  fout.variables['number_of_rc_m1'][int(rec)] = np.frombuffer(micro.outbuf())
   _output_bins(fout, rec, micro, opts, spectra)
   _output_save(fout, state, rec)
 
@@ -488,8 +509,8 @@ def _arguments_checking(opts, spectra, aerosol):
       if gstdev <= 0:
         raise Exception("standard deviation should be > 0 for aerosol[" + name + "]")
     # necessary?
-      if gstdev == 1.:
-        raise Exception("standard deviation should be != 1 to avoid monodisperse distribution for aerosol[" + name + "]")
+     # if gstdev == 1.:
+       # raise Exception("standard deviation should be != 1 to avoid monodisperse distribution for aerosol[" + name + "]")
 
   for name, dct in spectra.iteritems():
     # TODO: check if name is valid netCDF identifier
