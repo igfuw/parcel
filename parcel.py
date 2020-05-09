@@ -224,7 +224,7 @@ def _output_init(micro, opts, spectra):
         assert(type(vm)==int)
 
 	fout.createVariable(name+'_m'+str(vm), 'd', ('t',name))
-    fout.variables[name+'_m'+str(vm)].unit = 'micrometer'
+    fout.variables[name+'_m'+str(vm)].unit = ' m^'+str(vm)+' (kg of dry air)^-1'
 
     fout.createVariable(name+'_dry_m_'+str(vm), 'd', ('t',name))
     fout.variables[name+'_dry_m_'+str(vm)].unit = ' m^'+str(vm)+' (kg of dry air)^-1'
