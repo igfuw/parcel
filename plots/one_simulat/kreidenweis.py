@@ -73,7 +73,7 @@ def plot_fig1(data, output_folder = '', output_title = ''):
 
     plt.grid()
     plt.plot((tmp1 + tmp2) * 1e9 * rhod / rho, t, "b", lw=4.)
-    print "total % of SO2 that was converted to H2SO4 = ", (1 - (tmp1[-1] + tmp2[-1]) / (tmp1[0] + tmp2[0])) * 100
+    print("total % of SO2 that was converted to H2SO4 = ", (1 - (tmp1[-1] + tmp2[-1]) / (tmp1[0] + tmp2[0])) * 100)
 
     # calculate average pH
     # (weighted with volume of cloud droplets)

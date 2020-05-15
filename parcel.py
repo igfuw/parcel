@@ -77,7 +77,7 @@ def _micro_init(aerosol, opts, state, info):
 
   # read in the initial aerosol size distribution
   dry_distros = {}
-  for name, dct in aerosol.iteritems(): # loop over kappas
+  for name, dct in aerosol.items(): # loop over kappas
     lognormals = []
     for i in range(len(dct["mean_r"])):
       lognormals.append(lognormal(dct["mean_r"][i], dct["gstdev"][i], dct["n_tot"][i]))
@@ -103,7 +103,7 @@ def _micro_init(aerosol, opts, state, info):
   micro = lgrngn.factory(lgrngn.backend_t.serial, opts_init)
   ambient_chem = {}
   if micro.opts_init.chem_switch:
-    ambient_chem = dict((v, state[k]) for k,v in _Chem_g_id.iteritems())
+    ambient_chem = dict((v, state[k]) for k,v in _Chem_g_id.items())
   micro.init(state["th_d"], state["r_v"], state["rhod"], ambient_chem=ambient_chem)
 
   # sanity check
@@ -129,7 +129,7 @@ def _micro_step(micro, state, info, opts, it, fout):
   # get trace gases
   ambient_chem = {}
   if micro.opts_init.chem_switch:
-    ambient_chem = dict((v, state[k]) for k,v in _Chem_g_id.iteritems())
+    ambient_chem = dict((v, state[k]) for k,v in _Chem_g_id.items())
 
   # call libcloudphxx microphysics
   micro.step_sync(libopts, state["th_d"], state["r_v"], state["rhod"], ambient_chem=ambient_chem)
@@ -141,7 +141,7 @@ def _micro_step(micro, state, info, opts, it, fout):
   # update in state for aqueous chem (TODO do we still want to have aq chem in state?)
   if micro.opts_init.chem_switch:
     micro.diag_all() # selecting all particles
-    for id_str, id_int in _Chem_g_id.iteritems():
+    for id_str, id_int in _Chem_g_id.items():
       # save changes due to chemistry
       micro.diag_chem(id_int)
       state[id_str.replace('_g', '_a')] = np.frombuffer(micro.outbuf())[0]
@@ -152,18 +152,18 @@ def _stats(state, info):
   info["RH_max"] = max(info["RH_max"], state["RH"])
 
 def _output_bins(fout, t, micro, opts, spectra):
-  for dim, dct in spectra.iteritems():
+  for dim, dct in spectra.items():
     for bin in range(dct["nbin"]):
       if dct["drwt"] == 'wet':
-	micro.diag_wet_rng(
-	  fout.variables[dim+"_r_wet"][bin],
-	  fout.variables[dim+"_r_wet"][bin] + fout.variables[dim+"_dr_wet"][bin]
-	)
+        micro.diag_wet_rng(
+          fout.variables[dim+"_r_wet"][bin],
+          fout.variables[dim+"_r_wet"][bin] + fout.variables[dim+"_dr_wet"][bin]
+        )
       elif dct["drwt"] == 'dry':
-	micro.diag_dry_rng(
-	  fout.variables[dim+"_r_dry"][bin],
-	  fout.variables[dim+"_r_dry"][bin] + fout.variables[dim+"_dr_dry"][bin]
-	)
+        micro.diag_dry_rng(
+          fout.variables[dim+"_r_dry"][bin],
+          fout.variables[dim+"_r_dry"][bin] + fout.variables[dim+"_dr_dry"][bin]
+        )
       else: raise Exception("drwt should be wet or dry")
 
       for vm in dct["moms"]:
@@ -184,7 +184,7 @@ def _output_init(micro, opts, spectra):
   # file & dimensions
   fout = netcdf.netcdf_file(opts["outfile"], 'w')
   fout.createDimension('t', None)
-  for name, dct in spectra.iteritems():
+  for name, dct in spectra.items():
     fout.createDimension(name, dct["nbin"])
 
     tmp = name + '_r_' + dct["drwt"]
@@ -215,30 +215,30 @@ def _output_init(micro, opts, spectra):
       	fout.variables[name+'_'+vm].unit = 'kg of chem species dissolved in cloud droplets (kg of dry air)^-1'
       else:
         assert(type(vm)==int)
-	fout.createVariable(name+'_m'+str(vm), 'd', ('t',name))
-	fout.variables[name+'_m'+str(vm)].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
+        fout.createVariable(name+'_m'+str(vm), 'd', ('t',name))
+        fout.variables[name+'_m'+str(vm)].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
 
   units = {"z"  : "m",     "t"   : "s",     "r_v"  : "kg/kg", "th_d" : "K", "rhod" : "kg/m3",
            "p"  : "Pa",    "T"   : "K",     "RH"   : "1"
   }
 
   if micro.opts_init.chem_switch:
-    for id_str in _Chem_g_id.iterkeys():
+    for id_str in _Chem_g_id.keys():
       units[id_str] = "gas mixing ratio [kg / kg dry air]"
       units[id_str.replace('_g', '_a')] = "kg of chem species (both undissociated and ions) dissolved in cloud droplets (kg of dry air)^-1"
 
-  for var_name, unit in units.iteritems():
+  for var_name, unit in units.items():
     fout.createVariable(var_name, 'd', ('t',))
     fout.variables[var_name].unit = unit
 
   return fout
 
 def _output_save(fout, state, rec):
-  for var, val in state.iteritems():
+  for var, val in state.items():
     fout.variables[var][int(rec)] = val
 
 def _save_attrs(fout, dictnr):
-  for var, val in dictnr.iteritems():
+  for var, val in dictnr.items():
     setattr(fout, var, val)
 
 def _output(fout, opts, micro, state, rec, spectra):
@@ -334,7 +334,9 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300.,
    """
   # packing function arguments into "opts" dictionary
   args, _, _, _ = inspect.getargvalues(inspect.currentframe())
-  opts = dict(zip(args, [locals()[k] for k in args]))
+  opts = dict()
+  for k in args:
+    opts[k] = locals()[k]
 
   # parsing json specification of output spectra
   spectra = json.loads(opts["out_bin"])
@@ -344,7 +346,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300.,
 
   # default water content
   if ((opts["r_0"] < 0) and (opts["RH_0"] < 0)):
-    print "both r_0 and RH_0 negative, using default r_0 = 0.022"
+    print("both r_0 and RH_0 negative, using default r_0 = 0.022")
     r_0 = .022
   # water coontent specified with RH
   if ((opts["r_0"] < 0) and (opts["RH_0"] >= 0)):
@@ -364,7 +366,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300.,
   }
 
   if opts["chem_dsl"] or opts["chem_dsc"] or opts["chem_rct"]:
-    for key in _Chem_g_id.iterkeys():
+    for key in _Chem_g_id.keys():
       state.update({ key : np.array([opts[key]])})
 
   info = { "RH_max" : 0, "libcloud_Git_revision" : libcloud_version,
@@ -434,7 +436,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300.,
 
       # output
       if (it % outfreq == 0):
-        print str(round(it / (nt * 1.) * 100, 2)) + " %"
+        print(str(round(it / (nt * 1.) * 100, 2)) + " %")
         rec = it/outfreq
         _output(fout, opts, micro, state, rec, spectra)
 
@@ -458,7 +460,7 @@ def _arguments_checking(opts, spectra, aerosol):
   if opts["w"] < 0:
     raise Exception("vertical velocity should be larger than 0")
 
-  for name, dct in aerosol.iteritems():
+  for name, dct in aerosol.items():
     # TODO: check if name is valid netCDF identifier
     # (http://www.unidata.ucar.edu/software/thredds/current/netcdf-java/CDM/Identifiers.html)
     keys = ["kappa", "mean_r", "n_tot", "gstdev"]
@@ -491,7 +493,7 @@ def _arguments_checking(opts, spectra, aerosol):
       if gstdev == 1.:
         raise Exception("standard deviation should be != 1 to avoid monodisperse distribution for aerosol[" + name + "]")
 
-  for name, dct in spectra.iteritems():
+  for name, dct in spectra.items():
     # TODO: check if name is valid netCDF identifier
     # (http://www.unidata.ucar.edu/software/thredds/current/netcdf-java/CDM/Identifiers.html)
     keys = ["left", "rght", "nbin", "drwt", "lnli", "moms"]
@@ -517,15 +519,15 @@ def _arguments_checking(opts, spectra, aerosol):
         raise Exception(">>moms<< key in out_bin["+ name +"] must be a list")
     for mom in dct["moms"]:
         if (type(mom) != int):
-          if (mom not in _Chem_a_id.keys()):
-            raise Exception(">>moms<< key in out_bin["+ name +"] must be a list of integer numbers or valid chemical compounds (" +str(_Chem_a_id.keys()) + ")")
+          if (mom not in list(_Chem_a_id.keys())):
+            raise Exception(">>moms<< key in out_bin["+ name +"] must be a list of integer numbers or valid chemical compounds (" +str(list(_Chem_a_id.keys())) + ")")
 
 # ensuring that pure "import parcel" does not trigger any simulation
 if __name__ == '__main__':
 
   # getting list of argument names and their default values
-  name, _, _, dflt = inspect.getargspec(parcel)
-  opts = dict(zip(name[-len(dflt):], dflt))
+  name, _, _, dflt = inspect.getfullargspec(parcel)[0:4]
+  opts = dict(list(zip(name[-len(dflt):], dflt)))
 
   # handling all parcel() arguments as command-line arguments
   prsr = ArgumentParser(add_help=True, description=parcel.__doc__, formatter_class=RawTextHelpFormatter)

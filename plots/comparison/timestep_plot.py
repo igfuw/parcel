@@ -41,7 +41,7 @@ def main(dt_list = [1e-3, 1.5e-3, 2e-3, 3e-3, 4e-3, 8e-3, 1e-2, 2e-2, 4e-2, 8e-2
     N_list  = []
 
     for dt in dt_list:
-        print "\nt time step", dt
+        print("\nt time step", dt)
         outfile_nc = "timesteptest_dt=" + str(dt) + ".nc"
         parcel(dt=dt, outfreq = int(z_max/w/dt),   outfile = outfile_nc,\
                 w = w, T_0 = T_init, p_0 = p_init, r_0 = r_init, z_max = z_max, \

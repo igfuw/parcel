@@ -67,8 +67,8 @@ def test_init_mass(data, eps = 1e-20):
     # initial dry mass of aerosol from paper [kg/kg dry air]
     art = 2.375 * 1e-9 / rhod_init
 
-    print "initial mixing ratio:      ", ini, " [kg / kg dry air]"
-    print "article init mixing ratio: ", art, " [kg / kg dry air]"
+    print("initial mixing ratio:      ", ini, " [kg / kg dry air]")
+    print("article init mixing ratio: ", art, " [kg / kg dry air]")
 
     assert np.isclose(art, ini, atol=0, rtol=eps), str((ini-art)/ini)
 
