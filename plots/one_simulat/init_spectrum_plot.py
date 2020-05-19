@@ -32,7 +32,7 @@ def plot_init_spectrum(data, outfolder):
     gstdev  = 2
 
     # from ncdf file attributes read out_bin parameters as a dictionary ...
-    out_bin = ast.literal_eval(getattr(data, "out_bin"))
+    out_bin = eval(getattr(data, "out_bin"))
     # ... and check if the spacing used in the test was logarithmic
     assert out_bin["drad"]["lnli"] == 'log', "this test should be run with logarithmic spacing of bins"
 
