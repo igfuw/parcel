@@ -3,16 +3,26 @@ import sys
 sys.path.insert(0, "../../")
 sys.path.insert(0, "../")
 sys.path.insert(0, "./")
+sys.path.insert(0, "/home/piotr/Piotr/IGF/local_install/parcel/lib/python3/dist-packages")
 
+import ast
+import functions as fn
+from parcel import parcel
+from libcloudphxx import common
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from matplotlib.font_manager import FontProperties
 from scipy.io import netcdf
 import numpy as np
 import pytest
+import os, glob
 import subprocess
-from libcloudphxx import common
-import ast
+import pdb
 import math
-from parcel import parcel
-import functions as fn
+import matplotlib.animation as animation
+import matplotlib.patches as patches
+import matplotlib.path as path
 
 def plot_spectrum(data, data2,  outfolder):
 
@@ -62,7 +72,7 @@ def plot_spectrum(data, data2,  outfolder):
         plt.ylim((1,160))
         plt.legend()
         plt.grid(True,  linestyle='-.')
-        fig.savefig(os.path.join(my_path, 'plot_spec_' + str("%03d" % t) + '_RICO.svg'))
+        fig.savefig(os.path.join(my_path, 'plot_spec_' + str("%03d" % t) + '_RICO.png'))
         plt.clf()
         plt.cla()
         plt.close()
@@ -87,6 +97,7 @@ def plot_init_spectrum(data, outfolder):
     # assert out_bin["wradii"]["lnli"] == 'log', "this test should be run with logarithmic spacing of bins"
 
     # parcel initial condition
+#    rd = data.variables["wradii_r_wet"][:] # left bin edges
     rd = data.variables["wradii_r_wet"][:] # left bin edges
 
     # for comparison, model solution needs to be divided by log(d2) - log(d2)
@@ -96,6 +107,7 @@ def plot_init_spectrum(data, outfolder):
     # initial size distribution from the model
     model = data.variables['wradii_m0'][0,:] * data.variables["rhod"][0] / d_log_rd
 
+    np.savetxt('Rico_for _HP.csv', [p for p in zip(rd, data.variables['wradii_m0'][0,:])], delimiter=',', fmt='%s')
     # variables for plotting theoretical solution
     radii = np.logspace(-3, 1, 100) * 1e-6
     theor = np.empty(radii.shape)
@@ -105,17 +117,17 @@ def plot_init_spectrum(data, outfolder):
         theor2[it] = fn.log10_size_of_lnr(n_tot2, mean_r2, math.log(radii[it], 10), gstdev2)
     fig1 = plt.figure()
     fig1.set_size_inches(18.5, 10.5)
-    plt.plot(radii * 2 * 1e6,  theor  * 1e-6,  label="theory")
-    plt.plot(radii * 2 * 1e6,  theor2 * 1e-6,  label="theory2")
-    plt.step(rd    * 2 * 1e6,  model  * 1e-6,  label="model")
+    plt.plot(radii * 1e6,  theor  * 1e-6,  label="theory")
+    plt.plot(radii * 1e6,  theor2 * 1e-6,  label="theory2")
+    plt.step(rd    * 1e6,  model  * 1e-6,  label="model")
     plt.xscale('log')
     plt.xlabel("particle radius [μm]")
-    plt.ylabel("dN/dlog_{10}(D) [cm^{-3} log_{10}(size interval)]")
+    plt.ylabel("dN/dlog_{10}(D) [cm^{-3}]")# log_{10}(size interval)]")
     plt.xlim((0.001,10))
-    plt.ylim((0,800))
+    plt.ylim((0,400))
     plt.legend()
     plt.grid(True,  linestyle='-.')
-    fig1.savefig(os.path.join(my_path, 'init_spectrum_RICO.svg'))
+    fig1.savefig(os.path.join(my_path, 'init_spectrum_RICO.png'))
     plt.clf()
     plt.cla()
     plt.close()
@@ -129,7 +141,7 @@ def main():
     r_init  = common.eps * RH_init * common.p_vs(T_init) / (p_init - RH_init * common.p_vs(T_init))
     outfile = "test_spectrum_RICO.nc"
     outfile2 = "test_spectrum2_RICO.nc"
-    out_bin = '{"wradii": {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "lin", "nbin": 100, "moms": [0]},\
+    out_bin = '{"wradii": {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "log", "nbin": 100, "moms": [0]},\
                 "dradii": {"rght": 1e-6, "left": 1e-9, "drwt": "dry", "lnli": "lin", "nbin": 100, "moms": [0]}}'
 
     # run parcel run!
@@ -139,9 +151,9 @@ def main():
     data = netcdf.netcdf_file(outfile, "r")
     data2 = netcdf.netcdf_file(outfile2, "r")
     # plotting
-    plot_spectrum(data, data2, outfolder="/home/piotr/Piotr/IGF/parcel3/parcel/plots/wyniki_python3/RICO")
-    # doing plotting
-    # plot_init_spectrum(data, outfolder="/home/piotr/Piotr/IGF/parcel3/parcel/plots/wyniki_python3/RICO")
+#    plot_spectrum(data, data2, outfolder="/home/piotr/Piotr/IGF/parcel3/parcel/plots/wyniki_python3/RICO")
+#    # doing plotting
+    plot_init_spectrum(data, outfolder="/home/piotr/Piotr/IGF/parcel3/parcel/plots/wyniki_python3/RICO")
 
     # cleanup
     subprocess.call(["rm", outfile])

@@ -3,6 +3,7 @@ import sys
 sys.path.insert(0, "../../")
 sys.path.insert(0, "../")
 sys.path.insert(0, "./")
+sys.path.insert(0, "/home/piotr/Piotr/IGF/local_install/parcel/lib/python3/dist-packages")
 
 from scipy.io import netcdf
 import numpy as np

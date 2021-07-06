@@ -25,9 +25,6 @@ T_init  = 280.
 p_init  = 100000.
 r_init  = common.eps * RH_init * common.p_vs(T_init) / (p_init - RH_init * common.p_vs(T_init))
 
-print common.R_v
-
-'''
 w_list = [ 0.1, 0.5, 1, 2, 5]
 sstp_cond = [1, 2, 5, 10, 20 ]
 # w_list = [ 4, 5]
@@ -40,8 +37,8 @@ for w in w_list:
     fig = plt.figure(figsize=(28,13))
     for st_cond in sstp_cond:
         outfile = "onesim_plot.nc"
-        print "updraft velosity", w
-        print "\nt condensation time step", st_cond
+        print("updraft velosity", w)
+        print("\nt condensation time step", st_cond)
         outfile_nc = "timesteptest_cond=" + str(st_cond)+"updraft_velocity"+ str(w)+ ".nc"
         parcel(dt=1, outfreq = math.ceil(1./w),   outfile = outfile_nc,\
                 w = w, T_0 = T_init, p_0 = p_init, r_0 = r_init, z_max = 200, sstp_cond = st_cond, \
@@ -54,7 +51,7 @@ for w in w_list:
                 out_bin = '{"wradii": {"rght": 1e-4, "left": 1e-9, "drwt": "dry", "lnli": "log", "nbin": 100, "moms": [0,1]},\
                             "cloud": {"rght": 1e-4, "left": 0.5e-6, "drwt": "wet", "lnli": "log", "nbin": 100, "moms": [0,1]}}')
                 # '{"ammonium_sulfate": {"kappa": 0.61, "mean_r": [0.011e-6, 0.06e-6], "gstdev": [1.2, 1.7], "n_tot": [125e6, 65e6]}}'
-        output_folder="/home/piotr/Piotr/IGF/parcel/wyniki_momenty"
+        output_folder="/home/piotr/Piotr/IGF/parcel3/parcel/wyniki_momenty_single"
         fnc = netcdf.netcdf_file(outfile_nc)
 
 
@@ -96,7 +93,7 @@ for w in w_list:
         # m1 = np.sum(fnc.variables["cloud_m1"][:],axis=1)
         m0 = fnc.variables["number_of_rc_m0"][:]
         m1 = fnc.variables["number_of_rc_m1"][:]
-        print m1/m0
+        # print m1/m0
         ax = fig.add_subplot(222)
         ax.set_xlabel('mean radius ' + r'$[\mu m]$')
         ax.set_ylabel('Z [m]')
@@ -113,4 +110,3 @@ for w in w_list:
         if not os.path.exists(output_folder):
             subprocess.call(["mkdir", output_folder])
     plt.savefig(os.path.join(output_folder, "STRATOCUMULUS_PARCEL_updraft_velocity_"+ str(w)+".svg"))
-'''

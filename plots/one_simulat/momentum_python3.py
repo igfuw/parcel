@@ -1,30 +1,39 @@
 # This Python file uses the following encoding: utf-8
 import sys
+sys.path.insert(0, "../../")
 sys.path.insert(0, "../")
-sys.path.insert(0, "~/Piotr/IGF/parcel3/parcel/plots/comparison")
 sys.path.insert(0, "./")
-sys.path.insert(0, "plots/comparison/")
 sys.path.insert(0, "/home/piotr/Piotr/IGF/local_install/parcel/lib/python3/dist-packages")
 
+import ast
+import functions as fn
+from parcel import parcel
+from libcloudphxx import common
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from matplotlib.font_manager import FontProperties
 from scipy.io import netcdf
 import numpy as np
 import pytest
+import os, glob
 import subprocess
-import Gnuplot
-from pygnuplot import gnuplot
-from parcel import parcel
+import pdb
+import math
+import matplotlib.animation as animation
+import matplotlib.patches as patches
+import matplotlib.path as path
+from matplotlib.animation import FuncAnimation
 
 def plot_spectrum(data, outfolder):
-    
 
-    g = Gnuplot.Gnuplot()# persist=1)
-    g('set term svg dynamic enhanced')
 
+    my_path = os.path.abspath(outfolder)
     ymax = 1e4
     ymin = 1e-1
 
-    rw = data.variables["cloud_r_wet"][:] * 1e6
-    # rd = data.variables["dradii_r_dry"][:] * 1e6
+    rw = data.variables["wradii_r_wet"][:] * 1e6
+    rd = data.variables["dradii_r_dry"][:] * 1e6
 
     #TODO - add test if it is == to dr in netcdf
     drw = np.empty(rw.shape)
@@ -51,18 +60,32 @@ def plot_spectrum(data, outfolder):
 
         g('set xlabel "particle radius [μm]" ')
 
-        nw = data.variables['cloud_m0'][t,:] / drw
-        # nd = data.variables['dradii_m0'][t,:] / drd
+        nw = data.variables['wradii_m0'][t,:] / drw
+        nd = data.variables['dradii_m0'][t,:] / drd
 
         plot_rw = Gnuplot.PlotItems.Data(rw, nw, with_="fsteps", title="wet radius")
-        # plot_rd = Gnuplot.PlotItems.Data(rd, nd, with_="fsteps", title="dry radius")
+        plot_rd = Gnuplot.PlotItems.Data(rd, nd, with_="fsteps", title="dry radius")
 
-        g.plot(plot_rw, plot_rd)
+        fig = plt.figure()
+        fig.set_size_inches(18.5, 10.5)
+        plt.step(rw, nw, label="1")
+        plt.step(rw2, nw2,  label="1/10")
+        plt.step(rd2, nd2,  label="dry radius")
+        # plt.step(rd, nd, where='mid', label="dry radius")
+        plt.xlabel("particle radius [μm]")
+        plt.xlim((0,15))
+        plt.ylim((1,160))
+        plt.legend()
+        plt.grid(True,  linestyle='-.')
+        fig.savefig(os.path.join(my_path, 'plot_spec_' + str("%03d" % t) + '_DYCOMS.svg'))
+        plt.clf()
+        plt.cla()
+        plt.close()
 
 def main():
 
     outfile = "test_spectrum.nc"
-    out_bin = '{"cloud": {"rght": 2.5e-05, "moms": [0,1,3], "drwt": "wet", "nbin": 26, "lnli": "log", "left": 5e-07}}'
+    out_bin = '"cloud": {"rght": 2.5e-05, "moms": [0, 1, 2, 3], "drwt": "wet", "nbin": 1, "lnli": "lin", "left": 5e-07}'
 
     # run parcel run!
     parcel(dt = .5, sd_conc = 1024, outfreq = 40,  outfile = outfile, out_bin = out_bin)
@@ -70,8 +93,7 @@ def main():
     data = netcdf.netcdf_file(outfile, "r")
 
     # plotting
-#    plot_spectrum(data, outfolder="../outputs/")
-    plot_spectrum(data, outfolder="/home/piotr/Piotr/IGF/parcel3/parcel/wyniki_spectrum")
+    plot_spectrum(data, outfolder="/home/piotr/Piotr/IGF/parcel3/parcel/wyniki_laptop")
 
     # cleanup
     subprocess.call(["rm", outfile])

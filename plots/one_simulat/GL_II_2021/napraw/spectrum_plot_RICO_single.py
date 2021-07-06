@@ -3,7 +3,6 @@ import sys
 sys.path.insert(0, "../../")
 sys.path.insert(0, "../")
 sys.path.insert(0, "./")
-sys.path.insert(0, "/home/piotr/Piotr/IGF/local_install/parcel/lib/python3/dist-packages")
 
 from scipy.io import netcdf
 import numpy as np
@@ -52,11 +51,11 @@ def plot_spectrum(data, data2,  outfolder):
         g('set term svg dynamic enhanced')
         g('reset')
         g('set output "' + outfolder + 'plot_spec_' + str("%03d" % t) + '.svg"')
-        # g('set logscale xy')
-        # g('set ylabel "[mg^{-1} μm^{-1}]"')
-        # g('set yrange [' +  str(ymin) + ':' + str(ymax) + ']')
-        g('set yrange [1:160]')
-        g('set xrange [0:15]')
+        g('set logscale xy')
+        g('set ylabel "[mg^{-1} μm^{-1}]"')
+        g('set yrange [' +  str(ymin) + ':' + str(ymax) + ']')
+        # g('set yrange [1:200]')
+        # g('set xrange [0:15]')
         g('set grid')
         # g('set nokey')
 
@@ -65,6 +64,7 @@ def plot_spectrum(data, data2,  outfolder):
         g('set arrow from 25,' + str(ymin) + 'to 25,' + str(ymax) + 'nohead')
 
         g('set xlabel "particle radius [μm]" ')
+        g('set ylabel "mg^{-1} "')
 
         nw = data.variables['wradii_m0'][t,:] / drw
         nd = data.variables['dradii_m0'][t,:] / drd
@@ -90,19 +90,21 @@ def plot_init_spectrum(data, outfolder):
     import Gnuplot
 
     # size distribution parameters from Kreidenweis 2003
-    # n_tot   = 90e6
-    # mean_r  = 0.03e-6
-    # gstdev  = 1.28
+    #Warunki dla RICO
+    n_tot   = 90e6
+    mean_r  = 0.03e-6
+    gstdev  = 1.28
     # n_tot2   = 15e6
     # mean_r2  = 0.14e-6
     # gstdev2  = 1.75
 
-    n_tot   = 125e6
-    mean_r  = 0.011e-6
-    gstdev  = 1.2
-    n_tot2   = 65e6
-    mean_r2  = 0.06e-6
-    gstdev2  = 1.7
+    #Warunki dla DYCOMS
+    # n_tot   = 125e6
+    # mean_r  = 0.011e-6
+    # gstdev  = 1.2
+    # n_tot2   = 65e6
+    # mean_r2  = 0.06e-6
+    # gstdev2  = 1.7
 
 
     # from ncdf file attributes read out_bin parameters as a dictionary ...
@@ -118,7 +120,7 @@ def plot_init_spectrum(data, outfolder):
     d_log_rd = math.log(rd[2], 10) - math.log(rd[1], 10)
 
     # initial size distribution from the model
-    model = data.variables['wradii_m0'][0,:] * data.variables["rhod"][0] / d_log_rd
+    model = data.variables['dradii_m0'][0,:] * data.variables["rhod"][0] / d_log_rd
 
     # variables for plotting theoretical solution
     radii = np.logspace(-3, 1, 100) * 1e-6
@@ -126,40 +128,60 @@ def plot_init_spectrum(data, outfolder):
     theor2 = np.empty(radii.shape)
     for it in range(radii.shape[0]):
         theor[it] = fn.log10_size_of_lnr(n_tot, mean_r, math.log(radii[it], 10), gstdev)
-        theor2[it] = fn.log10_size_of_lnr(n_tot2, mean_r2, math.log(radii[it], 10), gstdev2)
+        # theor2[it] = fn.log10_size_of_lnr(n_tot2, mean_r2, math.log(radii[it], 10), gstdev2)
     g = Gnuplot.Gnuplot()
     g('set term svg dynamic enhanced')
     g('reset')
     g('set output "' + outfolder + '/init_spectrum.svg" ')
     g('set logscale x')
     g('set xlabel "particle dry diameter [μm]" ')
-    g('set ylabel "dN/dlog_{10}(D) [cm^{-3} log_{10}(size interval)]"')
+    g('set ylabel "dN/dlog_{10}(D) [cm^{-3} log_{10}(size interval)]" ')
     g('set grid')
     g('set xrange [0.001:10]')
     g('set yrange [0:800]')
 
     theory_r = Gnuplot.PlotItems.Data(radii * 2 * 1e6,  theor * 1e-6, with_="lines", title="theory")
-    theory_r2 = Gnuplot.PlotItems.Data(radii * 2 * 1e6,  theor2 * 1e-6, with_="lines", title="theory2")
+    # theory_r2 = Gnuplot.PlotItems.Data(radii * 2 * 1e6,  theor2 * 1e-6, with_="lines", title="theory2")
     plot     = Gnuplot.PlotItems.Data(rd    * 2 * 1e6,  model * 1e-6, with_="steps", title="model" )
 
-    g.plot(theory_r, theory_r2, plot)
+    # g.plot(theory_r, theory_r2, plot)
+    g.plot(theory_r, plot)
 
 def main():
 
+    rho_l = 1000
+    sigma = 75.64e-3
+    R_v = 461.5;
 
     RH_init = .98
     T_init  = 298.
     p_init  = 100000.
     r_init  = common.eps * RH_init * common.p_vs(T_init) / (p_init - RH_init * common.p_vs(T_init))
+    print r_init
+    mean_radius = 0.03e-6
+    kapa = 0.61
+    def A(T):
+    	return 2*sigma/(rho_l*R_v*T)
+
+    def Bs_simple(rd, kappa):
+    	return kappa * pow(rd,3)
+
+    r_critic = pow((3*Bs_simple(mean_radius, kapa)/A(T_init)),0.5)
+
+    print 3*Bs_simple(mean_radius, kapa)
+    print A(T_init)
+    print r_critic
+
     outfile = "test_spectrum.nc"
     outfile2 = "test_spectrum2.nc"
-    out_bin = '{"wradii": {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "lin", "nbin": 100, "moms": [0]},\
-                "dradii": {"rght": 1e-6, "left": 1e-9, "drwt": "dry", "lnli": "lin", "nbin": 100, "moms": [0]}}'
+    out_bin = '{"wradii": {"rght": 1e-4, "left": 2.11938889168e-07, "drwt": "wet", "lnli": "log", "nbin": 100, "moms": [0]},\
+                "dradii": {"rght": 1e-6, "left": 1e-9, "drwt": "dry", "lnli": "log", "nbin": 100, "moms": [0]}}'
 
     # run parcel run!
-    parcel(dt = 1, T_0 = T_init, p_0 = p_init, RH_0 = .98, sstp_cond =1, z_max = 200, w=5,  sd_conc = 10000, outfreq = 1, aerosol = '{"ammonium_sulfate": {"kappa": 0.61, "mean_r": [0.011e-6, 0.06e-6], "gstdev": [1.2, 1.7], "n_tot": [125e6, 65e6]}}', outfile = outfile, out_bin = out_bin)
-    parcel(dt = 1, T_0 = T_init, p_0 = p_init, RH_0 = .98, sstp_cond =10, z_max = 200, w=5,  sd_conc = 10000, outfreq = 1, aerosol = '{"ammonium_sulfate": {"kappa": 0.61, "mean_r": [0.011e-6, 0.06e-6], "gstdev": [1.2, 1.7], "n_tot": [125e6, 65e6]}}', outfile = outfile2, out_bin = out_bin)
+    parcel(dt = 1, T_0 = T_init, p_0 = p_init, RH_0 = .98, sstp_cond =1, z_max = 200, w=5,  sd_conc = 10000, outfreq = 1, aerosol = '{"ammonium_sulfate": {"kappa": 0.61, "mean_r": [0.03e-6], "gstdev": [1.01], "n_tot": [90e6]}}', outfile = outfile, out_bin = out_bin)
+    parcel(dt = 1, T_0 = T_init, p_0 = p_init, RH_0 = .98, sstp_cond =10, z_max = 200, w=5,  sd_conc = 10000, outfreq = 1, aerosol = '{"ammonium_sulfate": {"kappa": 0.61, "mean_r": [0.03e-6], "gstdev": [1.01], "n_tot": [90e6]}}', outfile = outfile2, out_bin = out_bin)
 
+                                                                                                                                                        #Warunki dla DYCOMS "mean_r": [0.011e-6, 0.06e-6], "gstdev": [1.2, 1.7], "n_tot": [125e6, 65e6]}
     data = netcdf.netcdf_file(outfile, "r")
     data2 = netcdf.netcdf_file(outfile2, "r")
     # plotting

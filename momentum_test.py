@@ -1,8 +1,12 @@
 import sys
-sys.path.insert(0, "../")
-sys.path.insert(0, "/home/piotr/Piotr/IGF/parcel/plots/comparison")
-sys.path.insert(0, "./")
+#sys.path.insert(0, "../")
+sys.path.insert(0, "~/Piotr/IGF/parcel3/parcel/plots/comparison")
+sys.path.insert(0, "~/Piotr/IGF/parcel3/parcel/plots/one_simulation")
+#sys.path.insert(0, "./")
 sys.path.insert(0, "plots/comparison/")
+sys.path.insert(0, "plots/one_simulation/")
+sys.path.insert(0, "/home/piotr/Piotr/IGF/local_install/parcel/lib/python3/dist-packages")
+
 
 from parcel import parcel
 from libcloudphxx import common
@@ -43,8 +47,8 @@ for w in w_list:
     fig = plt.figure(figsize=(28,23))
     for st_cond in sstp_cond:
         outfile = "onesim_plot.nc"
-        print "updraft velosity", w
-        print "\nt condensation time step", st_cond
+        print( "updraft velosity", w)
+        print( "\nt condensation time step", st_cond)
         outfile_nc = "timesteptest_cond=" + str(st_cond)+"updraft_velocity"+ str(w)+ ".nc"
         parcel(dt=1, outfreq = ceil(1./w),   outfile = outfile_nc,\
                 w = w, T_0 = T_init, p_0 = p_init, RH_0 = .98, z_max = 200, sstp_cond = st_cond, \
@@ -70,7 +74,7 @@ for w in w_list:
         # print np.percentile(import matplotlib.patches as patches
 
 
-        print np.percentile(fnc.variables["cloud_m0"][0],10)
+        print( np.percentile(fnc.variables["cloud_m0"][0],10))
         ax = fig.add_subplot(231)
         ax.set_xlabel('RH [%]')
         ax.set_ylabel('Z [m]')
@@ -225,7 +229,7 @@ for w in w_list:
         # anim = FuncAnimation(fig, animate, init_func=init,
         #                        frames=200, interval=1, blit=True)
 
-        plot_init_spectrum(data, outfolder = "plots/outputs/")
+        plot_init_spectrum(data, outfolder = "/home/piotr/Piotr/IGF/parcel3/parcel/wyniki_spectrum")
         if not os.path.exists(output_folder):
             subprocess.call(["mkdir", output_folder])
     plt.savefig(os.path.join(output_folder, "Condensation_time_step_variation_for_cumulus_updraft_velocity"+ str(w)+".svg"))

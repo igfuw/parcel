@@ -1,8 +1,9 @@
 import sys
 sys.path.insert(0, "../")
-sys.path.insert(0, "/home/piotr/Piotr/IGF/parcel/plots/comparison")
+sys.path.insert(0, "~/Piotr/IGF/parcel3/parcel/plots/comparison")
 sys.path.insert(0, "./")
 sys.path.insert(0, "plots/comparison/")
+sys.path.insert(0, "/home/piotr/Piotr/IGF/local_install/parcel/lib/python3/dist-packages")
 
 from parcel import parcel
 from libcloudphxx import common
@@ -33,8 +34,8 @@ for w in w_list:
     fig = plt.figure(figsize=(28,13))
     for st_cond in sstp_cond:
         outfile = "onesim_plot.nc"
-        print "updraft velosity", w
-        print "\nt condensation time step", st_cond
+        print( "updraft velosity", w)
+        print( "\nt condensation time step", st_cond)
         outfile_nc = "timesteptest_cond=" + str(st_cond)+"updraft_velocity"+ str(w)+ ".nc"
         parcel(dt=1, outfreq = math.ceil(1./w),   outfile = outfile_nc,\
                 w = w, T_0 = T_init, p_0 = p_init, r_0 = r_init, z_max = 200, sstp_cond = st_cond, \
@@ -42,7 +43,7 @@ for w in w_list:
                 aerosol = '{"ammonium_sulfate": {"kappa": 0.61, "mean_r": [0.011e-6, 0.06e-6], "gstdev": [1.2, 1.7], "n_tot": [125e6, 15e6]}}',
                 out_bin = '{"cloud": {"rght": 2.5e-05, "moms": [0], "drwt": "wet", "nbin": 1, "lnli": "lin", "left": 5e-07}}'
                 )
-        output_folder="/home/piotr/Piotr/IGF/parcel/wyniki_momenty"
+        output_folder="/home/piotr/Piotr/IGF/parcel3/parcel/wyniki_momenty"
         fnc = netcdf.netcdf_file(outfile_nc)
 
 

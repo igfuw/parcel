@@ -1,0 +1,140 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy.stats as st
+from math import exp,sqrt
+
+RH_init = 0.98
+T_init  = 288.
+p_init  = 100000.
+
+R =287;
+R_v = 461.5;
+c_p = 1004;
+kappa = R/c_p;
+P_R = 1e5;
+g = 9.81;
+eps =0.622;
+T_0 = 273.15;
+L_v = 2.5e6;
+Do = 2.21e-5;
+e_s0 = 611;
+C_gamm = 1.5e-9;
+C = 100e-6;
+D = 0.9152e-10;
+divide = 2
+kappak = 0.61;
+r_dmin = 0.05e-6;
+ro_d = 1;
+Ko = 2.4e-2;
+rho_l = 1000
+p_atm = 101325;
+sigma = 75.64e-3
+#C_kappa = kappak*pow(r_d,3);
+
+##########################################################################################################################
+
+def Critical_super_Saturation(r_dry):
+	C_kapp = kappak*pow(r_dry,3)
+	a = pow(4*C_gamm, 3)
+	b= 27*C_kapp
+	return pow(a/b, 1/2)
+
+def Supersaturation(RH, press, T):
+    p_vs = 6.1078e2 * exp( 17.27 * (T-273.15) / ( T-273.15 + 237.3))
+    r_va  = eps * RH * p_vs / (press - RH *p_vs)
+    e = press*r_va/(eps+r_va)
+    es = e_s0*exp(-((1/(T))-(1/T_0))*(L_v/R_v))
+    return (e/es)-1
+		
+	
+def growth(r_d, S):
+    x_a= 1e-5
+    x_b= 1e-8
+    err = 1
+    f = lambda x: S - (C_gamm/x) + (kappak*pow(r_d,3)/pow(x,3))
+    while (err >= tol):
+        mean = (x_a+x_b)/2
+        if f(x_a)* f(mean)<0:
+            x_a = x_a
+            x_b = mean
+        elif f(x_b)*f(mean) <0:
+            x_a = mean
+            x_b = x_b
+        elif f(mean) == 0:
+            return mean          
+        P = f(mean)
+        err = abs((S - P)/S)
+	return mean
+	
+Supe = Supersaturation(RH_init, p_init, T_init)
+	
+print(growth(1e-6,Supe) 
+#def growth(tolerance, D, S, r_int):
+#	X = pow(r_int,2)
+#	err=1
+#	nx = 0
+#	while (err >= tolerance):
+#		F = 2*D*(S-(C_gamm/(pow(X,1/2)))+(C_kappa/(pow(X,3/2))))*time_step-X+(pow(r_int,2))
+#		dF = 2 * D *(C_gamm/(2*pow(X,3/2))-(3*C_kappa/(2*pow(X,5/2))))*time_step-1
+#		nx = X - F/dF
+#		err=abs((nx-X)/X)
+#		X = nx
+#	return sqrt(X)  
+def log10_distr(mu, sigma, N, r):
+    
+    return (np.exp(-(np.log10(r) - np.log10(mu))**2 / (2 * np.log10(sigma)**2))  / ( np.log10(sigma) * np.sqrt(2 * np.pi)))*N
+    
+    
+   
+mu = [0.24e-6, 0.04e-6, 0.44e-6, 0.14e-6]
+sigma = [1.58, 1.38, 2.5, 1.1]
+N = [90e6, 90e6, 90e6, 80e6]
+           
+
+
+
+
+print((C_gamm/1e-6) - (kappak*pow(1e-8,3)/pow(1e-6,3)))
+print((C_gamm/1e-8) - (kappak*pow(1e-8,3)/pow(1e-8,3)))
+'''
+radii = np.logspace(-2, 2, 10000) * 1e-6
+radii_wet = growth2(radii, RH_init, 0.61)
+print(radii)
+print(radii_wet)
+x = np.zeros((len(radii), int(len(mu))))
+y = np.zeros((len(radii), int(len(mu))))
+
+
+
+
+fig1 = plt.figure()
+fig1.set_size_inches(18.5, 10.5)
+
+for i in range(len(mu)):
+    x[:,i] = log10_distr(mu[i], sigma[i], N[i], radii)
+#    y[:,i] = log10_distr(mu[i], sigma[i], N[i], radii_wet)
+    plt.subplot(221+i)
+    plt.plot(radii * 1e6,  x[:,i] * 1e-6,  label=("$\mu$= "+str(mu[i]*1e6) + "[m], $\sigma$ = " + str(sigma[i]) +", N = "+str(N[i]/1e6) +r"[$\frac{\#\cdot 1e6}{m^{-3}}$]"))
+    plt.plot(radii*1.4 * 1e6,  x[:,i] * 1e-6/1.4,  label=("WET $\mu$= "+str(mu[i]*1e6) + "[m], $\sigma$ = " + str(sigma[i]) +", N = "+str(N[i]/1e6) +r"[$\frac{\#\cdot 1e6}{m^{-3}}$]"))
+    plt.xscale('log')
+    plt.xlabel("particle radius [μm]")
+    plt.ylabel(r"$\frac{dN}{dlog_{10}(D)} [cm^{-3}]$")
+#    plt.xlim((0.01,20))
+#    plt.ylim((0,np.max((x[:,i]*1e-6))*1.1))
+    plt.legend()
+    plt.grid(True,  linestyle='-.')
+fig1.savefig('init_spectrum_TEST2.png')
+
+
+#lognormal = st.lognorm(s=sigma, scale = np.exp(mu))
+#theor = np.empty(radii.shape)
+#for it in range(radii.shape[0]):
+#    theor[it] = log10_size_of_lnr(N, mu, math.log(radii[it], 10), sigma)
+#    x[it] = (np.exp(-(np.log10(radii[it]) - np.log10(mu))**2 / (2 * np.log10(sigma)**2))  / ( np.log10(sigma) * np.sqrt(2 * np.pi)))*N
+#    x[it] = st.lognorm.pdf(radii[it],loc=np.log10(mu), scale=np.exp(mu), s=sigma)*N
+#print(theor)
+#
+#
+#x = lognormal.pdf(radii)*N
+#print(x)
+'''

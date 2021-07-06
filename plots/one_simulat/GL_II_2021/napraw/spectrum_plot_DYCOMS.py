@@ -3,7 +3,6 @@ import sys
 sys.path.insert(0, "../../")
 sys.path.insert(0, "../")
 sys.path.insert(0, "./")
-sys.path.insert(0, "/home/piotr/Piotr/IGF/local_install/parcel/lib/python3/dist-packages")
 
 from scipy.io import netcdf
 import numpy as np
@@ -65,6 +64,7 @@ def plot_spectrum(data, data2,  outfolder):
         g('set arrow from 25,' + str(ymin) + 'to 25,' + str(ymax) + 'nohead')
 
         g('set xlabel "particle radius [μm]" ')
+        g('set ylabel "mg^{-1} "')
 
         nw = data.variables['wradii_m0'][t,:] / drw
         nd = data.variables['dradii_m0'][t,:] / drd
@@ -111,14 +111,14 @@ def plot_init_spectrum(data, outfolder):
     assert out_bin["wradii"]["lnli"] == 'log', "this test should be run with logarithmic spacing of bins"
 
     # parcel initial condition
-    rd = data.variables["wradii_r_wet"][:] # left bin edges
+    rd = data.variables["dradii_r_dry"][:] # left bin edges
 
     # for comparison, model solution needs to be divided by log(d2) - log(d2)
     # since the test is run with log spacing of bins log(d2) - log(d1) = const
     d_log_rd = math.log(rd[2], 10) - math.log(rd[1], 10)
 
     # initial size distribution from the model
-    model = data.variables['wradii_m0'][0,:] * data.variables["rhod"][0] / d_log_rd
+    model = data.variables['dradii_m0'][0,:] * data.variables["rhod"][0] / d_log_rd
 
     # variables for plotting theoretical solution
     radii = np.logspace(-3, 1, 100) * 1e-6
@@ -153,8 +153,8 @@ def main():
     r_init  = common.eps * RH_init * common.p_vs(T_init) / (p_init - RH_init * common.p_vs(T_init))
     outfile = "test_spectrum.nc"
     outfile2 = "test_spectrum2.nc"
-    out_bin = '{"wradii": {"rght": 1e-4, "left": 1e-9, "drwt": "wet", "lnli": "lin", "nbin": 100, "moms": [0]},\
-                "dradii": {"rght": 1e-6, "left": 1e-9, "drwt": "dry", "lnli": "lin", "nbin": 100, "moms": [0]}}'
+    out_bin = '{"wradii": {"rght": 1e-4, "left": 1e-9, "drwt": "dry", "lnli": "log", "nbin": 100, "moms": [0]},\
+                "dradii": {"rght": 1e-6, "left": 1e-9, "drwt": "dry", "lnli": "log", "nbin": 100, "moms": [0]}}'
 
     # run parcel run!
     parcel(dt = 1, T_0 = T_init, p_0 = p_init, RH_0 = .98, sstp_cond =1, z_max = 200, w=5,  sd_conc = 10000, outfreq = 1, aerosol = '{"ammonium_sulfate": {"kappa": 0.61, "mean_r": [0.011e-6, 0.06e-6], "gstdev": [1.2, 1.7], "n_tot": [125e6, 65e6]}}', outfile = outfile, out_bin = out_bin)
@@ -163,7 +163,7 @@ def main():
     data = netcdf.netcdf_file(outfile, "r")
     data2 = netcdf.netcdf_file(outfile2, "r")
     # plotting
-    plot_spectrum(data, data2, outfolder="../outputs/")
+    # plot_spectrum(data, data2, outfolder="../outputs/")
     # doing plotting
     plot_init_spectrum(data, outfolder="../outputs/")
 

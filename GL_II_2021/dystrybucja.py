@@ -24,17 +24,17 @@ plt.rcParams.update({'font.size': 18})
 
 
 
-n_tot=9.93e4
-mean_r=0.013
-gstdev=exp(0.245)
+n_tot=90e6
+mean_r=0.01e-6
+gstdev=exp(1.58)
 
-n_tot2=1.11e3
-mean_r2=0.014
-gstdev2=exp(0.666)
-
-n_tot3=3.64e4
-mean_r3=0.05
-gstdev3=exp(0.337)
+#n_tot2=1.11e3
+#mean_r2=0.014
+#gstdev2=exp(0.666)
+#
+#n_tot3=3.64e4
+#mean_r3=0.05
+#gstdev3=exp(0.337)
 
 
 def distribution(u, N, std, mean):
@@ -60,9 +60,9 @@ Rozklad3 = np.zeros(len(x))
 for i in range(len(x)):
 
     Rozklad[i] = surface_distribution(x[i], n_tot, gstdev, mean_r)
-    Rozklad2[i] = surface_distribution(x[i], n_tot2, gstdev2, mean_r2)
-    Rozklad3[i] = surface_distribution(x[i], n_tot3, gstdev3, mean_r3)
-    Rozklad[i] = Rozklad[i] + Rozklad2[i] + Rozklad3[i]
+#    Rozklad2[i] = surface_distribution(x[i], n_tot2, gstdev2, mean_r2)
+#    Rozklad3[i] = surface_distribution(x[i], n_tot3, gstdev3, mean_r3)
+    Rozklad[i] = Rozklad[i]# + Rozklad2[i] + Rozklad3[i]
 
 plt.xscale('log')
 plt.plot(x,Rozklad )
