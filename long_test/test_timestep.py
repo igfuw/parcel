@@ -1,6 +1,6 @@
 import sys
 sys.path.insert(0, "../")
-sys.path.insert(0, "/home/piotr/Piotr/IGF/parcel/plots/comparison")
+#sys.path.insert(0, "path to /parcel/plots/comparison")
 sys.path.insert(0, "./")
 sys.path.insert(0, "plots/comparison/")
 
