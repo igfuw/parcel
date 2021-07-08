@@ -5,6 +5,7 @@ import sys
 #sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
 #sys.path.insert(0, "../../../libcloudphxx/build/bindings/python/")
 #sys.path.insert(0, "/usr/local/lib/site-python/")
+#sys.path.insert(0, "path_to/lib/python3/dist-packages")
 # TEMP TODO TEMP TODO !!!
 
 from argparse import ArgumentParser, RawTextHelpFormatter
@@ -155,16 +156,18 @@ def _output_bins(fout, t, micro, opts, spectra):
   for dim, dct in spectra.items():
     for bin in range(dct["nbin"]):
       if dct["drwt"] == 'wet':
-        micro.diag_wet_rng(
-          fout.variables[dim+"_r_wet"][bin],
-          fout.variables[dim+"_r_wet"][bin] + fout.variables[dim+"_dr_wet"][bin]
-        )
+         micro.diag_wet_rng(
+	        fout.variables[dim+"_r_wet"][bin],
+	        fout.variables[dim+"_r_wet"][bin] + fout.variables[dim+"_dr_wet"][bin]
+	     )
       elif dct["drwt"] == 'dry':
-        micro.diag_dry_rng(
-          fout.variables[dim+"_r_dry"][bin],
-          fout.variables[dim+"_r_dry"][bin] + fout.variables[dim+"_dr_dry"][bin]
-        )
+          micro.diag_dry_rng(
+	        fout.variables[dim+"_r_dry"][bin],
+	           fout.variables[dim+"_r_dry"][bin] + fout.variables[dim+"_dr_dry"][bin]
+	     )
+
       else: raise Exception("drwt should be wet or dry")
+
 
       for vm in dct["moms"]:
         if type(vm) == int:
@@ -175,6 +178,7 @@ def _output_bins(fout, t, micro, opts, spectra):
             micro.diag_dry_mom(vm)
           else: raise Exception("drwt should be wet or dry")
           fout.variables[dim+'_m'+str(vm)][int(t), int(bin)] = np.frombuffer(micro.outbuf())
+
         else:
           # calculate chemistry
           micro.diag_chem(_Chem_a_id[vm])
@@ -214,9 +218,14 @@ def _output_init(micro, opts, spectra):
       	fout.createVariable(name+'_'+vm, 'd', ('t',name))
       	fout.variables[name+'_'+vm].unit = 'kg of chem species dissolved in cloud droplets (kg of dry air)^-1'
       else:
-        assert(type(vm)==int)
-        fout.createVariable(name+'_m'+str(vm), 'd', ('t',name))
-        fout.variables[name+'_m'+str(vm)].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
+
+          assert(type(vm)==int)
+          fout.createVariable(name+'_m'+str(vm), 'd', ('t',name))
+          fout.variables[name+'_m'+str(vm)].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
+          fout.createVariable('number_of_rc_m0', 'd', ('t'))
+          fout.createVariable('number_of_rc_m1', 'd', ('t'))
+          fout.variables['number_of_rc_m0'].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
+          fout.variables['number_of_rc_m1'].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
 
   units = {"z"  : "m",     "t"   : "s",     "r_v"  : "kg/kg", "th_d" : "K", "rhod" : "kg/m3",
            "p"  : "Pa",    "T"   : "K",     "RH"   : "1"
@@ -242,6 +251,12 @@ def _save_attrs(fout, dictnr):
     setattr(fout, var, val)
 
 def _output(fout, opts, micro, state, rec, spectra):
+  micro.diag_rw_ge_rc()
+  micro.diag_wet_mom(0)
+  fout.variables['number_of_rc_m0'][int(rec)] = np.frombuffer(micro.outbuf())
+  micro.diag_rw_ge_rc()
+  micro.diag_wet_mom(1)
+  fout.variables['number_of_rc_m1'][int(rec)] = np.frombuffer(micro.outbuf())
   _output_bins(fout, rec, micro, opts, spectra)
   _output_save(fout, state, rec)
 
@@ -336,7 +351,8 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300.,
   args, _, _, _ = inspect.getargvalues(inspect.currentframe())
   opts = dict()
   for k in args:
-    opts[k] = locals()[k]
+      opts[k] = locals()[k]
+
 
   # parsing json specification of output spectra
   spectra = json.loads(opts["out_bin"])
@@ -350,7 +366,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300.,
     r_0 = .022
   # water coontent specified with RH
   if ((opts["r_0"] < 0) and (opts["RH_0"] >= 0)):
-    r_0 = common.eps * opts["RH_0"] * common.p_vs(T_0) / (p_0 - opts["RH_0"] * common.p_vs(T_0))
+      r_0 = common.eps * opts["RH_0"] * common.p_vs(T_0) / (p_0 - opts["RH_0"] * common.p_vs(T_0))
 
   # sanity checks for arguments
   _arguments_checking(opts, spectra, aerosol)
@@ -490,8 +506,8 @@ def _arguments_checking(opts, spectra, aerosol):
       if gstdev <= 0:
         raise Exception("standard deviation should be > 0 for aerosol[" + name + "]")
     # necessary?
-      if gstdev == 1.:
-        raise Exception("standard deviation should be != 1 to avoid monodisperse distribution for aerosol[" + name + "]")
+     # if gstdev == 1.:
+       # raise Exception("standard deviation should be != 1 to avoid monodisperse distribution for aerosol[" + name + "]")
 
   for name, dct in spectra.items():
     # TODO: check if name is valid netCDF identifier

@@ -22,10 +22,10 @@ def plot_profiles(fnc, output_folder="../outputs"):
 
     plots[0].set_xlabel('p [hPa]')
 
-    plots[1].ticklabel_format(useOffset=False) 
+    plots[1].ticklabel_format(useOffset=False)
     plots[1].set_xlabel('th_d [K]')
     plots[2].set_xlabel('T [K]')
-    plots[3].set_xlabel('kappa(rho_d :)) [kg/m3]')  
+    plots[3].set_xlabel('kappa(rho_d :)) [kg/m3]')
     plots[4].set_xlabel('rv [g/kg]')
     plots[5].set_xlabel('RH')
 
@@ -39,18 +39,18 @@ def plot_profiles(fnc, output_folder="../outputs"):
     plots[3].plot(fnc.variables["rhod"][:]       , z)
     plots[4].plot(fnc.variables["r_v"][:] * 1000 , z)
     plots[5].plot(
-        fnc.variables["RH"][:]                     , z, 
+        fnc.variables["RH"][:]                     , z,
         [fnc.variables["RH"][:].max()] * z.shape[0], z
         )
-   
+
     if not os.path.exists(output_folder):
         subprocess.call(["mkdir", output_folder])
     plt.savefig(os.path.join(output_folder, "plot_profiles_onesim.svg"))
 
 def main(dt=1):
-    # running parcel model for different ways to solve for pressure  ...            
+    # running parcel model for different ways to solve for pressure  ...
     outfile = "onesim_plot.nc"
-    parcel(dt=dt, outfreq = 10, outfile=outfile)
+    parcel(dt=dt, outfreq = 10, w=5, outfile=outfile)
     fnc = netcdf.netcdf_file(outfile)
     plot_profiles(fnc)
     fnc.close()

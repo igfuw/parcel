@@ -12,7 +12,7 @@ For more information on the [libcloudph++](http://libcloudphxx.igf.fuw.edu.pl/) 
   [project repository](https://github.com/igfuw/libcloudphxx) and 
   the [project documentation](http://www.geosci-model-dev.net/8/1677/2015/).
 
-The parcel model is written in Python 2.7. 
+The parcel model was written in Python 2.7 and now works with Python 3.# . 
 
 # installation
 
