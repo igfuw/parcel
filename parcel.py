@@ -153,7 +153,6 @@ def _stats(state, info):
   info["RH_max"] = max(info["RH_max"], state["RH"])
 
 def _output_bins(fout, t, micro, opts, spectra):
-
   for dim, dct in spectra.items():
     for bin in range(dct["nbin"]):
       if dct["drwt"] == 'wet':
@@ -166,6 +165,7 @@ def _output_bins(fout, t, micro, opts, spectra):
 	        fout.variables[dim+"_r_dry"][bin],
 	           fout.variables[dim+"_r_dry"][bin] + fout.variables[dim+"_dr_dry"][bin]
 	     )
+
       else: raise Exception("drwt should be wet or dry")
 
 
@@ -218,21 +218,21 @@ def _output_init(micro, opts, spectra):
       	fout.createVariable(name+'_'+vm, 'd', ('t',name))
       	fout.variables[name+'_'+vm].unit = 'kg of chem species dissolved in cloud droplets (kg of dry air)^-1'
       else:
+
           assert(type(vm)==int)
           fout.createVariable(name+'_m'+str(vm), 'd', ('t',name))
-        # fout.variables[name+'_m'+str(vm)].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
           fout.variables[name+'_m'+str(vm)].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
           fout.createVariable('number_of_rc_m0', 'd', ('t'))
           fout.createVariable('number_of_rc_m1', 'd', ('t'))
-        # fout.variables[name+'_rc'+str(vm)].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
           fout.variables['number_of_rc_m0'].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
           fout.variables['number_of_rc_m1'].unit = 'm^'+str(vm)+' (kg of dry air)^-1'
+
   units = {"z"  : "m",     "t"   : "s",     "r_v"  : "kg/kg", "th_d" : "K", "rhod" : "kg/m3",
            "p"  : "Pa",    "T"   : "K",     "RH"   : "1"
   }
 
   if micro.opts_init.chem_switch:
-    for id_str in _Chem_g_id.iterkeys():
+    for id_str in _Chem_g_id.keys():
       units[id_str] = "gas mixing ratio [kg / kg dry air]"
       units[id_str.replace('_g', '_a')] = "kg of chem species (both undissociated and ions) dissolved in cloud droplets (kg of dry air)^-1"
 
@@ -353,6 +353,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300.,
   for k in args:
       opts[k] = locals()[k]
 
+
   # parsing json specification of output spectra
   spectra = json.loads(opts["out_bin"])
 
@@ -381,7 +382,7 @@ def parcel(dt=.1, z_max=200., w=1., T_0=300., p_0=101300.,
   }
 
   if opts["chem_dsl"] or opts["chem_dsc"] or opts["chem_rct"]:
-    for key in _Chem_g_id.iterkeys():
+    for key in _Chem_g_id.keys():
       state.update({ key : np.array([opts[key]])})
 
   info = { "RH_max" : 0, "libcloud_Git_revision" : libcloud_version,
@@ -534,15 +535,15 @@ def _arguments_checking(opts, spectra, aerosol):
         raise Exception(">>moms<< key in out_bin["+ name +"] must be a list")
     for mom in dct["moms"]:
         if (type(mom) != int):
-          if (mom not in _Chem_a_id.keys()):
-            raise Exception(">>moms<< key in out_bin["+ name +"] must be a list of integer numbers or valid chemical compounds (" +str(_Chem_a_id.keys()) + ")")
+          if (mom not in list(_Chem_a_id.keys())):
+            raise Exception(">>moms<< key in out_bin["+ name +"] must be a list of integer numbers or valid chemical compounds (" +str(list(_Chem_a_id.keys())) + ")")
 
 # ensuring that pure "import parcel" does not trigger any simulation
 if __name__ == '__main__':
 
   # getting list of argument names and their default values
-  name, _, _, dflt = inspect.getargspec(parcel)
-  opts = dict(zip(name[-len(dflt):], dflt))
+  name, _, _, dflt = inspect.getfullargspec(parcel)[0:4]
+  opts = dict(list(zip(name[-len(dflt):], dflt)))
 
   # handling all parcel() arguments as command-line arguments
   prsr = ArgumentParser(add_help=True, description=parcel.__doc__, formatter_class=RawTextHelpFormatter)

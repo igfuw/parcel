@@ -38,7 +38,7 @@ def data(request):
     out_m3_dry  = []
 
     for sd_conc in sd_conc_list:
-        print "sd_conc = ", sd_conc
+        print("sd_conc = ", sd_conc)
  
         p_dict['outfile'] = "convergence_test_sd_conc=" + str(sd_conc) + ".nc" 
         p_dict['sd_conc'] = sd_conc

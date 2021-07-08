@@ -67,8 +67,8 @@ def test_init_mass(data, eps = 1e-20):
     # initial dry mass of aerosol from paper [kg/kg dry air]
     art = 2.375 * 1e-9 / rhod_init
 
-    print "initial mixing ratio:      ", ini, " [kg / kg dry air]"
-    print "article init mixing ratio: ", art, " [kg / kg dry air]"
+    print("initial mixing ratio:      ", ini, " [kg / kg dry air]")
+    print("article init mixing ratio: ", art, " [kg / kg dry air]")
 
     assert np.isclose(art, ini, atol=0, rtol=eps), str((ini-art)/ini)
 
@@ -83,7 +83,7 @@ def test_init_spectrum(data, eps = 0.06):
     gstdev  = 2
 
     # from ncdf file attributes read out_bin parameters as a dictionary ...
-    out_bin = ast.literal_eval(getattr(data, "out_bin"))
+    out_bin = eval(getattr(data, "out_bin"))
     # ... and check if the spacing used in the test was logarithmic
     assert out_bin["drad"]["lnli"] == 'log', "this test should be run with logarithmic spacing of bins"
    

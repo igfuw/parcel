@@ -73,7 +73,7 @@ def plot_fig1(data, output_folder = '', output_title = ''):
 
     plt.grid()
     plt.plot((tmp1 + tmp2) * 1e9 * rhod / rho, t, "b", lw=4.)
-    print "total % of SO2 that was converted to H2SO4 = ", (1 - (tmp1[-1] + tmp2[-1]) / (tmp1[0] + tmp2[0])) * 100
+    print("total % of SO2 that was converted to H2SO4 = ", (1 - (tmp1[-1] + tmp2[-1]) / (tmp1[0] + tmp2[0])) * 100)
 
     # calculate average pH
     # (weighted with volume of cloud droplets)
@@ -112,7 +112,7 @@ def plot_fig2(data, output_folder = '', output_title = ''):
     import Gnuplot
 
     # from ncdf file attributes read out_bin parameters as a dictionary ...
-    out_bin = ast.literal_eval(getattr(data, "out_bin"))
+    out_bin = eval(getattr(data, "out_bin"))
     # ... and check if the spacing used in the test was logarithmic
     assert out_bin["specd"]["lnli"] == 'log', "this plot should be used with logarithmic spacing of bins"
 
@@ -153,7 +153,7 @@ def plot_fig3(data, output_folder = '', output_title = ''):
     import Gnuplot
 
     # from ncdf file attributes read out_bin parameters as a dictionary ...
-    out_bin = ast.literal_eval(getattr(data, "out_bin"))
+    out_bin = eval(getattr(data, "out_bin"))
     # ... and check if the spacing used in the test was logarithmic
     assert out_bin["specd"]["lnli"] == 'log', "this plot should be used with logarithmic spacing of bins"
 
@@ -211,7 +211,7 @@ def plot_pH_size_dist(data, output_folder = '', output_title = ''):
     import Gnuplot
 
     # from ncdf file attributes read out_bin parameters as a dictionary ...
-    out_bin = ast.literal_eval(getattr(data, "out_bin"))
+    out_bin = eval(getattr(data, "out_bin"))
     # ... and check if the spacing used in the test was logarithmic
     assert out_bin["chem"]["lnli"] == 'log', "this plot should be used with logarithmic spacing of bins"
 

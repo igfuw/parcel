@@ -78,7 +78,7 @@ def test_dry_moments(data):
     - moments calculated by the library
     - moments calculated as numerical integral of the size distribution from the model
     """
-    aerosol = ast.literal_eval(data.aerosol)
+    aerosol = eval(data.aerosol)
     mean   = aerosol['ammonium_sulfate']["mean_r"][0]  # mean radius
     gstdev = aerosol['ammonium_sulfate']["gstdev"][0]  # geometric standard deviation
     n_tot  = aerosol['ammonium_sulfate']["n_tot"][0]   # concentration under standard conditions (T=15C, p=1013.25 hPa, rv=0) [m^-3]

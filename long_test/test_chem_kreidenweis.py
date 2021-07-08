@@ -121,17 +121,17 @@ def test_chem_sulfate_formation(data):
 
     pH  = -1 * np.log10(nom / den)
 
-    print " "
-    print " "
-    print "water weighted average pH = ", pH, " vs 4.82-4.85 from size resolved models "
+    print(" ")
+    print(" ")
+    print("water weighted average pH = ", pH, " vs 4.82-4.85 from size resolved models ")
 
     s6_ini = data.variables["chemd_S_VI"][0, :]
     s6_end = data.variables["chemd_S_VI"][-1, :]
 
     sulf_ppt = fn.mix_ratio_to_mole_frac((np.sum(s6_end) - np.sum(s6_ini)), p, cm.M_H2SO4, T, rhod) * 1e12
    
-    print " "
-    print "sulfate formation (ppt) = ", sulf_ppt, " vs 170-180 from size resolved models"
+    print(" ")
+    print("sulfate formation (ppt) = ", sulf_ppt, " vs 170-180 from size resolved models")
 
     ini_O3   = data.variables["O3_g"][0] / cm.M_O3 + \
                data.variables["chemd_O3_a"][0, :].sum() / cm.M_O3
@@ -149,11 +149,11 @@ def test_chem_sulfate_formation(data):
     sulf_ppt_H2O2 = fn.mix_ratio_to_mole_frac((np.sum(ini_H2O2) - np.sum(end_H2O2)) * cm.M_H2SO4, p, cm.M_H2SO4, T, rhod) * 1e12
     sulf_ppt_O3   = fn.mix_ratio_to_mole_frac((np.sum(ini_O3) - np.sum(end_O3)) * cm.M_H2SO4, p, cm.M_H2SO4, T, rhod) * 1e12
 
-    print " "
-    print "sulfate formation from H2O2 (ppt) = ", sulf_ppt_H2O2, " vs 85-105 from size resolved models"
-    print "sulfate formation from O3 (ppt)   = ", sulf_ppt_O3, " vs 70-85 from size resolved models"
+    print(" ")
+    print("sulfate formation from H2O2 (ppt) = ", sulf_ppt_H2O2, " vs 85-105 from size resolved models")
+    print("sulfate formation from O3 (ppt)   = ", sulf_ppt_O3, " vs 70-85 from size resolved models")
 
-    print " "
+    print(" ")
     n_tot = data.variables["acti_m0"][12, 0] * rhod * 1e-6
-    print "N of droplets           = ", n_tot, " in cm3"
-    print "maximum supersaturation = ", (data.RH_max - 1) * 100, "%"
+    print("N of droplets           = ", n_tot, " in cm3")
+    print("maximum supersaturation = ", (data.RH_max - 1) * 100, "%")
