@@ -5,7 +5,7 @@ import sys
 #sys.path.insert(0, "../libcloudphxx/build/bindings/python/")
 #sys.path.insert(0, "../../../libcloudphxx/build/bindings/python/")
 #sys.path.insert(0, "/usr/local/lib/site-python/")
-sys.path.insert(0, "/home/piotr/Piotr/IGF/local_install/parcel/lib/python3/dist-packages")
+#sys.path.insert(0, "path_to/lib/python3/dist-packages")
 # TEMP TODO TEMP TODO !!!
 
 from argparse import ArgumentParser, RawTextHelpFormatter
