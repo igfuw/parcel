@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from scipy.io import netcdf
 import numpy as np
+import json
 from parcel_common import _Chem_g_id, _Chem_a_id
 
 
@@ -90,6 +91,20 @@ def _output_init(micro, opts, spectra):
     fout.createVariable("ice_mix_ratio", 'd', ('t',))
     fout.variables["ice_mix_ratio"].unit = "kg/kg"
 
+  # if micro.opts_init.exact_sstp_cond:
+  fout.createVariable("sstp_cond_mean", 'd', ('t',))
+  fout.variables["sstp_cond_mean"].unit = "1"
+
+  fout.createVariable("act_m0", 'd', ('t',))
+  fout.variables["act_m0"].unit = "1/kg"
+
+  fout.createVariable("sd_conc", 'd', ('t',))
+  fout.variables["sd_conc"].unit = "1"
+
+  # wall-clock time spent inside step_cond (per parcel output timestep)
+  fout.createVariable("step_cond_walltime_ms", 'd', ('t',))
+  fout.variables["step_cond_walltime_ms"].unit = "ms"
+
   return fout
 
 
@@ -157,8 +172,46 @@ def _output_save(fout, state, rec):
 
 
 def _save_attrs(fout, dictnr):
+  """Save metadata as NetCDF global attributes.
+
+  `scipy.io.netcdf` is picky about attribute types; it expects scalar strings/numbers
+  or 1-D arrays. The `opts` dict often contains Python objects (dicts, lists, None,
+  callables) that would crash on file close/flush.
+  """
+
+  def _coerce_attr_value(v):
+    # NetCDF has no null type; store None explicitly
+    if v is None:
+      return "None"
+
+    # Basic scalar types are fine
+    if isinstance(v, (str, int, float, bool, np.number)):
+      return v
+
+    # Numpy arrays: keep small numeric arrays, stringify object arrays
+    if isinstance(v, np.ndarray):
+      if v.dtype == object:
+        return repr(v.tolist())
+      return v
+
+    # Containers / complex objects: stringify deterministically
+    if isinstance(v, (dict, list, tuple, set)):
+      try:
+        return json.dumps(v, sort_keys=True, default=str)
+      except Exception:
+        return repr(v)
+
+    # Callables, modules, etc.
+    return repr(v)
+
   for var, val in dictnr.items():
-    setattr(fout, var, val)
+    coerced = _coerce_attr_value(val)
+    # Keep the previous debug prints minimal and safe
+    try:
+      setattr(fout, var, coerced)
+    except Exception:
+      # Last resort: force string
+      setattr(fout, var, repr(coerced))
 
 
 def _output(fout, opts, micro, state, rec, spectra):

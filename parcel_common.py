@@ -24,6 +24,26 @@ _Chem_a_id = {
   "S_VI"   : lgrngn.chem_species_t.S_VI
 }
 
+def _w_eval(w, t):
+  """Evaluate vertical velocity at time t.
+
+  Supported forms for `w`:
+    - float/int: constant vertical velocity
+    - callable:  w(t) -> float
+    - str:       Python expression in variable `t` (seconds), e.g. "1 + 0.5*np.sin(2*np.pi*t/60)"
+                Available names: t, np
+
+  Note: expression strings are `eval`'d with a restricted global namespace.
+  """
+  if callable(w):
+    return float(w(t))
+  if isinstance(w, (int, float, np.floating)):
+    return float(w)
+  if isinstance(w, str):
+    # restricted eval environment
+    return float(eval(w, {"__builtins__": {}}, {"t": float(t), "np": np}))
+  raise TypeError("w must be a number, a callable w(t), or an expression string")
+
 
 class lognormal(object):
   def __init__(self, mean_r, gstdev, n_tot):
@@ -70,41 +90,53 @@ def _arguments_checking(opts, spectra, aerosol, ice_switch):
     raise Exception("temperature should be larger than 0C if ice_switch=False")
   elif ((opts["r_0"] >= 0) and (opts["RH_0"] >= 0)):
     raise Exception("both r_0 and RH_0 specified, please use only one")
-  if opts["w"] < 0:
-    raise Exception("vertical velocity should be larger than 0")
+  # if opts["w"] < 0:
+  #   raise Exception("vertical velocity should be larger than 0")
+  if opts["t"] is not None and opts["z_max"] is not None:
+    raise ValueError("Specify only one stop condition: either z_max or t (not both)")
+  if opts["t"] is None and opts["z_max"] is None:
+    raise ValueError("You must specify exactly one stop condition: z_max or t")
+  if opts["t"] is not None and opts["t"] <= 0:
+    raise ValueError("t must be > 0")
+  if opts["z_max"] is not None and opts["z_max"] <= 0:
+    raise ValueError("z_max must be > 0")
+  w0 = _w_eval(opts["w"], 0.0)
+  if w0 <= 0 and isinstance(opts["w"], (int, float, np.floating)) and opts["z_max"] is not None:
+    raise ValueError("For constant w with z_max stop, expected w>0 to reach z_max")
 
-  for name, dct in aerosol.items():
-    # TODO: check if name is valid netCDF identifier
-    # (http://www.unidata.ucar.edu/software/thredds/current/netcdf-java/CDM/Identifiers.html)
-    keys = ["kappa", "mean_r", "n_tot", "gstdev"]
-    for key in keys:
-      if key not in dct:
-        raise Exception(">>" + key + "<< is missing in aerosol[" + name + "]")
-    for key in dct:
-      if key not in keys:
-        raise Exception("invalid key >>" + key + "<< in aerosol[" + name + "]")
-    if dct["kappa"] <= 0:
-      raise Exception("kappa hygroscopicity parameter should be larger than 0 for aerosol[" + name + "]")
-    if type(dct["mean_r"]) != list:
-        raise Exception(">>mean_r<< key in aerosol["+ name +"] must be a list")
-    if type(dct["gstdev"]) != list:
-        raise Exception(">>gstdev<< key in aerosol["+ name +"] must be a list")
-    if type(dct["n_tot"]) != list:
-        raise Exception(">>n_tot<< key in aerosol["+ name +"] must be a list")
-    if not len(dct["mean_r"]) == len(dct["n_tot"]) == len(dct["gstdev"]):
-      raise Exception("mean_r, n_tot and gstdev lists should have same sizes for aerosol[" + name + "]")
-    for mean_r in dct["mean_r"]:
-      if mean_r <= 0:
-        raise Exception("mean radius should be > 0 for aerosol[" + name + "]")
-    for n_tot in dct["n_tot"]:
-      if n_tot <= 0:
-        raise Exception("concentration should be > 0 for aerosol[" + name + "]")
-    for gstdev in dct["gstdev"]:
-      if gstdev <= 0:
-        raise Exception("standard deviation should be > 0 for aerosol[" + name + "]")
-    # necessary?
-      if gstdev == 1.:
-        raise Exception("standard deviation should be != 1 to avoid monodisperse distribution for aerosol[" + name + "]")
+  if aerosol is not None:
+    for name, dct in aerosol.items():
+      # TODO: check if name is valid netCDF identifier
+      # (http://www.unidata.ucar.edu/software/thredds/current/netcdf-java/CDM/Identifiers.html)
+      keys = ["kappa", "mean_r", "n_tot", "gstdev"]
+      for key in keys:
+        if key not in dct:
+          raise Exception(">>" + key + "<< is missing in aerosol[" + name + "]")
+      for key in dct:
+        if key not in keys:
+          raise Exception("invalid key >>" + key + "<< in aerosol[" + name + "]")
+      if dct["kappa"] <= 0:
+        raise Exception("kappa hygroscopicity parameter should be larger than 0 for aerosol[" + name + "]")
+      if type(dct["mean_r"]) != list:
+          raise Exception(">>mean_r<< key in aerosol["+ name +"] must be a list")
+      if type(dct["gstdev"]) != list:
+          raise Exception(">>gstdev<< key in aerosol["+ name +"] must be a list")
+      if type(dct["n_tot"]) != list:
+          raise Exception(">>n_tot<< key in aerosol["+ name +"] must be a list")
+      if not len(dct["mean_r"]) == len(dct["n_tot"]) == len(dct["gstdev"]):
+        raise Exception("mean_r, n_tot and gstdev lists should have same sizes for aerosol[" + name + "]")
+      for mean_r in dct["mean_r"]:
+        if mean_r <= 0:
+          raise Exception("mean radius should be > 0 for aerosol[" + name + "]")
+      for n_tot in dct["n_tot"]:
+        if n_tot <= 0:
+          raise Exception("concentration should be > 0 for aerosol[" + name + "]")
+      for gstdev in dct["gstdev"]:
+        if gstdev <= 0:
+          raise Exception("standard deviation should be > 0 for aerosol[" + name + "]")
+      # necessary?
+        if gstdev == 1.:
+          raise Exception("standard deviation should be != 1 to avoid monodisperse distribution for aerosol[" + name + "]")
 
   for name, dct in spectra.items():
     # TODO: check if name is valid netCDF identifier
