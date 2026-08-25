@@ -64,7 +64,7 @@ def test_pressure_diff(data, pprof, eps=3.e-4):
     f_ref  = netcdf.netcdf_file(os.path.join("unit_test/refdata", 
                              "profopttest_" + pprof + str(data["dt"]) + ".nc"), "r")
     for var in ["t", "z", "th_d", "T", "p", "r_v", "rhod"]:
-        assert np.isclose(f_ref.variables[var][:], data[pprof].variables[var][:], atol=0, rtol=eps).all(), "differs e.g. " + str(var) + "; max(ref diff) = " + str(np.where(f_ref.variables[var][:] != 0., abs((data[pprof].variables[var][:]-f_ref.variables[var][:])/f_ref.variables[var][:]), 0.).max())
+        np.testing.assert_allclose(f_ref.variables[var][:], data[pprof].variables[var][:], atol=0, rtol=eps, err_msg="differs e.g. " + str(var) + "; max(ref diff) = " + str(np.where(f_ref.variables[var][:] != 0., abs((data[pprof].variables[var][:]-f_ref.variables[var][:])/f_ref.variables[var][:]), 0.).max()))
 
     assert np.isclose(f_ref.RH_max, data[pprof].RH_max, atol=0, rtol=eps)
 

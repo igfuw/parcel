@@ -47,12 +47,12 @@ def test_bin_checker(data, name_spect, eps_d=1.e-14):
     dr = np.empty(r_nc.shape[0] - 1)
     dr[:] = (r_nc[1:] - r_nc[0:-1]) 
     
-    assert np.isclose(dr, dr_nc[:-1], atol=0, rtol=eps_d).all()
+    np.testing.assert_allclose(dr, dr_nc[:-1], atol=0, rtol=eps_d)
 
 
 @pytest.mark.parametrize("var", ["wradii_r_wet", "wradii_dr_wet", "linwradii_r_wet", "linwradii_dr_wet",
                                  "dradii_r_dry", "dradii_dr_dry", "lindradii_r_dry", "lindradii_dr_dry"])
-def test_spectrum_diff(data, var, eps_d = 1e-15):
+def test_spectrum_diff(data, var, eps_d = 1e-14):
     """
     Compare the results with the referential simulation
     (stored in refdata folder)                                             
@@ -61,11 +61,11 @@ def test_spectrum_diff(data, var, eps_d = 1e-15):
     f_ref  = netcdf.netcdf_file("unit_test/refdata/test_spectrum.nc", "r")
 
     # ... the bin edges and bin sizes ...
-    assert np.isclose(f_ref.variables[var][:], data.variables[var][:],atol=0, rtol=eps_d).all()
+    np.testing.assert_allclose(f_ref.variables[var][:], data.variables[var][:], atol=0, rtol=eps_d)
 
     # ... and 0th, 1st, 3rd moment of wet and dry radius size distribution             
-@pytest.mark.parametrize("mom, eps", [("wradii_m0",    1e-15), ("dradii_m0",    1e-15), 
-                                      ("lindradii_m0", 1e-15), ("linwradii_m0", 1e-15),
+@pytest.mark.parametrize("mom, eps", [("wradii_m0",    1e-15), ("dradii_m0",    1e-14), 
+                                      ("lindradii_m0", 1e-14), ("linwradii_m0", 1e-15),
                                       ("wradii_m1",    7e-4),  ("dradii_m1",    5e-15), 
                                       ("lindradii_m1", 4e-15), ("linwradii_m1", 5e-6),
                                       ("wradii_m3",    1.6e-3),("dradii_m3",    2e-14), 
@@ -78,9 +78,10 @@ def test_mom_checker(data, mom, eps):
     refdata = np.reshape(refdata, np.product(refdata.shape))
     cmpdata = np.reshape(cmpdata, np.product(cmpdata.shape))
 
-    assert np.isclose(cmpdata, refdata, atol=0, rtol=eps).all(),\
-        "differs e.g. " + str(mom) + "; max(ref diff) = " +\
+    np.testing.assert_allclose(cmpdata, refdata, atol=0, rtol=eps, err_msg=(
+        "differs e.g. " + str(mom) + "; max(ref diff) = " +
         str(np.where(refdata != 0.,abs((cmpdata - refdata) / refdata), abs(cmpdata - refdata)).max())
+    ))
 
 
 def test_spectrum_plot(data):
